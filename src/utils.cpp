@@ -14,7 +14,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <iostream>
 #include "utils.h"
+#include "bitboard.h"
 
 const PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
 const Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
@@ -91,4 +93,17 @@ Piece charToPiece(char c) {
             break;
     }
     return piece;
+}
+
+void displayBB(Bitboard b) {
+    std::cout << "    A   B   C   D   E   F   G   H  \n";
+    for (int i = 8; i >= 1; i--) {
+        std::cout << "  +---+---+---+---+---+---+---+---+\n";
+        std::cout << i << " |";
+        for (int j = 1; j <= 8; j++) {
+            std::cout << " " << b.get(Square((i - 1) * 8 + (j - 1))) << " |";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "  +---+---+---+---+---+---+---+---+" << std::endl;
 }
