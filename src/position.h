@@ -32,16 +32,18 @@ public:
     // This will be mostly used with constant color and type so this will result a nicer code
     // pieces<{ROOK, WHITE}>() --> pieces<WHITE, ROOK>()
     template<Color color, PieceType type>
-    constexpr Bitboard Pieces() { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces() { return pieceBB[type] & allPieceBB[color]; }
 
     template<Color color>
-    constexpr Bitboard Us() { return allPieceBB[color]; }
+    constexpr Bitboard us() { return allPieceBB[color]; }
 
     template<Color color>
-    constexpr Bitboard Enemy() { return allPieceBB[EnemyColor<color>()]; }
+    constexpr Bitboard enemy() { return allPieceBB[EnemyColor<color>()]; }
 
     template<Color color>
-    constexpr Bitboard EnemyOrEmpty() { return ~Us<color>(); }
+    constexpr Bitboard enemyOrEmpty() { return ~us<color>(); }
+
+    constexpr Bitboard occupied() { return allPieceBB[WHITE] & allPieceBB[BLACK]; }
 
     void display();
 
