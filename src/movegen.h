@@ -21,5 +21,11 @@
 
 void initLookup();
 
+template<Color color>
+constexpr Bitboard getPawnAttacks(Square square);
+
+constexpr Bitboard getKingAttacks(Square square);
+
+constexpr Bitboard getKnightAttacks(Square square);
 
 #endif //BLACKCORE_MOVEGEN_H

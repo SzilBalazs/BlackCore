@@ -109,3 +109,16 @@ void initLookup() {
         pawnAttackTable[sq][BLACK] = step<SOUTH_WEST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
     }
 }
+
+template<Color color>
+constexpr Bitboard getPawnAttacks(Square square) {
+    return pawnAttackTable[square][color];
+}
+
+constexpr Bitboard getKingAttacks(Square square) {
+    return kingAttackTable[square];
+}
+
+constexpr Bitboard getKnightAttacks(Square square) {
+    return knightAttackTable[square];
+}
