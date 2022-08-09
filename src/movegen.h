@@ -20,15 +20,4 @@
 #include "bitboard.h"
 
 
-extern Bitboard rayMasks[8][64], bitMask[64], fileMaskEx[64], rankMaskEx[64], diagonalMaskEx[64],
-        antiDiagonalMaskEx[64], knightMaskTable[64], kingMaskTable[64], pawnMaskTable[64][2];
-
-void initLookup();
-
-inline Bitboard pawnMask(Square square, Color color) { return pawnMaskTable[square][color]; }
-
-inline Bitboard kingMask(Square square) { return kingMaskTable[square]; }
-
-inline Bitboard knightMask(Square square) { return knightMaskTable[square]; }
-
 #endif //BLACKCORE_MOVEGEN_H

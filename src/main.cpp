@@ -18,7 +18,7 @@
 #include "position.h"
 
 int main() {
-    initLookup();
-    displayBB(knightMask(D5));
+    initBitboard();
+    displayBB(Bitboard(A3));
     return 0;
 }

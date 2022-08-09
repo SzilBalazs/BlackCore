@@ -17,6 +17,7 @@
 #ifndef BLACKCORE_BITBOARD_H
 #define BLACKCORE_BITBOARD_H
 
+#include <cassert>
 #include "constants.h"
 
 struct Bitboard {
@@ -24,6 +25,8 @@ struct Bitboard {
     U64 bb;
 
     constexpr Bitboard(U64 value) { bb = value; }
+
+    inline Bitboard(Square square);
 
     constexpr Bitboard() { bb = 0; }
 
@@ -78,6 +81,34 @@ constexpr Bitboard notFileA = ~fileA;
 constexpr Bitboard notFileH = ~fileH;
 constexpr Bitboard edge = 0xff818181818181ff;
 constexpr Bitboard notEdge = ~edge;
+
+extern Bitboard bitMasks[64];
+extern Bitboard pawnMasks[64][2];
+extern Bitboard knightMasks[64];
+extern Bitboard kingMasks[64];
+
+void initBitboard();
+
+inline Bitboard::Bitboard(Square square) { bb = bitMasks[square].bb; }
+
+inline Bitboard pawnMask(Square square, Color color) { return pawnMasks[square][color]; }
+
+inline Bitboard knightMask(Square square) { return knightMasks[square]; }
+
+inline Bitboard kingMask(Square square) { return kingMasks[square]; }
+
+template<PieceType type>
+inline Bitboard pieceMask(Square square, Bitboard occupied) {
+    assert(type != PAWN);
+    switch (type) {
+        case KNIGHT:
+            return knightMask(square);
+        case KING:
+            return kingMask(square);
+        default:
+            assert(1);
+    }
+}
 
 template<Direction direction>
 constexpr Bitboard step(Bitboard b) {
