@@ -22,11 +22,11 @@ void Position::setSquare(Square square, Piece piece) {
 }
 
 void Position::clearPosition() {
-    for (auto & i : pieceBB) {
+    for (auto &i : pieceBB) {
         i = 0;
     }
 
-    for (Square square=A1;square<64;square+=1) {
+    for (Square square = A1; square < 64; square += 1) {
         board[square] = {};
     }
 
@@ -48,14 +48,14 @@ void Position::displayBoard() {
     // TODO FEN, hash key, full-half move counter
 
     cout << "    A   B   C   D   E   F   G   H  \n";
-    for (int i=8;i>=1;i--) {
+    for (int i = 8; i >= 1; i--) {
         cout << "  +---+---+---+---+---+---+---+---+";
         if (i <= 7 && !text.empty()) {
             cout << "        " << text.back();
             text.pop_back();
         }
         cout << "\n" << i << " |";
-        for (int j=1;j<=8;j++) {
+        for (int j = 1; j <= 8; j++) {
             cout << " " << pieceToChar(pieceAt(Square((i - 1) * 8 + (j - 1)))) << " |";
         }
         if (i <= 7 && !text.empty()) {
@@ -67,23 +67,22 @@ void Position::displayBoard() {
     cout << "  +---+---+---+---+---+---+---+---+" << std::endl;
 }
 
-void Position::loadPositionFromFen(const string& fen) {
+void Position::loadPositionFromFen(const string &fen) {
     clearPosition();
 
     std::stringstream ss;
     string b;
     ss << fen;
     ss >> b;
-    Square square=A8;
+    Square square = A8;
     for (char c : b) {
         if ('1' <= c && c <= '8') {
             square += c - '0';
-        }
-        else if (c == '/') {
+        } else if (c == '/') {
             square -= 16;
         } else {
             setSquare(square, charToPiece(c));
-            square+=1;
+            square += 1;
         }
     }
 
@@ -93,6 +92,6 @@ Position::Position() {
     clearPosition();
 }
 
-Position::Position(const std::string& fen) {
+Position::Position(const std::string &fen) {
     loadPositionFromFen(fen);
 }

@@ -29,11 +29,11 @@ public:
 
     void displayBoard();
 
-    void loadPositionFromFen(const std::string& fen);
+    void loadPositionFromFen(const std::string &fen);
 
     Position();
 
-    Position(const std::string& fen);
+    Position(const std::string &fen);
 
 private:
 
@@ -42,6 +42,7 @@ private:
     void setSquare(Square square, Piece piece);
 
     void clearPosition();
+
     Piece board[64];
 
     Bitboard pieceBB[6], allPieceBB[2];

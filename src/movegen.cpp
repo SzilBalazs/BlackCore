@@ -1,7 +1,7 @@
 #include "movegen.h"
 
 Bitboard rayMasks[8][64], bitMask[64], fileMaskEx[64], rankMaskEx[64], diagonalMaskEx[64],
-            antiDiagonalMaskEx[64], knightAttackTable[64], kingAttackTable[64], pawnAttackTable[64][2];
+        antiDiagonalMaskEx[64], knightAttackTable[64], kingAttackTable[64], pawnAttackTable[64][2];
 
 void initLookup() {
     Bitboard north = 0x0101010101010100ULL;
@@ -73,16 +73,19 @@ void initLookup() {
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {
-        knightAttackTable[sq] = step<NORTH>(step<NORTH_WEST>(bitMask[sq])) | step<NORTH>(step<NORTH_EAST>(bitMask[sq])) |
-                                step<WEST>(step<NORTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq])) |
-                                step<SOUTH>(step<SOUTH_WEST>(bitMask[sq])) | step<SOUTH>(step<SOUTH_EAST>(bitMask[sq])) |
-                                step<WEST>(step<SOUTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq]));
+        knightAttackTable[sq] =
+                step<NORTH>(step<NORTH_WEST>(bitMask[sq])) | step<NORTH>(step<NORTH_EAST>(bitMask[sq])) |
+                step<WEST>(step<NORTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq])) |
+                step<SOUTH>(step<SOUTH_WEST>(bitMask[sq])) | step<SOUTH>(step<SOUTH_EAST>(bitMask[sq])) |
+                step<WEST>(step<SOUTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq]));
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {
         kingAttackTable[sq] =
-                step<NORTH>(bitMask[sq]) | step<NORTH_WEST>(bitMask[sq]) | step<WEST>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) |
-                step<SOUTH>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) | step<EAST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
+                step<NORTH>(bitMask[sq]) | step<NORTH_WEST>(bitMask[sq]) | step<WEST>(bitMask[sq]) |
+                step<SOUTH_WEST>(bitMask[sq]) |
+                step<SOUTH>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) | step<EAST>(bitMask[sq]) |
+                step<SOUTH_EAST>(bitMask[sq]);
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {

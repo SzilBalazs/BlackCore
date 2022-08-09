@@ -6,6 +6,4 @@
 void initLookup();
 
 
-
-
 #endif //BLACKCORE_MOVEGEN_H
