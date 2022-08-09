@@ -1,4 +1,3 @@
-#include <cassert>
 #include "utils.h"
 
 const PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};

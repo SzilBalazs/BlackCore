@@ -1,7 +1,6 @@
 #ifndef BLACKCORE_UTILS_H
 #define BLACKCORE_UTILS_H
 
-#include <utility>
 #include <string>
 #include "constants.h"
 
