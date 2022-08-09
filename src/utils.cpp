@@ -16,7 +16,6 @@
 
 #include <iostream>
 #include "utils.h"
-#include "bitboard.h"
 
 const PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
 const Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
@@ -105,5 +104,5 @@ void displayBB(Bitboard b) {
         }
         std::cout << "\n";
     }
-    std::cout << "  +---+---+---+---+---+---+---+---+" << std::endl;
+    std::cout << "  +---+---+---+---+---+---+---+---+\n\n" << std::endl;
 }

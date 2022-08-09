@@ -17,7 +17,7 @@
 #include "movegen.h"
 
 Bitboard rayMasks[8][64], bitMask[64], fileMaskEx[64], rankMaskEx[64], diagonalMaskEx[64],
-        antiDiagonalMaskEx[64], knightAttackTable[64], kingAttackTable[64], pawnAttackTable[64][2];
+        antiDiagonalMaskEx[64], knightMaskTable[64], kingMaskTable[64], pawnMaskTable[64][2];
 
 void initLookup() {
     Bitboard north = 0x0101010101010100ULL;
@@ -89,36 +89,24 @@ void initLookup() {
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {
-        knightAttackTable[sq] =
+        knightMaskTable[sq] =
                 step<NORTH>(step<NORTH_WEST>(bitMask[sq])) | step<NORTH>(step<NORTH_EAST>(bitMask[sq])) |
                 step<WEST>(step<NORTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq])) |
                 step<SOUTH>(step<SOUTH_WEST>(bitMask[sq])) | step<SOUTH>(step<SOUTH_EAST>(bitMask[sq])) |
-                step<WEST>(step<SOUTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq]));
+                step<WEST>(step<SOUTH_WEST>(bitMask[sq])) | step<EAST>(step<SOUTH_EAST>(bitMask[sq]));
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {
-        kingAttackTable[sq] =
+        kingMaskTable[sq] =
                 step<NORTH>(bitMask[sq]) | step<NORTH_WEST>(bitMask[sq]) | step<WEST>(bitMask[sq]) |
-                step<SOUTH_WEST>(bitMask[sq]) |
+                step<NORTH_EAST>(bitMask[sq]) |
                 step<SOUTH>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) | step<EAST>(bitMask[sq]) |
                 step<SOUTH_EAST>(bitMask[sq]);
     }
 
     for (unsigned int sq = 0; sq < 64; sq++) {
-        pawnAttackTable[sq][WHITE] = step<NORTH_WEST>(bitMask[sq]) | step<NORTH_EAST>(bitMask[sq]);
-        pawnAttackTable[sq][BLACK] = step<SOUTH_WEST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
+        pawnMaskTable[sq][WHITE] = step<NORTH_WEST>(bitMask[sq]) | step<NORTH_EAST>(bitMask[sq]);
+        pawnMaskTable[sq][BLACK] = step<SOUTH_WEST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
     }
 }
 
-template<Color color>
-constexpr Bitboard getPawnAttacks(Square square) {
-    return pawnAttackTable[square][color];
-}
-
-constexpr Bitboard getKingAttacks(Square square) {
-    return kingAttackTable[square];
-}
-
-constexpr Bitboard getKnightAttacks(Square square) {
-    return knightAttackTable[square];
-}

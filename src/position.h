@@ -43,7 +43,7 @@ public:
     template<Color color>
     constexpr Bitboard EnemyOrEmpty() { return ~Us<color>(); }
 
-    void displayBoard();
+    void display();
 
     void loadPositionFromFen(const std::string &fen);
 

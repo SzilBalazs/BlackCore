@@ -54,7 +54,7 @@ void Position::clearPosition() {
     castlingRights = 0;
 }
 
-void Position::displayBoard() {
+void Position::display() {
     std::vector<string> text;
 
     if (epSquare != NULL_SQUARE)
@@ -80,7 +80,7 @@ void Position::displayBoard() {
         }
         cout << "\n";
     }
-    cout << "  +---+---+---+---+---+---+---+---+" << std::endl;
+    cout << "  +---+---+---+---+---+---+---+---+\n\n" << std::endl;
 }
 
 void Position::loadPositionFromFen(const string &fen) {

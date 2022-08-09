@@ -19,6 +19,7 @@
 
 #include <string>
 #include "constants.h"
+#include "bitboard.h"
 
 
 template<Color color>
@@ -40,6 +41,8 @@ std::string formatSquare(Square square);
 char pieceToChar(Piece piece);
 
 Piece charToPiece(char c);
+
+void displayBB(Bitboard b);
 
 
 #endif //BLACKCORE_UTILS_H

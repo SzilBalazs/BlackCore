@@ -19,13 +19,16 @@
 
 #include "bitboard.h"
 
+
+extern Bitboard rayMasks[8][64], bitMask[64], fileMaskEx[64], rankMaskEx[64], diagonalMaskEx[64],
+        antiDiagonalMaskEx[64], knightMaskTable[64], kingMaskTable[64], pawnMaskTable[64][2];
+
 void initLookup();
 
-template<Color color>
-constexpr Bitboard getPawnAttacks(Square square);
+inline Bitboard pawnMask(Square square, Color color) { return pawnMaskTable[square][color]; }
 
-constexpr Bitboard getKingAttacks(Square square);
+inline Bitboard kingMask(Square square) { return kingMaskTable[square]; }
 
-constexpr Bitboard getKnightAttacks(Square square);
+inline Bitboard knightMask(Square square) { return knightMaskTable[square]; }
 
 #endif //BLACKCORE_MOVEGEN_H

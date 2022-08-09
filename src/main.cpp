@@ -19,7 +19,6 @@
 
 int main() {
     initLookup();
-    Position position = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
-    position.displayBoard();
+    displayBB(knightMask(D5));
     return 0;
 }
