@@ -19,10 +19,12 @@
 
 int main() {
     initBitboard();
+
     std::string fen;
     getline(std::cin, fen);
     Position pos = {fen};
     pos.display();
+
     Move moves[200];
     Move *movesEnd = generateMoves(pos, moves);
     std::cout << movesEnd - moves << " pseudo legal moves found: " << std::endl;

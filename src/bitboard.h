@@ -296,7 +296,6 @@ constexpr Bitboard queenAttacks(Square square, Bitboard occ) {
 }
 
 inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
-    assert(type != PAWN);
     switch (type) {
         case KNIGHT:
             return knightMask(square);
@@ -308,6 +307,30 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
             return queenAttacks(square, occupied);
         case KING:
             return kingMask(square);
+        default:
+            assert(1);
+            return 0;
+    }
+}
+
+template<Color color>
+inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
+    switch (type) {
+        case PAWN:
+            return pawnMask(square, color);
+        case KNIGHT:
+            return knightMask(square);
+        case BISHOP:
+            return bishopAttacks(square, occupied);
+        case ROOK:
+            return rookAttacks(square, occupied);
+        case QUEEN:
+            return queenAttacks(square, occupied);
+        case KING:
+            return kingMask(square);
+        default:
+            assert(1);
+            return 0;
     }
 }
 
