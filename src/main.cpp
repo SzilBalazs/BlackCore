@@ -19,6 +19,15 @@
 
 int main() {
     initBitboard();
-
+    std::string fen;
+    std::cin >> fen;
+    Position pos = {fen};
+    pos.display();
+    std::cout << "Pseudo legal moves: " << std::endl;
+    Move moves[200];
+    Move *movesEnd = generateMoves(pos, moves);
+    for (Move *it = moves; it != movesEnd; it++) {
+        std::cout << it->str() << std::endl;
+    }
     return 0;
 }

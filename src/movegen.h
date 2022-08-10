@@ -17,7 +17,9 @@
 #ifndef BLACKCORE_MOVEGEN_H
 #define BLACKCORE_MOVEGEN_H
 
-#include "bitboard.h"
+#include "position.h"
+#include "move.h"
 
+Move *generateMoves(const Position &pos, Move *moves);
 
 #endif //BLACKCORE_MOVEGEN_H

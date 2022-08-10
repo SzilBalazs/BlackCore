@@ -23,27 +23,32 @@
 
 class Position {
 public:
-    Color stm;
-    Square epSquare;
-    unsigned char castlingRights{};
 
-    constexpr Piece pieceAt(Square square) { return board[square]; }
+    constexpr Piece pieceAt(Square square) const { return board[square]; }
 
     // This will be mostly used with constant color and type so this will result a nicer code
     // pieces<{ROOK, WHITE}>() --> pieces<WHITE, ROOK>()
     template<Color color, PieceType type>
-    constexpr Bitboard pieces() { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces() const { return pieceBB[type] & allPieceBB[color]; }
 
     template<Color color>
-    constexpr Bitboard us() { return allPieceBB[color]; }
+    constexpr Bitboard friendly() const { return allPieceBB[color]; }
 
     template<Color color>
-    constexpr Bitboard enemy() { return allPieceBB[EnemyColor<color>()]; }
+    constexpr Bitboard enemy() const { return allPieceBB[EnemyColor<color>()]; }
 
     template<Color color>
-    constexpr Bitboard enemyOrEmpty() { return ~us<color>(); }
+    constexpr Bitboard enemyOrEmpty() const { return ~friendly<color>(); }
 
-    constexpr Bitboard occupied() { return allPieceBB[WHITE] & allPieceBB[BLACK]; }
+    inline Bitboard occupied() const { return allPieceBB[WHITE] | allPieceBB[BLACK]; }
+
+    inline Bitboard empty() const { return ~occupied(); }
+
+    inline Color getSideToMove() const { return stm; }
+
+    inline Square getEpSquare() const { return epSquare; }
+
+    inline bool getCastleRight(unsigned char castleRight) { return castleRight & castlingRights; }
 
     void display();
 
@@ -59,11 +64,19 @@ private:
 
     void setSquare(Square square, Piece piece);
 
+    inline void setCastleRight(unsigned char castleRight) { castlingRights |= castleRight; }
+
+    inline void removeCastleRight(unsigned char castleRight) { castlingRights &= ~castleRight; }
+
     void clearPosition();
 
     Piece board[64];
 
     Bitboard pieceBB[6], allPieceBB[2];
+
+    Color stm;
+    Square epSquare;
+    unsigned char castlingRights;
 
 };
 

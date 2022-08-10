@@ -17,7 +17,16 @@
 #ifndef BLACKCORE_CONSTANTS_H
 #define BLACKCORE_CONSTANTS_H
 
+#include <string>
+
 typedef unsigned long long U64;
+
+const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+const unsigned char WK_MASK = 1;
+const unsigned char WQ_MASK = 2;
+const unsigned char BK_MASK = 4;
+const unsigned char BQ_MASK = 8;
 
 enum Square : int {
     A1 = 0, B1 = 1, C1 = 2, D1 = 3, E1 = 4, F1 = 5, G1 = 6, H1 = 7,
@@ -31,13 +40,36 @@ enum Square : int {
     NULL_SQUARE = 64
 };
 
-inline Square operator+=(Square &a, int b) { return a = Square(int(a) + b); }
+inline Square operator+(Square &a, int b) { return Square(int(a) + b); }
 
-inline Square operator-=(Square &a, int b) { return a = Square(int(a) - b); }
+inline Square operator-(Square &a, int b) { return Square(int(a) - b); }
 
-enum Direction {
-    NORTH = 0, WEST = 1, SOUTH = 2, EAST = 3, NORTH_EAST = 4, NORTH_WEST = 5, SOUTH_WEST = 6, SOUTH_EAST = 7
+inline Square operator+=(Square &a, int b) { return a = a + b; }
+
+inline Square operator-=(Square &a, int b) { return a = a - b; }
+
+inline std::istream &operator>>(std::istream &is, Square &square) {
+    std::string s;
+    is >> s;
+
+    if (s[0] == '-') {
+        square = NULL_SQUARE;
+    } else if ('a' <= s[0] && s[0] <= 'z') {
+        square = Square((s[0] - 'a') + (s[1] - '1') * 8);
+    } else if ('A' <= s[0] && s[0] <= 'Z') {
+        square = Square((s[0] - 'A') + (s[1] - '1') * 8);
+    }
+
+    return is;
+}
+
+enum Direction : int {
+    NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
 };
+
+constexpr Direction opposite(Direction direction) { return Direction(-direction); }
+
+constexpr Direction operator-(Direction direction) { return opposite(direction); }
 
 enum PieceType {
     PIECE_EMPTY = 6, KING = 0, PAWN = 1, KNIGHT = 2, BISHOP = 3, ROOK = 4, QUEEN = 5
@@ -61,6 +93,7 @@ struct Piece {
         color = c;
     }
 
+    constexpr bool isNull() const { return type == PIECE_EMPTY || color == COLOR_EMPTY; }
 };
 
 #endif //BLACKCORE_CONSTANTS_H

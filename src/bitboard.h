@@ -238,6 +238,10 @@ constexpr Bitboard fileE = fileA << 4;
 constexpr Bitboard fileF = fileA << 5;
 constexpr Bitboard fileG = fileA << 6;
 constexpr Bitboard fileH = fileA << 7;
+
+constexpr Bitboard notFileA = ~fileA;
+constexpr Bitboard notFileH = ~fileH;
+
 constexpr Bitboard rank1 = 0xff;
 constexpr Bitboard rank2 = rank1 << (1 * 8);
 constexpr Bitboard rank3 = rank1 << (2 * 8);
@@ -246,8 +250,9 @@ constexpr Bitboard rank5 = rank1 << (4 * 8);
 constexpr Bitboard rank6 = rank1 << (5 * 8);
 constexpr Bitboard rank7 = rank1 << (6 * 8);
 constexpr Bitboard rank8 = rank1 << (7 * 8);
-constexpr Bitboard notFileA = ~fileA;
-constexpr Bitboard notFileH = ~fileH;
+
+constexpr Bitboard notRank2 = ~rank2;
+constexpr Bitboard notRank7 = ~rank7;
 
 extern Bitboard bitMasks[64];
 extern Bitboard pawnMasks[64][2];
@@ -290,8 +295,7 @@ constexpr Bitboard queenAttacks(Square square, Bitboard occ) {
     return rookAttacks(square, occ) | bishopAttacks(square, occ);
 }
 
-template<PieceType type>
-inline Bitboard pieceAttacks(Square square, Bitboard occupied) {
+inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
     assert(type != PAWN);
     switch (type) {
         case KNIGHT:
