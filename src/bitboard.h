@@ -52,6 +52,10 @@ struct Bitboard {
 
     constexpr bool operator!=(Bitboard a) const { return bb != a.bb; }
 
+    constexpr Bitboard operator+(Bitboard a) const { return bb + a.bb; }
+
+    constexpr Bitboard operator-(Bitboard a) const { return bb - a.bb; }
+
     constexpr Bitboard operator&(Bitboard a) const { return bb & a.bb; }
 
     constexpr Bitboard operator|(Bitboard a) const { return bb | a.bb; }
@@ -73,19 +77,51 @@ struct Bitboard {
     constexpr void operator<<=(const unsigned int a) { bb <<= a; }
 
     constexpr void operator>>=(const unsigned int a) { bb >>= a; }
+
+    constexpr explicit operator bool() const { return bb; }
+
+    constexpr explicit operator U64() const { return bb; }
 };
 
+struct Magic {
+    Bitboard *ptr;
+    Bitboard mask;
+    Bitboard magic;
+    unsigned int shift;
+};
+
+extern Magic rookMagics[64];
+extern Magic bishopMagics[64];
+extern Bitboard rookAttackTable[102400];
+extern Bitboard bishopAttackTable[5248];
+
 constexpr Bitboard fileA = 0x101010101010101;
-constexpr Bitboard fileH = 0x8080808080808080;
+constexpr Bitboard fileB = fileA << 1;
+constexpr Bitboard fileC = fileA << 2;
+constexpr Bitboard fileD = fileA << 3;
+constexpr Bitboard fileE = fileA << 4;
+constexpr Bitboard fileF = fileA << 5;
+constexpr Bitboard fileG = fileA << 6;
+constexpr Bitboard fileH = fileA << 7;
+constexpr Bitboard rank1 = 0xff;
+constexpr Bitboard rank2 = rank1 << (1 * 8);
+constexpr Bitboard rank3 = rank1 << (2 * 8);
+constexpr Bitboard rank4 = rank1 << (3 * 8);
+constexpr Bitboard rank5 = rank1 << (4 * 8);
+constexpr Bitboard rank6 = rank1 << (5 * 8);
+constexpr Bitboard rank7 = rank1 << (6 * 8);
+constexpr Bitboard rank8 = rank1 << (7 * 8);
 constexpr Bitboard notFileA = ~fileA;
 constexpr Bitboard notFileH = ~fileH;
-constexpr Bitboard edge = 0xff818181818181ff;
-constexpr Bitboard notEdge = ~edge;
 
 extern Bitboard bitMasks[64];
 extern Bitboard pawnMasks[64][2];
 extern Bitboard knightMasks[64];
 extern Bitboard kingMasks[64];
+extern Bitboard fileMasks[64];
+extern Bitboard rankMasks[64];
+extern Bitboard rookMasks[64];
+extern Bitboard bishopMasks[64];
 
 void initBitboard();
 
@@ -97,16 +133,42 @@ inline Bitboard knightMask(Square square) { return knightMasks[square]; }
 
 inline Bitboard kingMask(Square square) { return kingMasks[square]; }
 
+inline Bitboard fileMask(Square square) { return fileMasks[square]; }
+
+inline Bitboard rankMask(Square square) { return rankMasks[square]; }
+
+inline Bitboard rookMask(Square square) { return rookMasks[square]; }
+
+inline Bitboard bishopMask(Square square) { return bishopMasks[square]; }
+
+inline Bitboard rookAttacks(Square square, Bitboard occ) {
+    Magic &m = rookMagics[square];
+    return m.ptr[(((occ & m.mask) * m.magic) >> (64 - m.shift)).bb];
+}
+
+inline Bitboard bishopAttacks(Square square, Bitboard occ) {
+    Magic &m = bishopMagics[square];
+    return m.ptr[(((occ & m.mask) * m.magic) >> (64 - m.shift)).bb];
+}
+
+inline Bitboard queenAttacks(Square square, Bitboard occ) {
+    return rookAttacks(square, occ) | bishopAttacks(square, occ);
+}
+
 template<PieceType type>
-inline Bitboard pieceMask(Square square, Bitboard occupied) {
+inline Bitboard pieceAttacks(Square square, Bitboard occupied) {
     assert(type != PAWN);
     switch (type) {
         case KNIGHT:
             return knightMask(square);
+        case BISHOP:
+            return bishopAttacks(square, occupied);
+        case ROOK:
+            return rookAttacks(square, occupied);
+        case QUEEN:
+            return queenAttacks(square, occupied);
         case KING:
             return kingMask(square);
-        default:
-            assert(1);
     }
 }
 
@@ -131,5 +193,32 @@ constexpr Bitboard step(Bitboard b) {
             return (b & notFileH) >> 7;
     }
 }
+
+template<Direction direction>
+constexpr Bitboard slide(Square square) {
+    Bitboard result;
+    Bitboard temp = {square};
+    while (temp) {
+        temp = step<direction>(temp);
+        result |= temp;
+    }
+    return result;
+}
+
+template<Direction direction>
+constexpr Bitboard slide(Square square, Bitboard occupied) {
+    Bitboard result;
+    Bitboard temp = {square};
+    while (temp) {
+        temp = step<direction>(temp);
+        result |= temp;
+        if (occupied.get(temp.lsb())) break;
+    }
+    return result;
+}
+
+Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type);
+
+void findMagics(Bitboard *attackTable, Magic *magics, PieceType type);
 
 #endif //BLACKCORE_BITBOARD_H

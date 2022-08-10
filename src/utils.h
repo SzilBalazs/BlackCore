@@ -44,5 +44,6 @@ Piece charToPiece(char c);
 
 void displayBB(Bitboard b);
 
+Bitboard randBB();
 
 #endif //BLACKCORE_UTILS_H

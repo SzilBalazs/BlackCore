@@ -106,3 +106,9 @@ void displayBB(Bitboard b) {
     }
     std::cout << "  +---+---+---+---+---+---+---+---+\n\n" << std::endl;
 }
+
+// source: https://web.archive.org/web/20071031100138/http://www.brucemo.com/compchess/programming/zobrist.htm
+Bitboard randBB() {
+    return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^
+           ((U64) rand() << 45) ^ ((U64) rand() << 60);
+}
