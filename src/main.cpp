@@ -20,7 +20,7 @@
 int main() {
     initBitboard();
     std::string fen;
-    std::cin >> fen;
+    getline(std::cin, fen);
     Position pos = {fen};
     pos.display();
     std::cout << "Pseudo legal moves: " << std::endl;

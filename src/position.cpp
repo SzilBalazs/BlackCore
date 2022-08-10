@@ -118,10 +118,10 @@ void Position::loadPositionFromFen(const string &fen) {
         default:
             assert(1);
     }
-
-    ss >> c >> b;
-    if (b[0] != '-') {
-        for (char r : b) {
+    string cr;
+    ss >> cr;
+    if (cr[0] != '-') {
+        for (char r : cr) {
             switch (r) {
                 case 'K':
                     setCastleRight(WK_MASK);
