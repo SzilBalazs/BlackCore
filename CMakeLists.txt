@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 project(BlackCore)
 
-set(CMAKE_CXX_FLAGS "-Ofast -pthread")
+set(CMAKE_CXX_FLAGS "-Ofast -pthread -march=native")
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(BlackCore src/main.cpp src/move.cpp src/move.h src/constants.h src/utils.cpp src/utils.h src/position.cpp src/position.h src/bitboard.h src/movegen.cpp src/movegen.h)
+add_executable(BlackCore src/main.cpp src/move.cpp src/move.h src/constants.h src/utils.cpp src/utils.h src/position.cpp src/position.h src/bitboard.h src/movegen.cpp src/movegen.h src/bitboard.cpp)

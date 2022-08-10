@@ -1,92 +1,154 @@
+//     BlackCore is a UCI Chess engine
+//     Copyright (c) 2022 SzilBalazs
+//
+//     This program is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+//
+//     This program is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+//
+//     You should have received a copy of the GNU General Public License
+//     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include "movegen.h"
 
-Bitboard rayMasks[8][64], bitMask[64], fileMaskEx[64], rankMaskEx[64], diagonalMaskEx[64],
-            antiDiagonalMaskEx[64], knightAttackTable[64], kingAttackTable[64], pawnAttackTable[64][2];
+Move *makePromo(Move *moves, Square from, Square to) {
+    // Knight
+    *moves++ = Move(from, to, PROMO_FLAG);
 
-void initLookup() {
-    Bitboard north = 0x0101010101010100ULL;
-    for (int sq = 0; sq < 64; sq++) {
-        bitMask[sq] = 1ULL << sq;
-        rayMasks[NORTH][sq] = north;
-        north <<= 1;
+    // Bishop
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL2_FLAG);
+
+    // Rook
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG);
+
+    // Queen
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG);
+    return moves;
+}
+
+template<Color color>
+Move *generatePawnMoves(const Position &pos, Move *moves) {
+    constexpr Color enemyColor = EnemyColor<color>();
+
+    constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
+    constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
+    constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
+    constexpr Direction DOWN = -UP;
+    constexpr Direction DOWN_LEFT = -UP_RIGHT;
+    constexpr Direction DOWN_RIGHT = -UP_LEFT;
+
+    constexpr Bitboard doublePushRank = (color == WHITE ? rank3 : rank6);
+    constexpr Bitboard beforePromoRank = (color == WHITE ? rank7 : rank2);
+    constexpr Bitboard notBeforePromo = ~beforePromoRank;
+
+    Bitboard empty = pos.empty();
+    Bitboard enemy = pos.enemy<color>();
+
+    Bitboard pawns = pos.pieces<color, PAWN>();
+    Bitboard pawnsBeforePromo = beforePromoRank & pawns;
+    pawns &= notBeforePromo;
+
+    Bitboard singlePush = step<UP>(pawns) & empty;
+    Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
+
+    Bitboard rightCapture = step<UP_RIGHT>(pawns) & enemy;
+    Bitboard leftCapture = step<UP_LEFT>(pawns) & enemy;
+
+
+    while (singlePush) {
+        Square to = singlePush.popLsb();
+        *moves++ = Move(to + DOWN, to, 0);
     }
 
-    Bitboard south = 0x80808080808080ULL;
-    for (int sq = 63; sq >= 0; sq--) {
-        rayMasks[SOUTH][sq] = south;
-        south >>= 1;
+    while (doublePush) {
+        Square to = doublePush.popLsb();
+        *moves++ = Move(to + (2 * DOWN), to, SPECIAL2_FLAG);
     }
 
-    Bitboard east = 0xfeULL;
-    for (int f = 0; f < 8; f++, east = step<EAST>(east)) {
-        Bitboard temp = east;
-        for (int r = 0; r < 8; r++, temp = step<NORTH>(temp)) {
-            rayMasks[EAST][r * 8 + f] = temp;
+    while (leftCapture) {
+        Square to = leftCapture.popLsb();
+        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE_FLAG, pos.pieceAt(to));
+    }
+
+    while (rightCapture) {
+        Square to = rightCapture.popLsb();
+        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE_FLAG, pos.pieceAt(to));
+    }
+
+    if (pawnsBeforePromo) {
+        Bitboard upPromo = step<UP>(pawnsBeforePromo) & empty;
+        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo) & enemy;
+        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo) & enemy;
+
+        while (upPromo) {
+            Square to = upPromo.popLsb();
+            moves = makePromo(moves, to + DOWN, to);
+        }
+
+        while (rightPromo) {
+            Square to = rightPromo.popLsb();
+            moves = makePromo(moves, to + DOWN_LEFT, to);
+        }
+
+        while (leftPromo) {
+            Square to = leftPromo.popLsb();
+            moves = makePromo(moves, to + DOWN_RIGHT, to);
         }
     }
 
-    Bitboard west = 0x7f00000000000000ULL;
-    for (int f = 7; f >= 0; f--, west = step<WEST>(west)) {
-        Bitboard temp = west;
-        for (int r = 7; r >= 0; r--, temp = step<SOUTH>(temp)) {
-            rayMasks[WEST][r * 8 + f] = temp;
+    if (pos.getEpSquare() != NULL_SQUARE) {
+        Bitboard epPawns = pawnMask(pos.getEpSquare(), enemyColor) & pawns;
+
+        while (epPawns) {
+            *moves++ = Move(epPawns.popLsb(), pos.getEpSquare(), CAPTURE_FLAG | SPECIAL2_FLAG,
+                            {PAWN, enemyColor});
         }
     }
 
-    Bitboard northEast = 0x8040201008040200ULL;
-    for (int f = 0; f < 8; f++, northEast = step<EAST>(NORTH_EAST)) {
-        Bitboard temp = northEast;
-        for (int r = 0; r < 8; r++, temp = step<NORTH>(temp)) {
-            rayMasks[NORTH_EAST][r * 8 + f] = temp;
+    return moves;
+}
+
+template<Color color>
+Move *generateMoves(const Position &pos, Move *moves) {
+    Bitboard friendlyPieces = pos.friendly<color>();
+    Bitboard enemyOrEmpty = pos.enemyOrEmpty<color>();
+    Bitboard occupied = pos.occupied();
+
+    moves = generatePawnMoves<color>(pos, moves);
+
+    Bitboard temp = friendlyPieces & ~pos.pieces<color, PAWN>();
+    while (temp) {
+        Square from = temp.popLsb();
+        PieceType type = pos.pieceAt(from).type;
+        Bitboard attacks = pieceAttacks(type, from, occupied);
+        attacks &= enemyOrEmpty;
+
+        while (attacks) {
+            Square to = attacks.popLsb();
+            Piece piece = pos.pieceAt(to);
+
+            if (piece.isNull()) {
+                *moves++ = Move(from, to, 0);
+            } else {
+                *moves++ = Move(from, to, CAPTURE_FLAG, piece);
+            }
+
         }
     }
 
-    Bitboard northWest = 0x102040810204000ULL;
-    for (int f = 7; f >= 0; f--, northWest = step<WEST>(northWest)) {
-        Bitboard temp = northWest;
-        for (int r = 0; r < 8; r++, temp = step<NORTH>(temp)) {
-            rayMasks[NORTH_WEST][r * 8 + f] = temp;
-        }
-    }
+    return moves;
+}
 
-    Bitboard southEast = 0x2040810204080ULL;
-    for (int f = 0; f < 8; f++, southEast = step<EAST>(southEast)) {
-        Bitboard temp = southEast;
-        for (int r = 7; r >= 0; r--, temp = step<SOUTH>(temp)) {
-            rayMasks[SOUTH_EAST][r * 8 + f] = temp;
-        }
-    }
+Move *generateMoves(const Position &pos, Move *moves) {
 
-    Bitboard southWest = 0x40201008040201ULL;
-    for (int f = 7; f >= 0; f--, southWest = step<WEST>(southWest)) {
-        Bitboard temp = southWest;
-        for (int r = 7; r >= 0; r--, temp = step<SOUTH>(temp)) {
-            rayMasks[SOUTH_WEST][r * 8 + f] = temp;
-        }
-    }
-
-    for (int sq = 0; sq < 64; sq++) {
-        fileMaskEx[sq] = rayMasks[NORTH][sq] | rayMasks[SOUTH][sq];
-        rankMaskEx[sq] = rayMasks[EAST][sq] | rayMasks[WEST][sq];
-        diagonalMaskEx[sq] = rayMasks[NORTH_EAST][sq] | rayMasks[SOUTH_WEST][sq];
-        antiDiagonalMaskEx[sq] = rayMasks[NORTH_WEST][sq] | rayMasks[SOUTH_EAST][sq];
-    }
-
-    for (unsigned int sq = 0; sq < 64; sq++) {
-        knightAttackTable[sq] = step<NORTH>(step<NORTH_WEST>(bitMask[sq])) | step<NORTH>(step<NORTH_EAST>(bitMask[sq])) |
-                                step<WEST>(step<NORTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq])) |
-                                step<SOUTH>(step<SOUTH_WEST>(bitMask[sq])) | step<SOUTH>(step<SOUTH_EAST>(bitMask[sq])) |
-                                step<WEST>(step<SOUTH_WEST>(bitMask[sq])) | step<EAST>(step<NORTH_EAST>(bitMask[sq]));
-    }
-
-    for (unsigned int sq = 0; sq < 64; sq++) {
-        kingAttackTable[sq] =
-                step<NORTH>(bitMask[sq]) | step<NORTH_WEST>(bitMask[sq]) | step<WEST>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) |
-                step<SOUTH>(bitMask[sq]) | step<SOUTH_WEST>(bitMask[sq]) | step<EAST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
-    }
-
-    for (unsigned int sq = 0; sq < 64; sq++) {
-        pawnAttackTable[sq][WHITE] = step<NORTH_WEST>(bitMask[sq]) | step<NORTH_EAST>(bitMask[sq]);
-        pawnAttackTable[sq][BLACK] = step<SOUTH_WEST>(bitMask[sq]) | step<SOUTH_EAST>(bitMask[sq]);
+    if (pos.getSideToMove() == WHITE) {
+        return generateMoves<WHITE>(pos, moves);
+    } else {
+        return generateMoves<BLACK>(pos, moves);
     }
 }

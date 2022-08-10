@@ -1,5 +1,20 @@
+//     BlackCore is a UCI Chess engine
+//     Copyright (c) 2022 SzilBalazs
+//
+//     This program is free software: you can redistribute it and/or modify
+//     it under the terms of the GNU General Public License as published by
+//     the Free Software Foundation, either version 3 of the License, or
+//     (at your option) any later version.
+//
+//     This program is distributed in the hope that it will be useful,
+//     but WITHOUT ANY WARRANTY; without even the implied warranty of
+//     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//     GNU General Public License for more details.
+//
+//     You should have received a copy of the GNU General Public License
+//     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #include <iostream>
-#include <utility>
 #include <vector>
 #include <sstream>
 #include "position.h"
@@ -23,11 +38,11 @@ void Position::setSquare(Square square, Piece piece) {
 }
 
 void Position::clearPosition() {
-    for (auto & i : pieceBB) {
+    for (auto &i : pieceBB) {
         i = 0;
     }
 
-    for (Square square=A1;square<64;square+=1) {
+    for (Square square = A1; square < 64; square += 1) {
         board[square] = {};
     }
 
@@ -39,24 +54,29 @@ void Position::clearPosition() {
     castlingRights = 0;
 }
 
-void Position::displayBoard() {
+void Position::display() {
     std::vector<string> text;
-
     if (epSquare != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(epSquare));
-    text.emplace_back(string("Castle rights: "));
+    string cr;
+    if (getCastleRight(WK_MASK)) cr += 'K';
+    if (getCastleRight(WQ_MASK)) cr += 'Q';
+    if (getCastleRight(BK_MASK)) cr += 'k';
+    if (getCastleRight(BQ_MASK)) cr += 'q';
+    if (cr.empty()) cr = "None";
+    text.emplace_back(string("Castling rights: ") + cr);
     text.emplace_back(string("Side to move: ") + string(stm == WHITE ? "White" : "Black"));
     // TODO FEN, hash key, full-half move counter
 
-    cout << "    A   B   C   D   E   F   G   H  \n";
-    for (int i=8;i>=1;i--) {
-        cout << "  +---+---+---+---+---+---+---+---+";
+    cout << "\n     A   B   C   D   E   F   G   H  \n";
+    for (int i = 8; i >= 1; i--) {
+        cout << "   +---+---+---+---+---+---+---+---+";
         if (i <= 7 && !text.empty()) {
             cout << "        " << text.back();
             text.pop_back();
         }
-        cout << "\n" << i << " |";
-        for (int j=1;j<=8;j++) {
+        cout << "\n " << i << " |";
+        for (int j = 1; j <= 8; j++) {
             cout << " " << pieceToChar(pieceAt(Square((i - 1) * 8 + (j - 1)))) << " |";
         }
         if (i <= 7 && !text.empty()) {
@@ -65,35 +85,69 @@ void Position::displayBoard() {
         }
         cout << "\n";
     }
-    cout << "  +---+---+---+---+---+---+---+---+" << std::endl;
+    cout << "   +---+---+---+---+---+---+---+---+\n\n" << std::endl;
 }
 
-void Position::loadPositionFromFen(const string& fen) {
+void Position::loadPositionFromFen(const string &fen) {
     clearPosition();
 
     std::stringstream ss;
     string b;
     ss << fen;
     ss >> b;
-    Square square=A8;
+    Square square = A8;
     for (char c : b) {
         if ('1' <= c && c <= '8') {
             square += c - '0';
-        }
-        else if (c == '/') {
+        } else if (c == '/') {
             square -= 16;
         } else {
             setSquare(square, charToPiece(c));
-            square+=1;
+            square += 1;
+        }
+    }
+    char c;
+    ss >> c;
+    switch (c) {
+        case 'w':
+            stm = WHITE;
+            break;
+        case 'b':
+            stm = BLACK;
+            break;
+        default:
+            assert(1);
+    }
+    string cr;
+    ss >> cr;
+    if (cr[0] != '-') {
+        for (char r : cr) {
+            switch (r) {
+                case 'K':
+                    setCastleRight(WK_MASK);
+                    break;
+                case 'Q':
+                    setCastleRight(WQ_MASK);
+                    break;
+                case 'k':
+                    setCastleRight(BK_MASK);
+                    break;
+                case 'q':
+                    setCastleRight(BQ_MASK);
+                    break;
+                default:
+                    assert(1);
+            }
         }
     }
 
+    ss >> epSquare;
 }
 
 Position::Position() {
     clearPosition();
 }
 
-Position::Position(const std::string& fen) {
+Position::Position(const std::string &fen) {
     loadPositionFromFen(fen);
 }
