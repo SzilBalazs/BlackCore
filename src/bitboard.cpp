@@ -20,7 +20,6 @@
 #include "utils.h"
 
 Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], bishopMasks[64], rookAttackTable[102400], bishopAttackTable[5248];
-Magic rookMagics[64], bishopMagics[64];
 
 void initBitboard() {
 
@@ -51,8 +50,8 @@ void initBitboard() {
                               slide<SOUTH_EAST>(square);
     }
 
-    findMagics(rookAttackTable, rookMagics, ROOK);
-    findMagics(bishopAttackTable, bishopMagics, BISHOP);
+    initMagic(rookMagics, ROOK);
+    initMagic(bishopMagics, BISHOP);
 
 }
 
@@ -69,9 +68,39 @@ Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
     }
 }
 
+void initMagic(const Magic *magics, PieceType type) {
+    assert((type == ROOK) | (type == BISHOP));
+    Bitboard occupied[4096], attacked[4096];
+
+    for (Square square = A1; square < 64; square += 1) {
+        const Magic &magic = magics[square];
+
+        unsigned int length = 0;
+        Bitboard occ = 0;
+        do {
+            occupied[length] = occ;
+            attacked[length] = slidingAttacks(square, occ, type);
+
+            length++;
+            occ = (occ - magic.mask) & magic.mask;
+        } while (occ != 0);
+
+        for (int i = 0; i < length; i++) {
+            U64 index = (((occupied[i] & magic.mask) * magic.magic) >> (64 - magic.shift)).bb;
+
+            magic.ptr[index] = attacked[i];
+        }
+    }
+}
+
 void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
     assert((type == ROOK) | (type == BISHOP));
     Bitboard occupied[4096], attacked[4096];
+
+    if (type == ROOK)
+        std::cout << "Magic rookMagics[64] = {\n";
+    else
+        std::cout << "Magic bishopMagics[64] = {\n";
 
     unsigned int length = 0;
     for (Square square = A1; square < 64; square += 1) {
@@ -119,5 +148,15 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
                 break;
             }
         }
+        if (type == ROOK)
+            std::cout << "  {rookAttackTable + " << magic.ptr - rookAttackTable << ", " << BBToHex(magic.mask) << ", "
+                      << BBToHex(magic.magic) << ", " << magic.shift << "},\n";
+        else
+            std::cout << "  {bishopAttackTable + " << magic.ptr - bishopAttackTable << ", " << BBToHex(magic.mask)
+                      << ", "
+                      << BBToHex(magic.magic) << ", " << magic.shift << "},\n";
+
     }
+
+    std::cout << "};\n";
 }

@@ -46,4 +46,6 @@ void displayBB(Bitboard b);
 
 Bitboard randBB();
 
+std::string BBToHex(Bitboard bb);
+
 #endif //BLACKCORE_UTILS_H

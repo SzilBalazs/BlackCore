@@ -15,6 +15,7 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <sstream>
 #include "utils.h"
 
 const PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
@@ -111,4 +112,10 @@ void displayBB(Bitboard b) {
 Bitboard randBB() {
     return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^
            ((U64) rand() << 45) ^ ((U64) rand() << 60);
+}
+
+std::string BBToHex(Bitboard bb) {
+    std::stringstream ss;
+    ss << std::hex << bb.bb;
+    return "0x" + ss.str() + "ULL";
 }
