@@ -23,9 +23,9 @@ int main() {
     getline(std::cin, fen);
     Position pos = {fen};
     pos.display();
-    std::cout << "Pseudo legal moves: " << std::endl;
     Move moves[200];
     Move *movesEnd = generateMoves(pos, moves);
+    std::cout << movesEnd - moves << " pseudo legal moves found: " << std::endl;
     for (Move *it = moves; it != movesEnd; it++) {
         std::cout << it->str() << std::endl;
     }

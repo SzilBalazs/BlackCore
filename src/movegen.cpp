@@ -16,6 +16,21 @@
 
 #include "movegen.h"
 
+Move *makePromo(Move *moves, Square from, Square to) {
+    // Knight
+    *moves++ = Move(from, to, PROMO_FLAG);
+
+    // Bishop
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL2_FLAG);
+
+    // Rook
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG);
+
+    // Queen
+    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG);
+    return moves;
+}
+
 template<Color color>
 Move *generatePawnMoves(const Position &pos, Move *moves) {
     constexpr Color enemyColor = EnemyColor<color>();
@@ -29,21 +44,21 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
 
     constexpr Bitboard doublePushRank = (color == WHITE ? rank3 : rank6);
     constexpr Bitboard beforePromoRank = (color == WHITE ? rank7 : rank2);
-    constexpr Bitboard preventPush = ~beforePromoRank;
+    constexpr Bitboard notBeforePromo = ~beforePromoRank;
 
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
 
-
     Bitboard pawns = pos.pieces<color, PAWN>();
+    Bitboard pawnsBeforePromo = beforePromoRank & pawns;
+    pawns &= notBeforePromo;
 
-    Bitboard singlePush = step<UP>(pawns & preventPush) & empty;
+    Bitboard singlePush = step<UP>(pawns) & empty;
     Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
 
     Bitboard rightCapture = step<UP_RIGHT>(pawns) & enemy;
     Bitboard leftCapture = step<UP_LEFT>(pawns) & enemy;
 
-    Bitboard pawnsBeforePromo = beforePromoRank & pawns;
 
     while (singlePush) {
         Square to = singlePush.popLsb();
@@ -63,6 +78,27 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
     while (rightCapture) {
         Square to = rightCapture.popLsb();
         *moves++ = Move(to + DOWN_LEFT, to, CAPTURE_FLAG, pos.pieceAt(to));
+    }
+
+    if (pawnsBeforePromo) {
+        Bitboard upPromo = step<UP>(pawnsBeforePromo) & empty;
+        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo) & enemy;
+        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo) & enemy;
+
+        while (upPromo) {
+            Square to = upPromo.popLsb();
+            moves = makePromo(moves, to + DOWN, to);
+        }
+
+        while (rightPromo) {
+            Square to = rightPromo.popLsb();
+            moves = makePromo(moves, to + DOWN_LEFT, to);
+        }
+
+        while (leftPromo) {
+            Square to = leftPromo.popLsb();
+            moves = makePromo(moves, to + DOWN_RIGHT, to);
+        }
     }
 
     if (pos.getEpSquare() != NULL_SQUARE) {
