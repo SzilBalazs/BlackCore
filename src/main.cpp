@@ -19,7 +19,7 @@
 
 int main() {
     initBitboard();
-    
+
     std::string fen;
     getline(std::cin, fen);
     Position pos = {fen};

@@ -17,7 +17,7 @@
 #include <chrono>
 #include "movegen.h"
 
-Move *makePromo(Move *moves, Square from, Square to) {
+inline Move *makePromo(Move *moves, Square from, Square to) {
     // Knight
     *moves++ = Move(from, to, PROMO_FLAG);
 
@@ -248,7 +248,6 @@ inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboa
 
 template<Color color>
 Move *generateMoves(const Position &pos, Move *moves) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     constexpr Color enemyColor = EnemyColor<color>();
 
     Square king = pos.pieces<color, KING>().lsb();
@@ -270,6 +269,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     // Generating king moves
     moves = generateKingMoves(pos, moves, king, safeSquares, empty, enemy);
 
+    // If we are in a double check, only king moves are legal
     if (checkMask == 0)
         return moves;
 
@@ -287,8 +287,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
 
     while (pinners) {
         Square pinner = pinners.popLsb();
-        Bitboard common = commonRay[king][pinner];
-        Square pinned = (common & friendlyPieces).lsb();
+        Square pinned = (commonRay[king][pinner] & friendlyPieces).lsb();
         LineType type = lineType[king][pinner];
         switch (type) {
             case HORIZONTAL:
@@ -322,11 +321,6 @@ Move *generateMoves(const Position &pos, Move *moves) {
 
     moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask,
                                        pinH, pinV, pinD, pinA);
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
-              << std::endl;
 
     return moves;
 }
