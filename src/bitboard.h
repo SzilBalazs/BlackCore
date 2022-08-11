@@ -268,6 +268,7 @@ extern Bitboard diagonalMasks[64];
 extern Bitboard antiDiagonalMasks[64];
 extern Bitboard bishopMasks[64];
 extern Bitboard commonRay[64][64];
+extern LineType lineType[64][64];
 
 void initBitboard();
 

@@ -14,6 +14,7 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <chrono>
 #include "movegen.h"
 
 Move *makePromo(Move *moves, Square from, Square to) {
@@ -55,8 +56,58 @@ inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     return result;
 }
 
+inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
+                                     Bitboard occupied, Bitboard empty, Bitboard enemy) {
+
+    while (pieces) {
+        Square from = pieces.popLsb();
+        PieceType type = pos.pieceAt(from).type;
+        Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
+        Bitboard quiets = attacks & empty;
+        Bitboard captures = attacks & enemy;
+
+        while (quiets) {
+            *moves++ = Move(from, quiets.popLsb(), 0);
+        }
+
+        while (captures) {
+            Square to = captures.popLsb();
+            *moves++ = Move(from, to, CAPTURE_FLAG, pos.pieceAt(to));
+        }
+    }
+
+    return moves;
+
+}
+
+inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
+                                     Bitboard *specialMaskExtra,
+                                     Bitboard occupied, Bitboard empty, Bitboard enemy) {
+
+    while (pieces) {
+        Square from = pieces.popLsb();
+        PieceType type = pos.pieceAt(from).type;
+        Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask & specialMaskExtra[from];
+        Bitboard quiets = attacks & empty;
+        Bitboard captures = attacks & enemy;
+
+        while (quiets) {
+            *moves++ = Move(from, quiets.popLsb(), 0);
+        }
+
+        while (captures) {
+            Square to = captures.popLsb();
+            *moves++ = Move(from, to, CAPTURE_FLAG, pos.pieceAt(to));
+        }
+    }
+
+    return moves;
+
+}
+
 template<Color color>
-Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask) {
+Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
+                        Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
     constexpr Color enemyColor = EnemyColor<color>();
 
     constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
@@ -77,14 +128,14 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask) {
     Bitboard pawnsBeforePromo = beforePromoRank & pawns;
     pawns &= notBeforePromo;
 
-    Bitboard singlePush = step<UP>(pawns) & empty;
+    Bitboard singlePush = step<UP>(pawns & moveH) & empty;
     Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
 
     singlePush &= checkMask;
     doublePush &= checkMask;
 
-    Bitboard rightCapture = step<UP_RIGHT>(pawns) & enemy & checkMask;
-    Bitboard leftCapture = step<UP_LEFT>(pawns) & enemy & checkMask;
+    Bitboard rightCapture = step<UP_RIGHT>(pawns & moveD) & enemy & checkMask;
+    Bitboard leftCapture = step<UP_LEFT>(pawns & moveA) & enemy & checkMask;
 
     while (singlePush) {
         Square to = singlePush.popLsb();
@@ -107,9 +158,9 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask) {
     }
 
     if (pawnsBeforePromo) {
-        Bitboard upPromo = step<UP>(pawnsBeforePromo) & empty & checkMask;
-        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo) & enemy & checkMask;
-        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo) & enemy & checkMask;
+        Bitboard upPromo = step<UP>(pawnsBeforePromo & moveH) & empty & checkMask;
+        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo & moveD) & enemy & checkMask;
+        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
 
         while (upPromo) {
             Square to = upPromo.popLsb();
@@ -127,7 +178,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask) {
         }
     }
 
-    if (pos.getEpSquare() != NULL_SQUARE) {
+    if (pos.getEpSquare() != NULL_SQUARE) { // TODO handle pins
         Bitboard epPawns = pawnMask(pos.getEpSquare(), enemyColor) & pawns;
 
         while (epPawns) {
@@ -175,32 +226,29 @@ inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard che
     }
 }
 
-inline Move *
-generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces, Bitboard occupied, Bitboard empty,
-                           Bitboard enemy, Bitboard checkMask) {
+inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
+                                        Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
+                                        Bitboard pinH, Bitboard pinV, Bitboard pinD, Bitboard pinA) {
 
-    while (pieces) {
-        Square from = pieces.popLsb();
-        PieceType type = pos.pieceAt(from).type;
-        Bitboard attacks = pieceAttacks(type, from, occupied) & checkMask;
-        Bitboard quiets = attacks & empty;
-        Bitboard captures = attacks & enemy;
+    pieces &= ~(pinH | pinV | pinD | pinA);
 
-        while (quiets) {
-            *moves++ = Move(from, quiets.popLsb(), 0);
-        }
+    moves = generateMovesFromPieces(pos, moves, pieces, checkMask, occupied, empty, enemy);
 
-        while (captures) {
-            Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE_FLAG, pos.pieceAt(to));
-        }
-    }
+    moves = generateMovesFromPieces(pos, moves, pinH, checkMask, fileMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinV, checkMask, rankMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinD, checkMask, diagonalMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinA, checkMask, antiDiagonalMasks, occupied, empty, enemy);
+
 
     return moves;
 }
 
 template<Color color>
 Move *generateMoves(const Position &pos, Move *moves) {
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     constexpr Color enemyColor = EnemyColor<color>();
 
     Square king = pos.pieces<color, KING>().lsb();
@@ -225,14 +273,60 @@ Move *generateMoves(const Position &pos, Move *moves) {
     if (checkMask == 0)
         return moves;
 
+    // Generating pinMasks
+    Bitboard seenSquares = pieceAttacks<QUEEN>(king, occupied);
+    Bitboard possiblePins = seenSquares & friendlyPieces;
+
+    occupied ^= possiblePins;
+
+    Bitboard possiblePinners = (pieceAttacks<QUEEN>(king, occupied) ^ seenSquares) & enemy;
+    Bitboard pinners = ((pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
+                        (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
+                        (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & possiblePinners;
+    Bitboard pinH, pinV, pinD, pinA, moveH, moveV, moveD, moveA; // horizontal, vertical, diagonal, antiDiagonal
+
+    while (pinners) {
+        Square pinner = pinners.popLsb();
+        Bitboard common = commonRay[king][pinner];
+        Square pinned = (common & friendlyPieces).lsb();
+        LineType type = lineType[king][pinner];
+        switch (type) {
+            case HORIZONTAL:
+                pinH.set(pinned);
+                break;
+            case VERTICAL:
+                pinV.set(pinned);
+                break;
+            case DIAGONAL:
+                pinD.set(pinned);
+                break;
+            case ANTI_DIAGONAL:
+                pinA.set(pinned);
+                break;
+        }
+    }
+
+    moveH = ~(pinV | pinD | pinA);
+    moveV = ~(pinH | pinD | pinA);
+    moveD = ~(pinH | pinV | pinA);
+    moveA = ~(pinH | pinV | pinD);
+
+    occupied ^= possiblePins;
+
     // Generating pawn moves
-    moves = generatePawnMoves<color>(pos, moves, checkMask);
+    moves = generatePawnMoves<color>(pos, moves, checkMask, moveH, moveV, moveD, moveA);
 
     // Generating knight and slider moves
     Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<color, PAWN>();
     sliderAndJumperPieces.clear(king);
 
-    moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask);
+    moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask,
+                                       pinH, pinV, pinD, pinA);
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
+              << std::endl;
 
     return moves;
 }

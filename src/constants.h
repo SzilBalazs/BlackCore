@@ -63,11 +63,15 @@ inline std::istream &operator>>(std::istream &is, Square &square) {
     return is;
 }
 
+enum LineType : int {
+    HORIZONTAL = 0, VERTICAL = 1, DIAGONAL = 2, ANTI_DIAGONAL = 3
+};
+
 enum Direction : int {
     NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
 };
 
-constexpr Direction DIRECTIONS[8] = {NORTH, WEST, SOUTH, EAST, NORTH_EAST, NORTH_WEST, SOUTH_WEST, SOUTH_EAST};
+constexpr Direction DIRECTIONS[8] = {NORTH, WEST, NORTH_EAST, NORTH_WEST, SOUTH, EAST, SOUTH_WEST, SOUTH_EAST};
 
 constexpr Direction opposite(Direction direction) { return Direction(-direction); }
 

@@ -20,6 +20,7 @@
 #include "utils.h"
 
 Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64], rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64];
+LineType lineType[64][64];
 
 void initBitboard() {
 
@@ -61,6 +62,26 @@ void initBitboard() {
 
                 if (value) {
                     commonRay[sq][sq2] = value;
+                    LineType type;
+                    switch (dir) {
+                        case NORTH:
+                        case SOUTH:
+                            type = HORIZONTAL;
+                            break;
+                        case WEST:
+                        case EAST:
+                            type = VERTICAL;
+                            break;
+                        case NORTH_EAST:
+                        case SOUTH_WEST:
+                            type = DIAGONAL;
+                            break;
+                        case NORTH_WEST:
+                        case SOUTH_EAST:
+                            type = ANTI_DIAGONAL;
+                            break;
+                    }
+                    lineType[sq][sq2] = type;
                     break;
                 }
             }
