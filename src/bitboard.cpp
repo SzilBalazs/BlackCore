@@ -19,35 +19,52 @@
 #include "bitboard.h"
 #include "utils.h"
 
-Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], bishopMasks[64], rookAttackTable[102400], bishopAttackTable[5248];
+Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64], rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64];
 
 void initBitboard() {
 
-    for (Square square = A1; square < 64; square += 1) {
-        bitMasks[square] = 1ULL << square;
-        pawnMasks[square][WHITE] = step<NORTH_WEST>(bitMasks[square]) | step<NORTH_EAST>(bitMasks[square]);
-        pawnMasks[square][BLACK] = step<SOUTH_WEST>(bitMasks[square]) | step<SOUTH_EAST>(bitMasks[square]);
+    for (Square sq = A1; sq < 64; sq += 1) {
+        bitMasks[sq] = 1ULL << sq;
+        pawnMasks[sq][WHITE] = step<NORTH_WEST>(bitMasks[sq]) | step<NORTH_EAST>(bitMasks[sq]);
+        pawnMasks[sq][BLACK] = step<SOUTH_WEST>(bitMasks[sq]) | step<SOUTH_EAST>(bitMasks[sq]);
 
-        knightMasks[square] =
-                step<NORTH>(step<NORTH_WEST>(bitMasks[square])) | step<NORTH>(step<NORTH_EAST>(bitMasks[square])) |
-                step<WEST>(step<NORTH_WEST>(bitMasks[square])) | step<EAST>(step<NORTH_EAST>(bitMasks[square])) |
-                step<SOUTH>(step<SOUTH_WEST>(bitMasks[square])) | step<SOUTH>(step<SOUTH_EAST>(bitMasks[square])) |
-                step<WEST>(step<SOUTH_WEST>(bitMasks[square])) | step<EAST>(step<SOUTH_EAST>(bitMasks[square]));
+        knightMasks[sq] =
+                step<NORTH>(step<NORTH_WEST>(bitMasks[sq])) | step<NORTH>(step<NORTH_EAST>(bitMasks[sq])) |
+                step<WEST>(step<NORTH_WEST>(bitMasks[sq])) | step<EAST>(step<NORTH_EAST>(bitMasks[sq])) |
+                step<SOUTH>(step<SOUTH_WEST>(bitMasks[sq])) | step<SOUTH>(step<SOUTH_EAST>(bitMasks[sq])) |
+                step<WEST>(step<SOUTH_WEST>(bitMasks[sq])) | step<EAST>(step<SOUTH_EAST>(bitMasks[sq]));
 
-        kingMasks[square] =
-                step<NORTH>(bitMasks[square]) | step<NORTH_WEST>(bitMasks[square]) | step<WEST>(bitMasks[square]) |
-                step<NORTH_EAST>(bitMasks[square]) |
-                step<SOUTH>(bitMasks[square]) | step<SOUTH_WEST>(bitMasks[square]) | step<EAST>(bitMasks[square]) |
-                step<SOUTH_EAST>(bitMasks[square]);
+        kingMasks[sq] =
+                step<NORTH>(bitMasks[sq]) | step<NORTH_WEST>(bitMasks[sq]) | step<WEST>(bitMasks[sq]) |
+                step<NORTH_EAST>(bitMasks[sq]) |
+                step<SOUTH>(bitMasks[sq]) | step<SOUTH_WEST>(bitMasks[sq]) | step<EAST>(bitMasks[sq]) |
+                step<SOUTH_EAST>(bitMasks[sq]);
 
-        fileMasks[square] = slide<NORTH>(square) | slide<SOUTH>(square);
+        fileMasks[sq] = slide<NORTH>(sq) | slide<SOUTH>(sq);
 
-        rankMasks[square] = slide<WEST>(square) | slide<EAST>(square);
+        rankMasks[sq] = slide<WEST>(sq) | slide<EAST>(sq);
 
-        rookMasks[square] = slide<NORTH>(square) | slide<SOUTH>(square) | slide<WEST>(square) | slide<EAST>(square);
+        rookMasks[sq] = fileMasks[sq] | rankMasks[sq];
 
-        bishopMasks[square] = slide<NORTH_WEST>(square) | slide<NORTH_EAST>(square) | slide<SOUTH_WEST>(square) |
-                              slide<SOUTH_EAST>(square);
+        diagonalMasks[sq] = slide<NORTH_EAST>(sq) | slide<SOUTH_WEST>(sq);
+
+        antiDiagonalMasks[sq] = slide<NORTH_WEST>(sq) | slide<SOUTH_EAST>(sq);
+
+        bishopMasks[sq] = diagonalMasks[sq] & antiDiagonalMasks[sq];
+    }
+
+    for (Square sq = A1; sq < 64; sq += 1) {
+        for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
+            if (sq == sq2) continue;
+            for (Direction dir : DIRECTIONS) {
+                Bitboard value = slide(dir, sq) & slide(-dir, sq2);
+
+                if (value) {
+                    commonRay[sq][sq2] = value;
+                    break;
+                }
+            }
+        }
     }
 
     initMagic(rookMagics, ROOK);

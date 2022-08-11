@@ -67,6 +67,8 @@ enum Direction : int {
     NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
 };
 
+constexpr Direction DIRECTIONS[8] = {NORTH, WEST, SOUTH, EAST, NORTH_EAST, NORTH_WEST, SOUTH_WEST, SOUTH_EAST};
+
 constexpr Direction opposite(Direction direction) { return Direction(-direction); }
 
 constexpr Direction operator-(Direction direction) { return opposite(direction); }
