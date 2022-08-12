@@ -128,7 +128,7 @@ void Position::loadPositionFromFen(const string &fen) {
             state->stm = BLACK;
             break;
         default:
-            assert(1);
+            assert(0);
     }
     string cr;
     ss >> cr;
@@ -148,7 +148,7 @@ void Position::loadPositionFromFen(const string &fen) {
                     setCastleRight(BQ_MASK);
                     break;
                 default:
-                    assert(1);
+                    assert(0);
             }
         }
     }

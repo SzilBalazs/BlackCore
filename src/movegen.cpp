@@ -14,7 +14,6 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <chrono>
 #include "movegen.h"
 
 inline Move *makePromo(Move *moves, Square from, Square to) {
@@ -26,10 +25,10 @@ inline Move *makePromo(Move *moves, Square from, Square to) {
 }
 
 inline Move *makePromoCapture(Move *moves, Square from, Square to, Piece capturedPiece) {
-    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT);
-    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP);
-    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK);
-    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN);
+    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN, capturedPiece);
     return moves;
 }
 
@@ -107,20 +106,24 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
 }
 
 template<Color color>
-Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
+Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard checkMask,
                         Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
     constexpr Color enemyColor = EnemyColor<color>();
 
     constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
+    constexpr Direction RIGHT = color == WHITE ? EAST : -EAST;
     constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
     constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
     constexpr Direction DOWN = -UP;
+    constexpr Direction LEFT = -RIGHT;
     constexpr Direction DOWN_LEFT = -UP_RIGHT;
     constexpr Direction DOWN_RIGHT = -UP_LEFT;
 
     constexpr Bitboard doublePushRank = (color == WHITE ? rank3 : rank6);
     constexpr Bitboard beforePromoRank = (color == WHITE ? rank7 : rank2);
     constexpr Bitboard notBeforePromo = ~beforePromoRank;
+
+    Square epSquare = pos.getEpSquare();
 
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
@@ -179,12 +182,58 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
         }
     }
 
-    if (pos.getEpSquare() != NULL_SQUARE) { // TODO handle pins
-        Bitboard epPawns = pawnMask(pos.getEpSquare(), enemyColor) & pawns;
+    if ((epSquare != NULL_SQUARE) && (pawnMask(pos.getEpSquare(), enemyColor) & pawns) &&
+        checkMask.get(epSquare + DOWN)) {
+        Bitboard occ = pos.occupied();
+        bool rightEp = (step<UP_RIGHT>(pawns & moveD)).get(epSquare);
+        bool leftEp = (step<UP_LEFT>(pawns & moveA)).get(epSquare);
 
-        while (epPawns) {
-            *moves++ = Move(epPawns.popLsb(), pos.getEpSquare(), EP_CAPTURE,
-                            {PAWN, enemyColor});
+        if (rightEp) {
+            Square attackingPawn = epSquare + DOWN_LEFT;
+            Square attackedPawn = epSquare + DOWN;
+
+            occ.clear(attackingPawn);
+            occ.clear(attackedPawn);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttacks(attackedPawn, occ);
+            Bitboard diagAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
+            Bitboard seenDiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+
+            bool pinRank = rankAttack.get(king) && seenRankSliders;
+            bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+
+            if (!(pinRank || pinDiag))
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+
+            occ.set(attackingPawn);
+            occ.set(attackedPawn);
+        }
+
+        if (leftEp) {
+            Square attackingPawn = epSquare + DOWN_RIGHT;
+            Square attackedPawn = epSquare + DOWN;
+
+            occ.clear(attackingPawn);
+            occ.clear(attackedPawn);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttacks(attackedPawn, occ);
+            Bitboard diagAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
+            Bitboard seenDiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+
+            bool pinRank = rankAttack.get(king) && seenRankSliders;
+            bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+
+            if (!(pinRank || pinDiag))
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+
+            occ.set(attackingPawn);
+            occ.set(attackedPawn);
         }
     }
 
@@ -230,7 +279,10 @@ inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard che
 inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
                                         Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
                                         Bitboard pinH, Bitboard pinV, Bitboard pinD, Bitboard pinA) {
-
+    pinH &= pieces;
+    pinV &= pieces;
+    pinD &= pieces;
+    pinA &= pieces;
     pieces &= ~(pinH | pinV | pinD | pinA);
 
     moves = generateMovesFromPieces(pos, moves, pieces, checkMask, occupied, empty, enemy);
@@ -314,10 +366,10 @@ Move *generateMoves(const Position &pos, Move *moves) {
     occupied ^= possiblePins;
 
     // Generating pawn moves
-    moves = generatePawnMoves<color>(pos, moves, checkMask, moveH, moveV, moveD, moveA);
+    moves = generatePawnMoves<color>(pos, moves, king, checkMask, moveH, moveV, moveD, moveA);
 
     // Generating knight and slider moves
-    Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<color, PAWN>();
+    Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<PAWN>();
     sliderAndJumperPieces.clear(king);
 
     moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask,

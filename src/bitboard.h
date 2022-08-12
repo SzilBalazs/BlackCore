@@ -39,7 +39,7 @@ struct Bitboard {
     constexpr int popCount() const { return __builtin_popcountll(bb); }
 
     constexpr Square lsb() const {
-        assert(bb != 0);
+        assert(bb != 0 && "The most common cause of this if the king bb empty");
         return Square(__builtin_ctzll(bb));
     }
 
@@ -320,7 +320,7 @@ constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(1);
+            assert(0);
             return 0;
     }
 }
@@ -338,8 +338,7 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(1);
-            return 0;
+            assert(0);
     }
 }
 
@@ -359,7 +358,7 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(1);
+            assert(0);
             return 0;
     }
 }

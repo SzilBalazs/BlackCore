@@ -19,6 +19,8 @@
 #include "movegen.h"
 #include "utils.h"
 
+const int DEPTH = 6;
+
 U64 perft(Position &position, int depth) {
     Move moves[200];
     Move *movesEnd = generateMoves(position, moves);
@@ -26,7 +28,8 @@ U64 perft(Position &position, int depth) {
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);
-        nodes += perft(position, depth - 1);
+        U64 a = perft(position, depth - 1);
+        nodes += a;
         position.undoMove(*it);
     }
     return nodes;
@@ -35,9 +38,10 @@ U64 perft(Position &position, int depth) {
 int main() {
     initBitboard();
 
-    Position position = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "};
+    Position position = {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 "};
+
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    std::cout << perft(position, 6) << std::endl;
+    std::cout << perft(position, DEPTH) << std::endl;
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
               << std::endl;
