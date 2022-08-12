@@ -195,17 +195,24 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             occ.clear(attackingPawn);
             occ.clear(attackedPawn);
 
-            Bitboard rankAttack = rankMask(attackedPawn) & rookAttacks(attackedPawn, occ);
-            Bitboard diagAttack = bishopAttacks(attackedPawn, occ);
+            Bitboard rookAttack = rookAttacks(attackedPawn, occ);
+            Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
+            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
 
             Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
             Bitboard seenDiagSliders =
                     (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+            Bitboard seenADiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & aDiagAttack;
 
             bool pinRank = rankAttack.get(king) && seenRankSliders;
             bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+            bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
 
-            if (!(pinRank || pinDiag))
+            if (!(pinRank || pinDiag || pinADiag))
                 *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
 
             occ.set(attackingPawn);
@@ -219,17 +226,24 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             occ.clear(attackingPawn);
             occ.clear(attackedPawn);
 
-            Bitboard rankAttack = rankMask(attackedPawn) & rookAttacks(attackedPawn, occ);
-            Bitboard diagAttack = bishopAttacks(attackedPawn, occ);
+            Bitboard rookAttack = rookAttacks(attackedPawn, occ);
+            Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
+            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
 
             Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
             Bitboard seenDiagSliders =
                     (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+            Bitboard seenADiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & aDiagAttack;
 
             bool pinRank = rankAttack.get(king) && seenRankSliders;
             bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+            bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
 
-            if (!(pinRank || pinDiag))
+            if (!(pinRank || pinDiag || pinADiag))
                 *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
 
             occ.set(attackingPawn);

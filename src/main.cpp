@@ -29,6 +29,7 @@ U64 perft(Position &position, int depth) {
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);
         U64 a = perft(position, depth - 1);
+        if (depth == DEPTH) std::cout << it->str() << ": " << a << std::endl;
         nodes += a;
         position.undoMove(*it);
     }
@@ -38,7 +39,7 @@ U64 perft(Position &position, int depth) {
 int main() {
     initBitboard();
 
-    Position position = {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 "};
+    Position position = {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w - - 0 1"};
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     std::cout << perft(position, DEPTH) << std::endl;
