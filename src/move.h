@@ -70,26 +70,24 @@ public:
 
     constexpr bool isNull() const { return data == 0; }
 
-    bool operator==(Move) const;
+    constexpr bool isCapture() const { return isFlag(CAPTURE_FLAG); }
 
-    bool operator!=(Move) const;
+    constexpr bool isPromo() const { return isFlag(PROMO_FLAG); }
 
-    bool isCapture() const;
+    constexpr bool isSpecial1() const { return isFlag(SPECIAL1_FLAG); }
 
-    bool isPromo() const;
+    constexpr bool isSpecial2() const { return isFlag(SPECIAL2_FLAG); }
 
-    bool isSpecial1() const;
+    constexpr bool isQuiet() const { return !isCapture(); }
 
-    bool isSpecial2() const;
-
-    bool isQuiet() const;
-
-    explicit operator bool() const;
+    constexpr explicit operator bool() const { return !isNull(); }
 
     std::string str() const;
 
 private:
     unsigned int data;
 };
+
+std::ostream &operator<<(std::ostream &os, const Move &move);
 
 #endif //CHESS_MOVE_H

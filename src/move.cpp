@@ -17,38 +17,6 @@
 #include "move.h"
 #include "utils.h"
 
-bool Move::operator==(Move a) const {
-    return (data & 0xFFFF) == (a.data & 0xFFFF);
-}
-
-bool Move::operator!=(Move a) const {
-    return (data & 0xFFFF) != (a.data & 0xFFFF);
-}
-
-Move::operator bool() const {
-    return !isNull();
-}
-
-bool Move::isCapture() const {
-    return isFlag(CAPTURE_FLAG);
-}
-
-bool Move::isPromo() const {
-    return isFlag(PROMO_FLAG);
-}
-
-bool Move::isSpecial1() const {
-    return isFlag(SPECIAL1_FLAG);
-}
-
-bool Move::isSpecial2() const {
-    return isFlag(SPECIAL2_FLAG);
-}
-
-bool Move::isQuiet() const {
-    return !isCapture();
-}
-
 std::string Move::str() const {
     std::string token;
     if (isPromo()) {
@@ -58,5 +26,10 @@ std::string Move::str() const {
         else token += "q";
     }
     return formatSquare(getFrom()) + formatSquare(getTo()) + token;
+}
+
+std::ostream &operator<<(std::ostream &os, const Move &move) {
+    os << move.str();
+    return os;
 }
 
