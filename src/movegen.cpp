@@ -18,17 +18,18 @@
 #include "movegen.h"
 
 inline Move *makePromo(Move *moves, Square from, Square to) {
-    // Knight
-    *moves++ = Move(from, to, PROMO_FLAG);
+    *moves++ = Move(from, to, PROMO_KNIGHT);
+    *moves++ = Move(from, to, PROMO_BISHOP);
+    *moves++ = Move(from, to, PROMO_ROOK);
+    *moves++ = Move(from, to, PROMO_QUEEN);
+    return moves;
+}
 
-    // Bishop
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL2_FLAG);
-
-    // Rook
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG);
-
-    // Queen
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG);
+inline Move *makePromoCapture(Move *moves, Square from, Square to, Piece capturedPiece) {
+    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT);
+    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP);
+    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK);
+    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN);
     return moves;
 }
 
@@ -72,7 +73,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
 
         while (captures) {
             Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE_FLAG, pos.pieceAt(to));
+            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
         }
     }
 
@@ -97,7 +98,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
 
         while (captures) {
             Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE_FLAG, pos.pieceAt(to));
+            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
         }
     }
 
@@ -144,17 +145,17 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
 
     while (doublePush) {
         Square to = doublePush.popLsb();
-        *moves++ = Move(to + (2 * DOWN), to, SPECIAL2_FLAG);
+        *moves++ = Move(to + (2 * DOWN), to, DOUBLE_PAWN_PUSH);
     }
 
     while (leftCapture) {
         Square to = leftCapture.popLsb();
-        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE_FLAG, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE, pos.pieceAt(to));
     }
 
     while (rightCapture) {
         Square to = rightCapture.popLsb();
-        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE_FLAG, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE, pos.pieceAt(to));
     }
 
     if (pawnsBeforePromo) {
@@ -169,12 +170,12 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
 
         while (rightPromo) {
             Square to = rightPromo.popLsb();
-            moves = makePromo(moves, to + DOWN_LEFT, to);
+            moves = makePromoCapture(moves, to + DOWN_LEFT, to, pos.pieceAt(to));
         }
 
         while (leftPromo) {
             Square to = leftPromo.popLsb();
-            moves = makePromo(moves, to + DOWN_RIGHT, to);
+            moves = makePromoCapture(moves, to + DOWN_RIGHT, to, pos.pieceAt(to));
         }
     }
 
@@ -182,7 +183,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Bitboard checkMask,
         Bitboard epPawns = pawnMask(pos.getEpSquare(), enemyColor) & pawns;
 
         while (epPawns) {
-            *moves++ = Move(epPawns.popLsb(), pos.getEpSquare(), CAPTURE_FLAG | SPECIAL2_FLAG,
+            *moves++ = Move(epPawns.popLsb(), pos.getEpSquare(), EP_CAPTURE,
                             {PAWN, enemyColor});
         }
     }
@@ -203,7 +204,7 @@ inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
 
     while (kingCaptures) {
         Square to = kingCaptures.popLsb();
-        *moves++ = Move(king, to, CAPTURE_FLAG, pos.pieceAt(to));
+        *moves++ = Move(king, to, CAPTURE, pos.pieceAt(to));
     }
 
     return moves;

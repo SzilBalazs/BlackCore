@@ -17,9 +17,47 @@
 #ifndef BLACKCORE_POSITION_H
 #define BLACKCORE_POSITION_H
 
-
+#include <vector>
 #include "bitboard.h"
 #include "utils.h"
+#include "move.h"
+
+struct BoardState {
+    Color stm;
+    Square epSquare;
+    unsigned char castlingRights;
+
+    Piece capturedPiece;
+
+    BoardState() {
+        stm = WHITE;
+        epSquare = NULL_SQUARE;
+        castlingRights = 0;
+        capturedPiece = {};
+    }
+};
+
+struct StateStack {
+    BoardState stateStart[1000];
+    BoardState *currState;
+
+    StateStack() {
+        currState = stateStart;
+    }
+
+    inline void push(BoardState newState) {
+        currState++;
+        *currState = newState;
+    }
+
+    inline void pop() {
+        currState--;
+    }
+
+    inline BoardState *top() const { return currState; }
+};
+
+#define state states.top()
 
 class Position {
 public:
@@ -47,11 +85,15 @@ public:
 
     inline Bitboard empty() const { return ~occupied(); }
 
-    inline Color getSideToMove() const { return stm; }
+    inline Color getSideToMove() const { return state->stm; }
 
-    inline Square getEpSquare() const { return epSquare; }
+    inline Square getEpSquare() const { return state->epSquare; }
 
-    inline bool getCastleRight(unsigned char castleRight) { return castleRight & castlingRights; }
+    inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
+
+    inline void makeMove(Move move);
+
+    inline void undoMove(Move move);
 
     void display();
 
@@ -67,21 +109,110 @@ private:
 
     void setSquare(Square square, Piece piece);
 
-    inline void setCastleRight(unsigned char castleRight) { castlingRights |= castleRight; }
+    void movePiece(Square from, Square to);
 
-    inline void removeCastleRight(unsigned char castleRight) { castlingRights &= ~castleRight; }
+    inline void setCastleRight(unsigned char castleRight) { state->castlingRights |= castleRight; }
+
+    inline void removeCastleRight(unsigned char castleRight) { state->castlingRights &= ~castleRight; }
 
     void clearPosition();
+
+    template<Color color>
+    void makeMove(Move move);
+
+    template<Color color>
+    void undoMove(Move move);
 
     Piece board[64];
 
     Bitboard pieceBB[6], allPieceBB[2];
 
-    Color stm;
-    Square epSquare;
-    unsigned char castlingRights;
-
+    StateStack states;
 };
 
+template<Color color>
+void Position::makeMove(Move move) {
+    BoardState newState;
+
+    constexpr Color enemyColor = EnemyColor<color>();
+    constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
+    constexpr Direction DOWN = -UP;
+
+    Square from = move.getFrom();
+    Square to = move.getTo();
+
+    newState.capturedPiece = move.getCapturedPiece();
+    newState.castlingRights = state->castlingRights;
+    newState.stm = enemyColor;
+
+    if (move.equalFlag(DOUBLE_PAWN_PUSH)) {
+        newState.epSquare = from + UP;
+
+    } else {
+        newState.epSquare = NULL_SQUARE;
+    }
+
+    if (move.equalFlag(KING_CASTLE)) {
+
+    } else if (move.equalFlag(QUEEN_CASTLE)) {
+
+    } else if (move.equalFlag(EP_CAPTURE)) {
+        clearSquare(to + DOWN);
+    }
+
+    movePiece(from, to);
+
+    if (move.isFlag(PROMO_FLAG)) {
+        Piece piece = {PIECE_EMPTY, color};
+        if (move.equalFlag(PROMO_KNIGHT) || move.equalFlag(PROMO_CAPTURE_KNIGHT)) {
+            piece.type = KNIGHT;
+        } else if (move.equalFlag(PROMO_BISHOP) || move.equalFlag(PROMO_CAPTURE_BISHOP)) {
+            piece.type = BISHOP;
+        } else if (move.equalFlag(PROMO_ROOK) || move.equalFlag(PROMO_CAPTURE_ROOK)) {
+            piece.type = ROOK;
+        } else if (move.equalFlag(PROMO_QUEEN) || move.equalFlag(PROMO_CAPTURE_QUEEN)) {
+            piece.type = QUEEN;
+        }
+        setSquare(to, piece);
+    }
+
+    states.push(newState);
+}
+
+template<Color color>
+void Position::undoMove(Move move) {
+
+    constexpr Color enemyColor = EnemyColor<color>();
+    constexpr Direction UP = enemyColor == WHITE ? NORTH : -NORTH;
+    constexpr Direction DOWN = -UP;
+
+    Square from = move.getFrom();
+    Square to = move.getTo();
+
+    movePiece(to, from);
+
+
+    if (move.equalFlag(EP_CAPTURE))
+        setSquare(to + DOWN, state->capturedPiece);
+    else if (move.isCapture())
+        setSquare(to, state->capturedPiece);
+
+    if (move.isPromo())
+        setSquare(from, {PAWN, enemyColor});
+
+    states.pop();
+}
+
+inline void Position::makeMove(Move move) {
+    if (getSideToMove() == WHITE) makeMove<WHITE>(move);
+    else makeMove<BLACK>(move);
+}
+
+inline void Position::undoMove(Move move) {
+    if (getSideToMove() == WHITE) undoMove<WHITE>(move);
+    else undoMove<BLACK>(move);
+}
+
+#undef state
 
 #endif //BLACKCORE_POSITION_H

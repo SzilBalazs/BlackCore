@@ -19,13 +19,16 @@
 #include <sstream>
 #include "position.h"
 
+#define state states.top()
+
 using std::cout, std::string;
 
 void Position::clearSquare(Square square) {
-    Piece piece = pieceAt(square);
+    PieceType type = pieceAt(square).type;
 
-    pieceBB[piece.type].clear(square);
-    allPieceBB[piece.color].clear(square);
+    pieceBB[type].clear(square);
+    allPieceBB[WHITE].clear(square);
+    allPieceBB[BLACK].clear(square);
     board[square] = {};
 }
 
@@ -35,6 +38,11 @@ void Position::setSquare(Square square, Piece piece) {
     pieceBB[piece.type].set(square);
     allPieceBB[piece.color].set(square);
     board[square] = piece;
+}
+
+void Position::movePiece(Square from, Square to) {
+    setSquare(to, pieceAt(from));
+    clearSquare(from);
 }
 
 void Position::clearPosition() {
@@ -49,15 +57,18 @@ void Position::clearPosition() {
     allPieceBB[WHITE] = 0;
     allPieceBB[BLACK] = 0;
 
-    stm = WHITE;
-    epSquare = NULL_SQUARE;
-    castlingRights = 0;
+    states.push({});
+
+    state->stm = WHITE;
+    state->epSquare = NULL_SQUARE;
+    state->castlingRights = 0;
+    state->capturedPiece = {};
 }
 
 void Position::display() {
     std::vector<string> text;
-    if (epSquare != NULL_SQUARE)
-        text.emplace_back(string("En passant square: ") + formatSquare(epSquare));
+    if (getEpSquare() != NULL_SQUARE)
+        text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
     string cr;
     if (getCastleRight(WK_MASK)) cr += 'K';
     if (getCastleRight(WQ_MASK)) cr += 'Q';
@@ -65,7 +76,7 @@ void Position::display() {
     if (getCastleRight(BQ_MASK)) cr += 'q';
     if (cr.empty()) cr = "None";
     text.emplace_back(string("Castling rights: ") + cr);
-    text.emplace_back(string("Side to move: ") + string(stm == WHITE ? "White" : "Black"));
+    text.emplace_back(string("Side to move: ") + string(getSideToMove() == WHITE ? "White" : "Black"));
     // TODO FEN, hash key, full-half move counter
 
     cout << "\n     A   B   C   D   E   F   G   H  \n";
@@ -106,14 +117,15 @@ void Position::loadPositionFromFen(const string &fen) {
             square += 1;
         }
     }
+
     char c;
     ss >> c;
     switch (c) {
         case 'w':
-            stm = WHITE;
+            state->stm = WHITE;
             break;
         case 'b':
-            stm = BLACK;
+            state->stm = BLACK;
             break;
         default:
             assert(1);
@@ -141,7 +153,7 @@ void Position::loadPositionFromFen(const string &fen) {
         }
     }
 
-    ss >> epSquare;
+    ss >> state->epSquare;
 }
 
 Position::Position() {

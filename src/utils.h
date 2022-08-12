@@ -21,6 +21,8 @@
 #include "constants.h"
 #include "bitboard.h"
 
+constexpr PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
+constexpr Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
 
 template<Color color>
 constexpr Color EnemyColor() {
@@ -28,13 +30,15 @@ constexpr Color EnemyColor() {
     else return WHITE;
 }
 
-inline unsigned int squareToRank(Square square) { return square >> 3; }
+constexpr unsigned int squareToRank(Square square) { return square >> 3; }
 
-inline unsigned int squareToFile(Square square) { return square & 7; }
+constexpr unsigned int squareToFile(Square square) { return square & 7; }
 
-unsigned char encodePiece(Piece piece);
+constexpr unsigned char encodePiece(Piece piece) { return (piece.color << 3) | piece.type; }
 
-Piece decodePiece(unsigned char encodedPiece);
+constexpr Piece decodePiece(unsigned char encodedPiece) {
+    return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
+}
 
 std::string formatSquare(Square square);
 
