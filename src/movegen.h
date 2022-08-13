@@ -20,6 +20,17 @@
 #include "position.h"
 #include "move.h"
 
+template<Color color>
+inline Bitboard getAttackers(const Position &pos, Square square) {
+    Bitboard occupied = pos.occupied();
+    Bitboard enemy = pos.enemy<color>();
+    return ((pawnMask(square, color) & pos.pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(square, occupied) & pos.pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(square, occupied) & pos.pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(square, occupied) & pos.pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(square, occupied) & pos.pieces<QUEEN>())) & enemy;
+}
+
 Move *generateMoves(const Position &pos, Move *moves);
 
 #endif //BLACKCORE_MOVEGEN_H

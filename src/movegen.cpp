@@ -33,17 +33,6 @@ inline Move *makePromoCapture(Move *moves, Square from, Square to, Piece capture
 }
 
 template<Color color>
-inline Bitboard getCheckers(const Position &pos, Square king) {
-    Bitboard occupied = pos.occupied();
-    Bitboard enemy = pos.enemy<color>();
-    return ((pawnMask(king, color) & pos.pieces<PAWN>()) |
-            (pieceAttacks<KNIGHT>(king, occupied) & pos.pieces<KNIGHT>()) |
-            (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
-            (pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & enemy;
-}
-
-template<Color color>
 inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     Bitboard pieces = pos.friendly<color>();
     Bitboard result = 0;
@@ -322,7 +311,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
     Bitboard occupied = pos.occupied();
-    Bitboard checkers = getCheckers<color>(pos, king);
+    Bitboard checkers = getAttackers < color > (pos, king);
 
     occupied.clear(king);
     Bitboard safeSquares = ~getAttackedSquares<enemyColor>(pos, occupied);
