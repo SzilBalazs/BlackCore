@@ -25,12 +25,21 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (depth == 0) return eval(pos);
 
+    Color color = pos.getSideToMove();
+
     Move moves[200];
     Move *movesEnd = generateMoves(pos, moves);
 
     unsigned int moveCnt = movesEnd - moves;
 
-    if (moveCnt == 0) return 0;
+    if (moveCnt == 0) {
+        Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
+        if (checkers) {
+            return -MATE_VALUE + ply;
+        } else {
+            return DRAW_VALUE;
+        }
+    }
 
     Move bestMove;
 

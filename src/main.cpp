@@ -40,7 +40,7 @@ U64 perft(Position &position, int depth) {
 int main() {
     initBitboard();
 
-    Position position = {"k3q3/8/8/8/7R/2B5/8/K7 w - - 0 1"};
+    Position position = {"k7/3Q4/K7/8/8/8/8/8 b - - 0 1"};
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 

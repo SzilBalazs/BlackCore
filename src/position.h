@@ -69,11 +69,23 @@ public:
     template<Color color, PieceType type>
     constexpr Bitboard pieces() const { return pieceBB[type] & allPieceBB[color]; }
 
+    template<Color color>
+    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+
+    template<PieceType type>
+    constexpr Bitboard pieces(Color color) const { return pieceBB[type] & allPieceBB[color]; }
+
+    constexpr Bitboard pieces(Color color, PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+
     template<PieceType type>
     constexpr Bitboard pieces() const { return pieceBB[type]; }
 
+    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type]; }
+
     template<Color color>
     constexpr Bitboard friendly() const { return allPieceBB[color]; }
+
+    constexpr Bitboard friendly(Color color) const { return allPieceBB[color]; }
 
     template<Color color>
     constexpr Bitboard enemy() const { return allPieceBB[EnemyColor<color>()]; }

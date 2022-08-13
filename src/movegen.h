@@ -31,6 +31,13 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
             (pieceAttacks<QUEEN>(square, occupied) & pos.pieces<QUEEN>())) & enemy;
 }
 
+inline Bitboard getAttackers(const Position &pos, Square square) {
+    if (pos.getSideToMove() == WHITE)
+        return getAttackers<WHITE>(pos, square);
+    else
+        return getAttackers<BLACK>(pos, square);
+}
+
 Move *generateMoves(const Position &pos, Move *moves);
 
 #endif //BLACKCORE_MOVEGEN_H
