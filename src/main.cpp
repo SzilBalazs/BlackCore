@@ -29,7 +29,6 @@ U64 perft(Position &position, int depth) {
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);
         U64 a = perft(position, depth - 1);
-        if (depth == DEPTH) std::cout << (*it) << ": " << a << std::endl;
         nodes += a;
         position.undoMove(*it);
     }

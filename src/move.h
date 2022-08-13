@@ -49,11 +49,11 @@ constexpr unsigned int QUEEN_CASTLE = SPECIAL1_FLAG | SPECIAL2_FLAG;
 class Move {
 public:
     constexpr Move(Square from, Square to, unsigned int flags, Piece capturedPiece) {
-        data = ((encodePiece(capturedPiece)) << 16 | (flags & 0xf) << 12 | (from & 0x3f) << 6 | (to & 0x3f));
+        data = ((encodePiece(capturedPiece) << 16) | (flags << 12) | (from << 6) | (to));
     }
 
     constexpr Move(Square from, Square to, unsigned int flags) {
-        data = ((encodePiece({})) << 16 | (flags & 0xf) << 12 | (from & 0x3f) << 6 | (to & 0x3f));
+        data = ((encodePiece({}) << 16) | (flags << 12) | (from << 6) | (to));
     }
 
     constexpr Move() { data = 0; }

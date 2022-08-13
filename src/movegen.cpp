@@ -111,11 +111,9 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     constexpr Color enemyColor = EnemyColor<color>();
 
     constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
-    constexpr Direction RIGHT = color == WHITE ? EAST : -EAST;
     constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
     constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
     constexpr Direction DOWN = -UP;
-    constexpr Direction LEFT = -RIGHT;
     constexpr Direction DOWN_LEFT = -UP_RIGHT;
     constexpr Direction DOWN_RIGHT = -UP_LEFT;
 

@@ -124,7 +124,7 @@ void initMagic(const Magic *magics, PieceType type) {
             occ = (occ - magic.mask) & magic.mask;
         } while (occ != 0);
 
-        for (int i = 0; i < length; i++) {
+        for (unsigned int i = 0; i < length; i++) {
             U64 index = (((occupied[i] & magic.mask) * magic.magic) >> (64 - magic.shift)).bb;
 
             magic.ptr[index] = attacked[i];
@@ -173,7 +173,7 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
             std::memset(used, 0, sizeof(used));
 
             bool failed = false;
-            for (int i = 0; i < length; i++) {
+            for (unsigned int i = 0; i < length; i++) {
                 U64 index = (((occupied[i] & magic.mask) * magic.magic) >> (64 - magic.shift)).bb;
                 if (used[index] == 0) {
                     used[index] = attacked[i];

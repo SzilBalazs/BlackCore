@@ -45,7 +45,7 @@ struct Bitboard {
 
     constexpr Square popLsb() {
         Square square = lsb();
-        clear(square);
+        bb &= bb - 1;
         return square;
     }
 
@@ -404,6 +404,7 @@ constexpr Bitboard step(Direction direction, Bitboard b) {
         case SOUTH_EAST:
             return (b & notFileH) >> 7;
     }
+    return 0;
 }
 
 template<Direction direction>
