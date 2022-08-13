@@ -24,7 +24,7 @@ const int DEPTH = 6;
 
 U64 perft(Position &position, int depth) {
     Move moves[200];
-    Move *movesEnd = generateMoves(position, moves, true);
+    Move *movesEnd = generateMoves(position, moves, false);
     if (depth == 1) return movesEnd - moves;
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
@@ -49,7 +49,14 @@ void perftT() {
 }
 
 int main() {
+    srand(RANDOM_SEED);
+    initHash();
     initBitboard();
+
+    Position pos = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"};
+
+    pos.display();
+    return 0;
 
     Position position = {"6k1/3b4/1p1p4/p1n2p1r/1PPNp3/P3q1p1/1R1R2P1/5K2 w - - 0 4"};
 
