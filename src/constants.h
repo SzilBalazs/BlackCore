@@ -23,11 +23,6 @@ typedef unsigned long long U64;
 
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-const unsigned char WK_MASK = 1;
-const unsigned char WQ_MASK = 2;
-const unsigned char BK_MASK = 4;
-const unsigned char BQ_MASK = 8;
-
 enum Square : int {
     A1 = 0, B1 = 1, C1 = 2, D1 = 3, E1 = 4, F1 = 5, G1 = 6, H1 = 7,
     A2 = 8, B2 = 9, C2 = 10, D2 = 11, E2 = 12, F2 = 13, G2 = 14, H2 = 15,
@@ -39,6 +34,11 @@ enum Square : int {
     A8 = 56, B8 = 57, C8 = 58, D8 = 59, E8 = 60, F8 = 61, G8 = 62, H8 = 63,
     NULL_SQUARE = 64
 };
+
+constexpr unsigned char WK_MASK = 1;
+constexpr unsigned char WQ_MASK = 2;
+constexpr unsigned char BK_MASK = 4;
+constexpr unsigned char BQ_MASK = 8;
 
 inline Square operator+(Square &a, int b) { return Square(int(a) + b); }
 
@@ -63,9 +63,15 @@ inline std::istream &operator>>(std::istream &is, Square &square) {
     return is;
 }
 
+enum LineType : int {
+    HORIZONTAL = 0, VERTICAL = 1, DIAGONAL = 2, ANTI_DIAGONAL = 3
+};
+
 enum Direction : int {
     NORTH = 8, WEST = -1, SOUTH = -8, EAST = 1, NORTH_EAST = 9, NORTH_WEST = 7, SOUTH_WEST = -9, SOUTH_EAST = -7
 };
+
+constexpr Direction DIRECTIONS[8] = {NORTH, WEST, NORTH_EAST, NORTH_WEST, SOUTH, EAST, SOUTH_WEST, SOUTH_EAST};
 
 constexpr Direction opposite(Direction direction) { return Direction(-direction); }
 

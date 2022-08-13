@@ -16,23 +16,98 @@
 
 #include "movegen.h"
 
-Move *makePromo(Move *moves, Square from, Square to) {
-    // Knight
-    *moves++ = Move(from, to, PROMO_FLAG);
+inline Move *makePromo(Move *moves, Square from, Square to) {
+    *moves++ = Move(from, to, PROMO_KNIGHT);
+    *moves++ = Move(from, to, PROMO_BISHOP);
+    *moves++ = Move(from, to, PROMO_ROOK);
+    *moves++ = Move(from, to, PROMO_QUEEN);
+    return moves;
+}
 
-    // Bishop
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL2_FLAG);
-
-    // Rook
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG);
-
-    // Queen
-    *moves++ = Move(from, to, PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG);
+inline Move *makePromoCapture(Move *moves, Square from, Square to, Piece capturedPiece) {
+    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK, capturedPiece);
+    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN, capturedPiece);
     return moves;
 }
 
 template<Color color>
-Move *generatePawnMoves(const Position &pos, Move *moves) {
+inline Bitboard getCheckers(const Position &pos, Square king) {
+    Bitboard occupied = pos.occupied();
+    Bitboard enemy = pos.enemy<color>();
+    return ((pawnMask(king, color) & pos.pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(king, occupied) & pos.pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & enemy;
+}
+
+template<Color color>
+inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
+    Bitboard pieces = pos.friendly<color>();
+    Bitboard result = 0;
+
+    while (pieces) {
+        Square from = pieces.popLsb();
+        result |= pieceAttacks<color>(pos.pieceAt(from).type, from, occupied);
+    }
+
+    return result;
+}
+
+inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
+                                     Bitboard occupied, Bitboard empty, Bitboard enemy) {
+
+    while (pieces) {
+        Square from = pieces.popLsb();
+        PieceType type = pos.pieceAt(from).type;
+        Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
+        Bitboard quiets = attacks & empty;
+        Bitboard captures = attacks & enemy;
+
+        while (quiets) {
+            *moves++ = Move(from, quiets.popLsb(), 0);
+        }
+
+        while (captures) {
+            Square to = captures.popLsb();
+            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
+        }
+    }
+
+    return moves;
+
+}
+
+inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
+                                     Bitboard *specialMaskExtra,
+                                     Bitboard occupied, Bitboard empty, Bitboard enemy) {
+
+    while (pieces) {
+        Square from = pieces.popLsb();
+        PieceType type = pos.pieceAt(from).type;
+        Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask & specialMaskExtra[from];
+        Bitboard quiets = attacks & empty;
+        Bitboard captures = attacks & enemy;
+
+        while (quiets) {
+            *moves++ = Move(from, quiets.popLsb(), 0);
+        }
+
+        while (captures) {
+            Square to = captures.popLsb();
+            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
+        }
+    }
+
+    return moves;
+
+}
+
+template<Color color>
+Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard checkMask,
+                        Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
     constexpr Color enemyColor = EnemyColor<color>();
 
     constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
@@ -46,6 +121,8 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
     constexpr Bitboard beforePromoRank = (color == WHITE ? rank7 : rank2);
     constexpr Bitboard notBeforePromo = ~beforePromoRank;
 
+    Square epSquare = pos.getEpSquare();
+
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
 
@@ -53,12 +130,14 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
     Bitboard pawnsBeforePromo = beforePromoRank & pawns;
     pawns &= notBeforePromo;
 
-    Bitboard singlePush = step<UP>(pawns) & empty;
+    Bitboard singlePush = step<UP>(pawns & moveH) & empty;
     Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
 
-    Bitboard rightCapture = step<UP_RIGHT>(pawns) & enemy;
-    Bitboard leftCapture = step<UP_LEFT>(pawns) & enemy;
+    singlePush &= checkMask;
+    doublePush &= checkMask;
 
+    Bitboard rightCapture = step<UP_RIGHT>(pawns & moveD) & enemy & checkMask;
+    Bitboard leftCapture = step<UP_LEFT>(pawns & moveA) & enemy & checkMask;
 
     while (singlePush) {
         Square to = singlePush.popLsb();
@@ -67,23 +146,23 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
 
     while (doublePush) {
         Square to = doublePush.popLsb();
-        *moves++ = Move(to + (2 * DOWN), to, SPECIAL2_FLAG);
+        *moves++ = Move(to + (2 * DOWN), to, DOUBLE_PAWN_PUSH);
     }
 
     while (leftCapture) {
         Square to = leftCapture.popLsb();
-        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE_FLAG, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE, pos.pieceAt(to));
     }
 
     while (rightCapture) {
         Square to = rightCapture.popLsb();
-        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE_FLAG, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE, pos.pieceAt(to));
     }
 
     if (pawnsBeforePromo) {
-        Bitboard upPromo = step<UP>(pawnsBeforePromo) & empty;
-        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo) & enemy;
-        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo) & enemy;
+        Bitboard upPromo = step<UP>(pawnsBeforePromo & moveH) & empty & checkMask;
+        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo & moveD) & enemy & checkMask;
+        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
 
         while (upPromo) {
             Square to = upPromo.popLsb();
@@ -92,52 +171,246 @@ Move *generatePawnMoves(const Position &pos, Move *moves) {
 
         while (rightPromo) {
             Square to = rightPromo.popLsb();
-            moves = makePromo(moves, to + DOWN_LEFT, to);
+            moves = makePromoCapture(moves, to + DOWN_LEFT, to, pos.pieceAt(to));
         }
 
         while (leftPromo) {
             Square to = leftPromo.popLsb();
-            moves = makePromo(moves, to + DOWN_RIGHT, to);
+            moves = makePromoCapture(moves, to + DOWN_RIGHT, to, pos.pieceAt(to));
         }
     }
 
-    if (pos.getEpSquare() != NULL_SQUARE) {
-        Bitboard epPawns = pawnMask(pos.getEpSquare(), enemyColor) & pawns;
+    if ((epSquare != NULL_SQUARE) && (pawnMask(pos.getEpSquare(), enemyColor) & pawns) &&
+        checkMask.get(epSquare + DOWN)) {
+        Bitboard occ = pos.occupied();
+        bool rightEp = (step<UP_RIGHT>(pawns & moveD)).get(epSquare);
+        bool leftEp = (step<UP_LEFT>(pawns & moveA)).get(epSquare);
 
-        while (epPawns) {
-            *moves++ = Move(epPawns.popLsb(), pos.getEpSquare(), CAPTURE_FLAG | SPECIAL2_FLAG,
-                            {PAWN, enemyColor});
+        if (rightEp) {
+            Square attackingPawn = epSquare + DOWN_LEFT;
+            Square attackedPawn = epSquare + DOWN;
+
+            occ.clear(attackingPawn);
+            occ.clear(attackedPawn);
+
+            Bitboard rookAttack = rookAttacks(attackedPawn, occ);
+            Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
+            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
+
+            Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
+            Bitboard seenDiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+            Bitboard seenADiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & aDiagAttack;
+
+            bool pinRank = rankAttack.get(king) && seenRankSliders;
+            bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+            bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
+
+            if (!(pinRank || pinDiag || pinADiag))
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+
+            occ.set(attackingPawn);
+            occ.set(attackedPawn);
+        }
+
+        if (leftEp) {
+            Square attackingPawn = epSquare + DOWN_RIGHT;
+            Square attackedPawn = epSquare + DOWN;
+
+            occ.clear(attackingPawn);
+            occ.clear(attackedPawn);
+
+            Bitboard rookAttack = rookAttacks(attackedPawn, occ);
+            Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
+
+            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
+            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
+
+            Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
+            Bitboard seenDiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & diagAttack;
+            Bitboard seenADiagSliders =
+                    (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, BISHOP>()) & aDiagAttack;
+
+            bool pinRank = rankAttack.get(king) && seenRankSliders;
+            bool pinDiag = diagAttack.get(king) && seenDiagSliders;
+            bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
+
+            if (!(pinRank || pinDiag || pinADiag))
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+
+            occ.set(attackingPawn);
+            occ.set(attackedPawn);
         }
     }
 
     return moves;
 }
 
+inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
+                               Bitboard safeSquares, Bitboard empty, Bitboard enemy) {
+
+    Bitboard kingTarget = kingMask(king) & safeSquares;
+    Bitboard kingQuiets = kingTarget & empty;
+    Bitboard kingCaptures = kingTarget & enemy;
+
+    while (kingQuiets) {
+        *moves++ = Move(king, kingQuiets.popLsb(), 0);
+    }
+
+    while (kingCaptures) {
+        Square to = kingCaptures.popLsb();
+        *moves++ = Move(king, to, CAPTURE, pos.pieceAt(to));
+    }
+
+    return moves;
+}
+
+inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard checkers) {
+    unsigned int checks = checkers.popCount();
+    if (checks == 0) {
+        return 0xffffffffffffffffULL;
+    } else if (checks == 1) {
+        Square checker = checkers.lsb();
+        PieceType type = pos.pieceAt(checker).type;
+        if (type == ROOK || type == BISHOP || type == QUEEN) {
+            return checkers | commonRay[king][checker];
+        } else {
+            return checkers;
+        }
+    } else {
+        return 0;
+    }
+}
+
+inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
+                                        Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
+                                        Bitboard pinH, Bitboard pinV, Bitboard pinD, Bitboard pinA) {
+    pinH &= pieces;
+    pinV &= pieces;
+    pinD &= pieces;
+    pinA &= pieces;
+    pieces &= ~(pinH | pinV | pinD | pinA);
+
+    moves = generateMovesFromPieces(pos, moves, pieces, checkMask, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinH, checkMask, fileMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinV, checkMask, rankMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinD, checkMask, diagonalMasks, occupied, empty, enemy);
+
+    moves = generateMovesFromPieces(pos, moves, pinA, checkMask, antiDiagonalMasks, occupied, empty, enemy);
+
+
+    return moves;
+}
+
 template<Color color>
 Move *generateMoves(const Position &pos, Move *moves) {
+    constexpr Color enemyColor = EnemyColor<color>();
+
+    Square king = pos.pieces<color, KING>().lsb();
+    assert(king != NULL_SQUARE);
+
     Bitboard friendlyPieces = pos.friendly<color>();
-    Bitboard enemyOrEmpty = pos.enemyOrEmpty<color>();
+    Bitboard empty = pos.empty();
+    Bitboard enemy = pos.enemy<color>();
     Bitboard occupied = pos.occupied();
+    Bitboard checkers = getCheckers<color>(pos, king);
 
-    moves = generatePawnMoves<color>(pos, moves);
+    occupied.clear(king);
+    Bitboard safeSquares = ~getAttackedSquares<enemyColor>(pos, occupied);
+    occupied.set(king);
 
-    Bitboard temp = friendlyPieces & ~pos.pieces<color, PAWN>();
-    while (temp) {
-        Square from = temp.popLsb();
-        PieceType type = pos.pieceAt(from).type;
-        Bitboard attacks = pieceAttacks(type, from, occupied);
-        attacks &= enemyOrEmpty;
+    // Generating checkMask
+    Bitboard checkMask = generateCheckMask(pos, king, checkers);
 
-        while (attacks) {
-            Square to = attacks.popLsb();
-            Piece piece = pos.pieceAt(to);
+    // Generating king moves
+    moves = generateKingMoves(pos, moves, king, safeSquares, empty, enemy);
 
-            if (piece.isNull()) {
-                *moves++ = Move(from, to, 0);
-            } else {
-                *moves++ = Move(from, to, CAPTURE_FLAG, piece);
-            }
+    // If we are in a double check, only king moves are legal
+    if (checkMask == 0)
+        return moves;
 
+    // Generating pinMasks
+    Bitboard seenSquares = pieceAttacks<QUEEN>(king, occupied);
+    Bitboard possiblePins = seenSquares & friendlyPieces;
+
+    occupied ^= possiblePins;
+
+    Bitboard possiblePinners = (pieceAttacks<QUEEN>(king, occupied) ^ seenSquares) & enemy;
+    Bitboard pinners = ((pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
+                        (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
+                        (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & possiblePinners;
+    Bitboard pinH, pinV, pinD, pinA, moveH, moveV, moveD, moveA; // horizontal, vertical, diagonal, antiDiagonal
+
+    while (pinners) {
+        Square pinner = pinners.popLsb();
+        Square pinned = (commonRay[king][pinner] & friendlyPieces).lsb();
+        LineType type = lineType[king][pinner];
+        switch (type) {
+            case HORIZONTAL:
+                pinH.set(pinned);
+                break;
+            case VERTICAL:
+                pinV.set(pinned);
+                break;
+            case DIAGONAL:
+                pinD.set(pinned);
+                break;
+            case ANTI_DIAGONAL:
+                pinA.set(pinned);
+                break;
+        }
+    }
+
+    moveH = ~(pinV | pinD | pinA);
+    moveV = ~(pinH | pinD | pinA);
+    moveD = ~(pinH | pinV | pinA);
+    moveA = ~(pinH | pinV | pinD);
+
+    occupied ^= possiblePins;
+
+    // Generating pawn moves
+    moves = generatePawnMoves<color>(pos, moves, king, checkMask, moveH, moveV, moveD, moveA);
+
+    // Generating knight and slider moves
+    Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<PAWN>();
+    sliderAndJumperPieces.clear(king);
+
+    moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask,
+                                       pinH, pinV, pinD, pinA);
+
+    // Generating castling moves
+    if constexpr (color == WHITE) {
+        if (pos.getCastleRight(WK_MASK) &&
+            (safeSquares & WK_CASTLE_SAFE) == WK_CASTLE_SAFE && (empty & WK_CASTLE_EMPTY) == WK_CASTLE_EMPTY) {
+
+            *moves++ = Move(E1, G1, KING_CASTLE);
+        }
+
+        if (pos.getCastleRight(WQ_MASK) &&
+            (safeSquares & WQ_CASTLE_SAFE) == WQ_CASTLE_SAFE && (empty & WQ_CASTLE_EMPTY) == WQ_CASTLE_EMPTY) {
+
+            *moves++ = Move(E1, C1, QUEEN_CASTLE);
+        }
+    } else {
+        if (pos.getCastleRight(BK_MASK) &&
+            (safeSquares & BK_CASTLE_SAFE) == BK_CASTLE_SAFE && (empty & BK_CASTLE_EMPTY) == BK_CASTLE_EMPTY) {
+
+            *moves++ = Move(E8, G8, KING_CASTLE);
+        }
+
+        if (pos.getCastleRight(BQ_MASK) &&
+            (safeSquares & BQ_CASTLE_SAFE) == BQ_CASTLE_SAFE && (empty & BQ_CASTLE_EMPTY) == BQ_CASTLE_EMPTY) {
+
+            *moves++ = Move(E8, C8, QUEEN_CASTLE);
         }
     }
 

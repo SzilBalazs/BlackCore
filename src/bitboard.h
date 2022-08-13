@@ -38,11 +38,14 @@ struct Bitboard {
 
     constexpr int popCount() const { return __builtin_popcountll(bb); }
 
-    constexpr Square lsb() const { return Square(__builtin_ctzll(bb)); }
+    constexpr Square lsb() const {
+        assert(bb != 0 && "The most common cause of this if the king bb empty");
+        return Square(__builtin_ctzll(bb));
+    }
 
     constexpr Square popLsb() {
         Square square = lsb();
-        clear(square);
+        bb &= bb - 1;
         return square;
     }
 
@@ -254,6 +257,16 @@ constexpr Bitboard rank8 = rank1 << (7 * 8);
 constexpr Bitboard notRank2 = ~rank2;
 constexpr Bitboard notRank7 = ~rank7;
 
+constexpr Bitboard WK_CASTLE_SAFE = 0x70ULL;
+constexpr Bitboard WK_CASTLE_EMPTY = 0x60ULL;
+constexpr Bitboard WQ_CASTLE_SAFE = 0x1cULL;
+constexpr Bitboard WQ_CASTLE_EMPTY = 0xeULL;
+
+constexpr Bitboard BK_CASTLE_SAFE = 0x7000000000000000ULL;
+constexpr Bitboard BK_CASTLE_EMPTY = 0x6000000000000000ULL;
+constexpr Bitboard BQ_CASTLE_SAFE = 0x1c00000000000000ULL;
+constexpr Bitboard BQ_CASTLE_EMPTY = 0xe00000000000000ULL;
+
 extern Bitboard bitMasks[64];
 extern Bitboard pawnMasks[64][2];
 extern Bitboard knightMasks[64];
@@ -261,7 +274,11 @@ extern Bitboard kingMasks[64];
 extern Bitboard fileMasks[64];
 extern Bitboard rankMasks[64];
 extern Bitboard rookMasks[64];
+extern Bitboard diagonalMasks[64];
+extern Bitboard antiDiagonalMasks[64];
 extern Bitboard bishopMasks[64];
+extern Bitboard commonRay[64][64];
+extern LineType lineType[64][64];
 
 void initBitboard();
 
@@ -279,6 +296,10 @@ inline Bitboard rankMask(Square square) { return rankMasks[square]; }
 
 inline Bitboard rookMask(Square square) { return rookMasks[square]; }
 
+inline Bitboard diagonalMask(Square square) { return diagonalMasks[square]; }
+
+inline Bitboard antiDiagonalMask(Square square) { return antiDiagonalMasks[square]; }
+
 inline Bitboard bishopMask(Square square) { return bishopMasks[square]; }
 
 constexpr Bitboard rookAttacks(Square square, Bitboard occ) {
@@ -295,8 +316,8 @@ constexpr Bitboard queenAttacks(Square square, Bitboard occ) {
     return rookAttacks(square, occ) | bishopAttacks(square, occ);
 }
 
-inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
-    assert(type != PAWN);
+template<PieceType type>
+constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
     switch (type) {
         case KNIGHT:
             return knightMask(square);
@@ -308,6 +329,47 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
             return queenAttacks(square, occupied);
         case KING:
             return kingMask(square);
+        default:
+            assert(0);
+            return 0;
+    }
+}
+
+inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
+    switch (type) {
+        case KNIGHT:
+            return knightMask(square);
+        case BISHOP:
+            return bishopAttacks(square, occupied);
+        case ROOK:
+            return rookAttacks(square, occupied);
+        case QUEEN:
+            return queenAttacks(square, occupied);
+        case KING:
+            return kingMask(square);
+        default:
+            assert(0);
+    }
+}
+
+template<Color color>
+inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
+    switch (type) {
+        case PAWN:
+            return pawnMask(square, color);
+        case KNIGHT:
+            return knightMask(square);
+        case BISHOP:
+            return bishopAttacks(square, occupied);
+        case ROOK:
+            return rookAttacks(square, occupied);
+        case QUEEN:
+            return queenAttacks(square, occupied);
+        case KING:
+            return kingMask(square);
+        default:
+            assert(0);
+            return 0;
     }
 }
 
@@ -333,6 +395,28 @@ constexpr Bitboard step(Bitboard b) {
     }
 }
 
+constexpr Bitboard step(Direction direction, Bitboard b) {
+    switch (direction) {
+        case NORTH:
+            return b << 8;
+        case SOUTH:
+            return b >> 8;
+        case NORTH_WEST:
+            return (b & notFileA) << 7;
+        case WEST:
+            return (b & notFileA) >> 1;
+        case SOUTH_WEST:
+            return (b & notFileA) >> 9;
+        case NORTH_EAST:
+            return (b & notFileH) << 9;
+        case EAST:
+            return (b & notFileH) << 1;
+        case SOUTH_EAST:
+            return (b & notFileH) >> 7;
+    }
+    return 0;
+}
+
 template<Direction direction>
 constexpr Bitboard slide(Square square) {
     Bitboard result;
@@ -344,14 +428,23 @@ constexpr Bitboard slide(Square square) {
     return result;
 }
 
+inline Bitboard slide(Direction direction, Square square) {
+    Bitboard result;
+    Bitboard temp = {square};
+    while (temp) {
+        temp = step(direction, temp);
+        result |= temp;
+    }
+    return result;
+}
+
 template<Direction direction>
 constexpr Bitboard slide(Square square, Bitboard occupied) {
     Bitboard result;
     Bitboard temp = {square};
-    while (temp) {
+    while (temp && !occupied.get(temp.lsb())) {
         temp = step<direction>(temp);
         result |= temp;
-        if (occupied.get(temp.lsb())) break;
     }
     return result;
 }

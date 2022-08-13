@@ -18,54 +18,76 @@
 #ifndef CHESS_MOVE_H
 #define CHESS_MOVE_H
 
-#include <iostream>
+#include "utils.h"
 #include "constants.h"
 
-const unsigned int PROMO_FLAG = 0x8;    // 0b1000
-const unsigned int CAPTURE_FLAG = 0x4;  // 0b0100
-const unsigned int SPECIAL1_FLAG = 0x2; // 0b0010
-const unsigned int SPECIAL2_FLAG = 0x1; // 0b0001
+constexpr unsigned int PROMO_FLAG = 0x8;    // 0b1000
+constexpr unsigned int CAPTURE_FLAG = 0x4;  // 0b0100
+constexpr unsigned int SPECIAL1_FLAG = 0x2; // 0b0010
+constexpr unsigned int SPECIAL2_FLAG = 0x1; // 0b0001
+
+constexpr unsigned int QUIET_MOVE = 0;
+constexpr unsigned int CAPTURE = CAPTURE_FLAG;
+
+constexpr unsigned int DOUBLE_PAWN_PUSH = SPECIAL2_FLAG;
+constexpr unsigned int EP_CAPTURE = CAPTURE_FLAG | SPECIAL2_FLAG;
+
+constexpr unsigned int PROMO_KNIGHT = PROMO_FLAG;
+constexpr unsigned int PROMO_BISHOP = PROMO_FLAG | SPECIAL2_FLAG;
+constexpr unsigned int PROMO_ROOK = PROMO_FLAG | SPECIAL1_FLAG;
+constexpr unsigned int PROMO_QUEEN = PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG;
+
+constexpr unsigned int PROMO_CAPTURE_KNIGHT = CAPTURE_FLAG | PROMO_FLAG;
+constexpr unsigned int PROMO_CAPTURE_BISHOP = CAPTURE_FLAG | PROMO_FLAG | SPECIAL2_FLAG;
+constexpr unsigned int PROMO_CAPTURE_ROOK = CAPTURE_FLAG | PROMO_FLAG | SPECIAL1_FLAG;
+constexpr unsigned int PROMO_CAPTURE_QUEEN = CAPTURE_FLAG | PROMO_FLAG | SPECIAL1_FLAG | SPECIAL2_FLAG;
+
+constexpr unsigned int KING_CASTLE = SPECIAL1_FLAG;
+constexpr unsigned int QUEEN_CASTLE = SPECIAL1_FLAG | SPECIAL2_FLAG;
+
 
 class Move {
 public:
-    Move(Square from, Square to, unsigned int flags, Piece capturedPiece);
+    constexpr Move(Square from, Square to, unsigned int flags, Piece capturedPiece) {
+        data = ((encodePiece(capturedPiece) << 16) | (flags << 12) | (from << 6) | (to));
+    }
 
-    Move(Square from, Square to, unsigned int flags);
+    constexpr Move(Square from, Square to, unsigned int flags) {
+        data = ((encodePiece({}) << 16) | (flags << 12) | (from << 6) | (to));
+    }
 
-    Move();
+    constexpr Move() { data = 0; }
 
-    void operator=(Move);
+    constexpr Square getTo() const { return Square(data & 0x3f); }
 
-    Square getTo() const;
+    constexpr Square getFrom() const { return Square((data >> 6) & 0x3f); }
 
-    Square getFrom() const;
+    constexpr Piece getCapturedPiece() const { return decodePiece(data >> 16); }
 
-    Piece getCapturedPiece() const;
+    constexpr bool isFlag(unsigned int flag) const { return ((data >> 12) & 0xf) & flag; }
 
-    bool isFlag(unsigned int) const;
+    constexpr bool equalFlag(unsigned int flag) const { return ((data >> 12) & 0xf) == (flag & 0xf); }
 
-    bool operator==(Move) const;
+    constexpr bool isNull() const { return data == 0; }
 
-    bool operator!=(Move) const;
+    constexpr bool isCapture() const { return isFlag(CAPTURE_FLAG); }
 
-    bool isCapture() const;
+    constexpr bool isPromo() const { return isFlag(PROMO_FLAG); }
 
-    bool isPromo() const;
+    constexpr bool isSpecial1() const { return isFlag(SPECIAL1_FLAG); }
 
-    bool isSpecial1() const;
+    constexpr bool isSpecial2() const { return isFlag(SPECIAL2_FLAG); }
 
-    bool isSpecial2() const;
+    constexpr bool isQuiet() const { return !isCapture(); }
 
-    bool isQuiet() const;
-
-    explicit operator bool() const;
-
-    bool isNull() const;
+    constexpr explicit operator bool() const { return !isNull(); }
 
     std::string str() const;
 
 private:
     unsigned int data;
 };
+
+std::ostream &operator<<(std::ostream &os, const Move &move);
 
 #endif //CHESS_MOVE_H

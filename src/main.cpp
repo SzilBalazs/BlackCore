@@ -14,20 +14,37 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <chrono>
+#include <iostream>
 #include "movegen.h"
 #include "utils.h"
 
+const int DEPTH = 6;
+
+U64 perft(Position &position, int depth) {
+    Move moves[200];
+    Move *movesEnd = generateMoves(position, moves);
+    if (depth == 1) return movesEnd - moves;
+    U64 nodes = 0;
+    for (Move *it = moves; it != movesEnd; it++) {
+        position.makeMove(*it);
+        U64 a = perft(position, depth - 1);
+        //if (depth == DEPTH) std::cout << (*it) << ": " << a << std::endl;
+        nodes += a;
+        position.undoMove(*it);
+    }
+    return nodes;
+}
+
 int main() {
     initBitboard();
-    std::string fen;
-    getline(std::cin, fen);
-    Position pos = {fen};
-    pos.display();
-    Move moves[200];
-    Move *movesEnd = generateMoves(pos, moves);
-    std::cout << movesEnd - moves << " pseudo legal moves found: " << std::endl;
-    for (Move *it = moves; it != movesEnd; it++) {
-        std::cout << it->str() << std::endl;
-    }
+
+    Position position = {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 "};
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    std::cout << perft(position, DEPTH) << std::endl;
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
+              << std::endl;
     return 0;
 }

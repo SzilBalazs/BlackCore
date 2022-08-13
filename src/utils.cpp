@@ -18,17 +18,6 @@
 #include <sstream>
 #include "utils.h"
 
-const PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
-const Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
-
-unsigned char encodePiece(Piece piece) {
-    return (piece.color << 3) | piece.type;
-}
-
-Piece decodePiece(unsigned char encodedPiece) {
-    return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
-}
-
 std::string formatSquare(Square square) {
     return std::string() + (char) ('a' + (char) square % 8) + (char) ('1' + (char) (square / 8));
 }
