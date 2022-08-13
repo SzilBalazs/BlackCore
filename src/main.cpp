@@ -24,7 +24,7 @@ const int DEPTH = 6;
 
 U64 perft(Position &position, int depth) {
     Move moves[200];
-    Move *movesEnd = generateMoves(position, moves);
+    Move *movesEnd = generateMoves(position, moves, true);
     if (depth == 1) return movesEnd - moves;
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
@@ -37,18 +37,24 @@ U64 perft(Position &position, int depth) {
     return nodes;
 }
 
-int main() {
-    initBitboard();
+void perftT() {
+    Position pos = {STARTING_FEN};
 
-    Position position = {"k7/3Q4/K7/8/8/8/8/8 b - - 0 1"};
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-    std::cout << search(position, 5, -INF_SCORE, INF_SCORE, 0) << std::endl;
-    std::cout << eval(position) << std::endl;
-
+    std::cout << perft(pos, 6) << std::endl;
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
               << std::endl;
+}
+
+int main() {
+    initBitboard();
+
+    Position position = {"r1bqkb1r/1ppp1ppp/p1n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1"};
+
+    std::cout << search(position, 6, -INF_SCORE, INF_SCORE, 0) << std::endl;
+    std::cout << eval(position) << std::endl;
+
     return 0;
 }

@@ -38,6 +38,6 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
         return getAttackers<BLACK>(pos, square);
 }
 
-Move *generateMoves(const Position &pos, Move *moves);
+Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly);
 
 #endif //BLACKCORE_MOVEGEN_H

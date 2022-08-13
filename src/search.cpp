@@ -15,20 +15,57 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "search.h"
+#include <iostream>
 #include "eval.h"
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
-    return eval(pos);
-}
+    Score staticEval = eval(pos);
 
-Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+    if (staticEval >= beta) {
+        return beta;
+    }
 
-    if (depth == 0) return eval(pos);
+    if (staticEval > alpha) {
+        alpha = staticEval;
+    }
 
     Color color = pos.getSideToMove();
 
     Move moves[200];
-    Move *movesEnd = generateMoves(pos, moves);
+    Move *movesEnd = generateMoves(pos, moves, true);
+
+    unsigned int moveCnt = movesEnd - moves;
+
+    Move bestMove;
+
+    for (int i = 0; i < moveCnt; i++) {
+
+        pos.makeMove(moves[i]);
+
+        Score score = -quiescence(pos, -beta, -alpha, ply + 1);
+
+        pos.undoMove(moves[i]);
+
+        if (score >= beta) {
+            return beta;
+        }
+
+        if (score > alpha) {
+            alpha = score;
+        }
+    }
+
+    return alpha;
+}
+
+Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+
+    if (depth == 0) return quiescence(pos, alpha, beta, ply);
+
+    Color color = pos.getSideToMove();
+
+    Move moves[200];
+    Move *movesEnd = generateMoves(pos, moves, false);
 
     unsigned int moveCnt = movesEnd - moves;
 
@@ -60,6 +97,11 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
             bestMove = moves[i];
         }
 
+    }
+
+    // Root node
+    if (ply == 0) {
+        std::cout << "bestmove " << bestMove << std::endl;
     }
 
     return alpha;

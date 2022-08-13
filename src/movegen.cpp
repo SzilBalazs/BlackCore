@@ -45,6 +45,7 @@ inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     return result;
 }
 
+template<bool capturesOnly>
 inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
                                      Bitboard occupied, Bitboard empty, Bitboard enemy) {
 
@@ -52,13 +53,15 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         Square from = pieces.popLsb();
         PieceType type = pos.pieceAt(from).type;
         Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
-        Bitboard quiets = attacks & empty;
-        Bitboard captures = attacks & enemy;
 
-        while (quiets) {
-            *moves++ = Move(from, quiets.popLsb(), 0);
+        if (!capturesOnly) {
+            Bitboard quiets = attacks & empty;
+            while (quiets) {
+                *moves++ = Move(from, quiets.popLsb(), 0);
+            }
         }
 
+        Bitboard captures = attacks & enemy;
         while (captures) {
             Square to = captures.popLsb();
             *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
@@ -69,6 +72,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
 
 }
 
+template<bool capturesOnly>
 inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
                                      Bitboard *specialMaskExtra,
                                      Bitboard occupied, Bitboard empty, Bitboard enemy) {
@@ -77,13 +81,15 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         Square from = pieces.popLsb();
         PieceType type = pos.pieceAt(from).type;
         Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask & specialMaskExtra[from];
-        Bitboard quiets = attacks & empty;
-        Bitboard captures = attacks & enemy;
 
-        while (quiets) {
-            *moves++ = Move(from, quiets.popLsb(), 0);
+        if constexpr (!capturesOnly) {
+            Bitboard quiets = attacks & empty;
+            while (quiets) {
+                *moves++ = Move(from, quiets.popLsb(), 0);
+            }
         }
 
+        Bitboard captures = attacks & enemy;
         while (captures) {
             Square to = captures.popLsb();
             *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
@@ -94,7 +100,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
 
 }
 
-template<Color color>
+template<Color color, bool capturesOnly>
 Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard checkMask,
                         Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
     constexpr Color enemyColor = EnemyColor<color>();
@@ -119,24 +125,26 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     Bitboard pawnsBeforePromo = beforePromoRank & pawns;
     pawns &= notBeforePromo;
 
-    Bitboard singlePush = step<UP>(pawns & moveH) & empty;
-    Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
+    if constexpr (!capturesOnly) {
+        Bitboard singlePush = step<UP>(pawns & moveH) & empty;
+        Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
 
-    singlePush &= checkMask;
-    doublePush &= checkMask;
+        singlePush &= checkMask;
+        doublePush &= checkMask;
+
+        while (singlePush) {
+            Square to = singlePush.popLsb();
+            *moves++ = Move(to + DOWN, to, 0);
+        }
+
+        while (doublePush) {
+            Square to = doublePush.popLsb();
+            *moves++ = Move(to + (2 * DOWN), to, DOUBLE_PAWN_PUSH);
+        }
+    }
 
     Bitboard rightCapture = step<UP_RIGHT>(pawns & moveD) & enemy & checkMask;
     Bitboard leftCapture = step<UP_LEFT>(pawns & moveA) & enemy & checkMask;
-
-    while (singlePush) {
-        Square to = singlePush.popLsb();
-        *moves++ = Move(to + DOWN, to, 0);
-    }
-
-    while (doublePush) {
-        Square to = doublePush.popLsb();
-        *moves++ = Move(to + (2 * DOWN), to, DOUBLE_PAWN_PUSH);
-    }
 
     while (leftCapture) {
         Square to = leftCapture.popLsb();
@@ -149,15 +157,17 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     }
 
     if (pawnsBeforePromo) {
-        Bitboard upPromo = step<UP>(pawnsBeforePromo & moveH) & empty & checkMask;
-        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo & moveD) & enemy & checkMask;
-        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
 
-        while (upPromo) {
-            Square to = upPromo.popLsb();
-            moves = makePromo(moves, to + DOWN, to);
+        if constexpr (!capturesOnly) {
+            Bitboard upPromo = step<UP>(pawnsBeforePromo & moveH) & empty & checkMask;
+            while (upPromo) {
+                Square to = upPromo.popLsb();
+                moves = makePromo(moves, to + DOWN, to);
+            }
         }
 
+        Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo & moveD) & enemy & checkMask;
+        Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
         while (rightPromo) {
             Square to = rightPromo.popLsb();
             moves = makePromoCapture(moves, to + DOWN_LEFT, to, pos.pieceAt(to));
@@ -241,17 +251,20 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     return moves;
 }
 
+template<bool capturesOnly>
 inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
                                Bitboard safeSquares, Bitboard empty, Bitboard enemy) {
 
     Bitboard kingTarget = kingMask(king) & safeSquares;
-    Bitboard kingQuiets = kingTarget & empty;
-    Bitboard kingCaptures = kingTarget & enemy;
 
-    while (kingQuiets) {
-        *moves++ = Move(king, kingQuiets.popLsb(), 0);
+    if constexpr (!capturesOnly) {
+        Bitboard kingQuiets = kingTarget & empty;
+        while (kingQuiets) {
+            *moves++ = Move(king, kingQuiets.popLsb(), 0);
+        }
     }
 
+    Bitboard kingCaptures = kingTarget & enemy;
     while (kingCaptures) {
         Square to = kingCaptures.popLsb();
         *moves++ = Move(king, to, CAPTURE, pos.pieceAt(to));
@@ -277,6 +290,7 @@ inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard che
     }
 }
 
+template<bool capturesOnly>
 inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
                                         Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
                                         Bitboard pinH, Bitboard pinV, Bitboard pinD, Bitboard pinA) {
@@ -286,21 +300,22 @@ inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboa
     pinA &= pieces;
     pieces &= ~(pinH | pinV | pinD | pinA);
 
-    moves = generateMovesFromPieces(pos, moves, pieces, checkMask, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pieces, checkMask, occupied, empty, enemy);
 
-    moves = generateMovesFromPieces(pos, moves, pinH, checkMask, fileMasks, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinH, checkMask, fileMasks, occupied, empty, enemy);
 
-    moves = generateMovesFromPieces(pos, moves, pinV, checkMask, rankMasks, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinV, checkMask, rankMasks, occupied, empty, enemy);
 
-    moves = generateMovesFromPieces(pos, moves, pinD, checkMask, diagonalMasks, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinD, checkMask, diagonalMasks, occupied, empty, enemy);
 
-    moves = generateMovesFromPieces(pos, moves, pinA, checkMask, antiDiagonalMasks, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinA, checkMask, antiDiagonalMasks, occupied, empty,
+                                                  enemy);
 
 
     return moves;
 }
 
-template<Color color>
+template<Color color, bool capturesOnly>
 Move *generateMoves(const Position &pos, Move *moves) {
     constexpr Color enemyColor = EnemyColor<color>();
 
@@ -311,7 +326,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
     Bitboard occupied = pos.occupied();
-    Bitboard checkers = getAttackers < color > (pos, king);
+    Bitboard checkers = getAttackers<color>(pos, king);
 
     occupied.clear(king);
     Bitboard safeSquares = ~getAttackedSquares<enemyColor>(pos, occupied);
@@ -321,7 +336,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard checkMask = generateCheckMask(pos, king, checkers);
 
     // Generating king moves
-    moves = generateKingMoves(pos, moves, king, safeSquares, empty, enemy);
+    moves = generateKingMoves<capturesOnly>(pos, moves, king, safeSquares, empty, enemy);
 
     // If we are in a double check, only king moves are legal
     if (checkMask == 0)
@@ -367,14 +382,15 @@ Move *generateMoves(const Position &pos, Move *moves) {
     occupied ^= possiblePins;
 
     // Generating pawn moves
-    moves = generatePawnMoves<color>(pos, moves, king, checkMask, moveH, moveV, moveD, moveA);
+    moves = generatePawnMoves<color, capturesOnly>(pos, moves, king, checkMask, moveH, moveV, moveD, moveA);
 
     // Generating knight and slider moves
     Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<PAWN>();
     sliderAndJumperPieces.clear(king);
 
-    moves = generateSliderAndJumpMoves(pos, moves, sliderAndJumperPieces, occupied, empty, enemy, checkMask,
-                                       pinH, pinV, pinD, pinA);
+    moves = generateSliderAndJumpMoves<capturesOnly>(pos, moves, sliderAndJumperPieces, occupied, empty, enemy,
+                                                     checkMask,
+                                                     pinH, pinV, pinD, pinA);
 
     // Generating castling moves
     if constexpr (color == WHITE) {
@@ -406,11 +422,19 @@ Move *generateMoves(const Position &pos, Move *moves) {
     return moves;
 }
 
+template<bool capturesOnly>
 Move *generateMoves(const Position &pos, Move *moves) {
-
     if (pos.getSideToMove() == WHITE) {
-        return generateMoves<WHITE>(pos, moves);
+        return generateMoves<WHITE, capturesOnly>(pos, moves);
     } else {
-        return generateMoves<BLACK>(pos, moves);
+        return generateMoves<BLACK, capturesOnly>(pos, moves);
+    }
+}
+
+Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly) {
+    if (capturesOnly) {
+        return generateMoves<true>(pos, moves);
+    } else {
+        return generateMoves<false>(pos, moves);
     }
 }
