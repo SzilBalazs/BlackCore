@@ -257,6 +257,16 @@ constexpr Bitboard rank8 = rank1 << (7 * 8);
 constexpr Bitboard notRank2 = ~rank2;
 constexpr Bitboard notRank7 = ~rank7;
 
+constexpr Bitboard WK_CASTLE_SAFE = 0x70ULL;
+constexpr Bitboard WK_CASTLE_EMPTY = 0x60ULL;
+constexpr Bitboard WQ_CASTLE_SAFE = 0x1cULL;
+constexpr Bitboard WQ_CASTLE_EMPTY = 0xeULL;
+
+constexpr Bitboard BK_CASTLE_SAFE = 0x7000000000000000ULL;
+constexpr Bitboard BK_CASTLE_EMPTY = 0x6000000000000000ULL;
+constexpr Bitboard BQ_CASTLE_SAFE = 0x1c00000000000000ULL;
+constexpr Bitboard BQ_CASTLE_EMPTY = 0xe00000000000000ULL;
+
 extern Bitboard bitMasks[64];
 extern Bitboard pawnMasks[64][2];
 extern Bitboard knightMasks[64];

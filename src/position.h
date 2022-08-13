@@ -147,16 +147,42 @@ void Position::makeMove(Move move) {
 
     if (move.equalFlag(DOUBLE_PAWN_PUSH)) {
         newState.epSquare = from + UP;
-
     } else {
         newState.epSquare = NULL_SQUARE;
     }
 
+    states.push(newState);
+
+    // Removing castling rights
+    if (getCastleRight(WK_MASK) && (from == E1 || from == H1 || to == H1)) {
+        removeCastleRight(WK_MASK);
+    }
+    if (getCastleRight(WQ_MASK) && (from == E1 || from == A1 || to == A1)) {
+        removeCastleRight(WQ_MASK);
+    }
+    if (getCastleRight(BK_MASK) && (from == E8 || from == H8 || to == H8)) {
+        removeCastleRight(BK_MASK);
+    }
+    if (getCastleRight(BQ_MASK) && (from == E8 || from == A8 || to == A8)) {
+        removeCastleRight(BQ_MASK);
+    }
+
+    // Moving rook in case of a castle
     if (move.equalFlag(KING_CASTLE)) {
-
+        if constexpr (color == WHITE) {
+            movePiece(H1, F1);
+        } else {
+            movePiece(H8, F8);
+        }
     } else if (move.equalFlag(QUEEN_CASTLE)) {
+        if constexpr (color == WHITE) {
+            movePiece(A1, D1);
+        } else {
+            movePiece(A8, D8);
+        }
+    }
 
-    } else if (move.equalFlag(EP_CAPTURE)) {
+    if (move.equalFlag(EP_CAPTURE)) {
         clearSquare(to + DOWN);
     }
 
@@ -175,8 +201,6 @@ void Position::makeMove(Move move) {
         }
         setSquare(to, piece);
     }
-
-    states.push(newState);
 }
 
 template<Color color>
@@ -191,6 +215,20 @@ void Position::undoMove(Move move) {
 
     movePiece(to, from);
 
+
+    if (move.equalFlag(KING_CASTLE)) {
+        if constexpr (enemyColor == WHITE) {
+            movePiece(F1, H1);
+        } else {
+            movePiece(F8, H8);
+        }
+    } else if (move.equalFlag(QUEEN_CASTLE)) {
+        if constexpr (enemyColor == WHITE) {
+            movePiece(D1, A1);
+        } else {
+            movePiece(D8, A8);
+        }
+    }
 
     if (move.equalFlag(EP_CAPTURE))
         setSquare(to + DOWN, state->capturedPiece);
