@@ -16,8 +16,6 @@
 
 #include "eval.h"
 
-constexpr Score PIECE_VALUES[6] = {0, 100, 300, 300, 500, 900};
-
 Score eval(const Position &pos) {
     Score whiteEval = 0;
     whiteEval += pos.pieces<WHITE, PAWN>().popCount() * PIECE_VALUES[PAWN];

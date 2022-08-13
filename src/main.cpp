@@ -51,9 +51,9 @@ void perftT() {
 int main() {
     initBitboard();
 
-    Position position = {"r1bqkb1r/1ppp1ppp/p1n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1"};
+    Position position = {"6k1/3b4/1p1p4/p1n2p1r/1PPNp3/P3q1p1/1R1R2P1/5K2 w - - 0 4"};
 
-    std::cout << search(position, 6, -INF_SCORE, INF_SCORE, 0) << std::endl;
+    std::cout << search(position, 5, -INF_SCORE, INF_SCORE, 0) << std::endl;
     std::cout << eval(position) << std::endl;
 
     return 0;

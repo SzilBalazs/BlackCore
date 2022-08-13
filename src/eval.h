@@ -20,6 +20,8 @@
 #include "constants.h"
 #include "position.h"
 
+constexpr Score PIECE_VALUES[6] = {0, 100, 300, 300, 500, 900};
+
 Score eval(const Position &pos);
 
 

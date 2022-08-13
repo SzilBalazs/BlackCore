@@ -17,5 +17,9 @@
 #ifndef BLACKCORE_MOVE_ORDERING_H
 #define BLACKCORE_MOVE_ORDERING_H
 
+#include "move.h"
+#include "position.h"
+
+Score scoreMove(const Position &pos, Move m);
 
 #endif //BLACKCORE_MOVE_ORDERING_H

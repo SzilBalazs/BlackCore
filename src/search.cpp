@@ -29,22 +29,17 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    Color color = pos.getSideToMove();
+    MoveList moves = {pos, false};
 
-    Move moves[200];
-    Move *movesEnd = generateMoves(pos, moves, true);
+    while (!moves.empty()) {
 
-    unsigned int moveCnt = movesEnd - moves;
+        Move m = moves.nextMove();
 
-    Move bestMove;
-
-    for (int i = 0; i < moveCnt; i++) {
-
-        pos.makeMove(moves[i]);
+        pos.makeMove(m);
 
         Score score = -quiescence(pos, -beta, -alpha, ply + 1);
 
-        pos.undoMove(moves[i]);
+        pos.undoMove(m);
 
         if (score >= beta) {
             return beta;
@@ -64,12 +59,9 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     Color color = pos.getSideToMove();
 
-    Move moves[200];
-    Move *movesEnd = generateMoves(pos, moves, false);
+    MoveList moves = {pos, false};
 
-    unsigned int moveCnt = movesEnd - moves;
-
-    if (moveCnt == 0) {
+    if (moves.count == 0) {
         Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
         if (checkers) {
             return -MATE_VALUE + ply;
@@ -80,13 +72,15 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     Move bestMove;
 
-    for (int i = 0; i < moveCnt; i++) {
+    while (!moves.empty()) {
 
-        pos.makeMove(moves[i]);
+        Move m = moves.nextMove();
+
+        pos.makeMove(m);
 
         Score score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
 
-        pos.undoMove(moves[i]);
+        pos.undoMove(m);
 
         if (score >= beta) {
             return beta;
@@ -94,7 +88,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
         if (score > alpha) {
             alpha = score;
-            bestMove = moves[i];
+            bestMove = m;
         }
 
     }
