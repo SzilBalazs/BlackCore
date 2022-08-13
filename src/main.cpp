@@ -16,8 +16,9 @@
 
 #include <chrono>
 #include <iostream>
-#include "movegen.h"
+#include "search.h"
 #include "utils.h"
+#include "eval.h"
 
 const int DEPTH = 6;
 
@@ -39,10 +40,13 @@ U64 perft(Position &position, int depth) {
 int main() {
     initBitboard();
 
-    Position position = {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 "};
+    Position position = {"k3q3/8/8/8/7R/2B5/8/K7 w - - 0 1"};
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    std::cout << perft(position, DEPTH) << std::endl;
+
+    std::cout << search(position, 5, -INF_SCORE, INF_SCORE, 0) << std::endl;
+    std::cout << eval(position) << std::endl;
+
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count()
               << std::endl;

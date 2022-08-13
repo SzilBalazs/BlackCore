@@ -20,6 +20,11 @@
 #include <string>
 
 typedef unsigned long long U64;
+typedef int Score;
+typedef unsigned int Depth;
+typedef unsigned int Ply;
+
+constexpr Score INF_SCORE = 1000000;
 
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
