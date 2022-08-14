@@ -26,14 +26,16 @@ struct BoardState {
     Color stm;
     Square epSquare;
     unsigned char castlingRights;
+    U64 hash;
 
     Piece capturedPiece;
 
     BoardState() {
-        stm = WHITE;
+        stm = COLOR_EMPTY;
         epSquare = NULL_SQUARE;
         castlingRights = 0;
         capturedPiece = {};
+        hash = 0;
     }
 };
 
@@ -59,6 +61,14 @@ struct StateStack {
 
 #define state states.top()
 
+extern U64 randTable[781];
+constexpr U64 *pieceRandTable = randTable;
+constexpr U64 *castlingRandTable = randTable + 768;
+constexpr U64 *epRandTable = randTable + 772;
+constexpr U64 *blackRand = randTable + 780;
+
+void initHash();
+
 class Position {
 public:
 
@@ -69,11 +79,23 @@ public:
     template<Color color, PieceType type>
     constexpr Bitboard pieces() const { return pieceBB[type] & allPieceBB[color]; }
 
+    template<Color color>
+    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+
+    template<PieceType type>
+    constexpr Bitboard pieces(Color color) const { return pieceBB[type] & allPieceBB[color]; }
+
+    constexpr Bitboard pieces(Color color, PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+
     template<PieceType type>
     constexpr Bitboard pieces() const { return pieceBB[type]; }
 
+    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type]; }
+
     template<Color color>
     constexpr Bitboard friendly() const { return allPieceBB[color]; }
+
+    constexpr Bitboard friendly(Color color) const { return allPieceBB[color]; }
 
     template<Color color>
     constexpr Bitboard enemy() const { return allPieceBB[EnemyColor<color>()]; }
@@ -90,6 +112,10 @@ public:
     inline Square getEpSquare() const { return state->epSquare; }
 
     inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
+
+    inline BoardState *getState() { return state; }
+
+    inline U64 getHash() const { return state->hash; }
 
     inline void makeMove(Move move);
 
@@ -144,9 +170,17 @@ void Position::makeMove(Move move) {
     newState.capturedPiece = move.getCapturedPiece();
     newState.castlingRights = state->castlingRights;
     newState.stm = enemyColor;
+    newState.hash = state->hash ^ *blackRand;
+
+    // Removing ep and castling rights from hash
+    newState.hash ^= castlingRandTable[state->castlingRights];
+    if (newState.epSquare != NULL_SQUARE) {
+        newState.hash ^= epRandTable[squareToFile(state->epSquare)];
+    }
 
     if (move.equalFlag(DOUBLE_PAWN_PUSH)) {
         newState.epSquare = from + UP;
+        newState.hash ^= epRandTable[squareToFile(newState.epSquare)];
     } else {
         newState.epSquare = NULL_SQUARE;
     }
@@ -166,6 +200,9 @@ void Position::makeMove(Move move) {
     if (getCastleRight(BQ_MASK) && (from == E8 || from == A8 || to == A8)) {
         removeCastleRight(BQ_MASK);
     }
+
+    // Readding castling rights
+    state->hash ^= castlingRandTable[state->castlingRights];
 
     // Moving rook in case of a castle
     if (move.equalFlag(KING_CASTLE)) {

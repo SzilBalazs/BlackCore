@@ -19,7 +19,66 @@
 
 #include "position.h"
 #include "move.h"
+#include "move_ordering.h"
 
-Move *generateMoves(const Position &pos, Move *moves);
+template<Color color>
+inline Bitboard getAttackers(const Position &pos, Square square) {
+    Bitboard occupied = pos.occupied();
+    Bitboard enemy = pos.enemy<color>();
+    return ((pawnMask(square, color) & pos.pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(square, occupied) & pos.pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(square, occupied) & pos.pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(square, occupied) & pos.pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(square, occupied) & pos.pieces<QUEEN>())) & enemy;
+}
+
+inline Bitboard getAttackers(const Position &pos, Square square) {
+    if (pos.getSideToMove() == WHITE)
+        return getAttackers<WHITE>(pos, square);
+    else
+        return getAttackers<BLACK>(pos, square);
+}
+
+Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly);
+
+
+struct MoveList {
+    Move moves[200];
+    Move *movesEnd;
+    unsigned int index;
+
+    Score scores[200];
+
+    unsigned int count;
+
+    MoveList(const Position &pos, bool capturesOnly) {
+        movesEnd = generateMoves(pos, moves, capturesOnly);
+        index = 0;
+        count = movesEnd - moves;
+
+        // Scoring moves
+        for (unsigned int i = 0; i < count; i++) {
+            scores[i] = scoreMove(pos, moves[i]);
+        }
+    }
+
+    inline bool empty() {
+        return index == count;
+    }
+
+    inline Move nextMove() {
+        int best = index;
+        for (unsigned int i = index; i < count; i++) {
+            if (scores[i] > scores[best]) {
+                best = i;
+            }
+        }
+        std::swap(moves[index], moves[best]);
+        std::swap(scores[index], scores[best]);
+
+        return moves[index++];
+    }
+};
+
 
 #endif //BLACKCORE_MOVEGEN_H

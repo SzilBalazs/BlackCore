@@ -82,6 +82,8 @@ public:
 
     constexpr explicit operator bool() const { return !isNull(); }
 
+    constexpr bool operator==(Move a) const { return (data & 0xFFFF) == (a.data & 0xFFFF); }
+
     std::string str() const;
 
 private:

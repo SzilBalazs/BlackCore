@@ -23,21 +23,38 @@
 
 using std::cout, std::string;
 
-void Position::clearSquare(Square square) {
-    PieceType type = pieceAt(square).type;
+// 2 colors * 6 types * 64 square = 768
+// 4 for castling rights
+// 8 number for the file of the epSquare
+// 1 number if the side is black
+U64 randTable[781];
 
-    pieceBB[type].clear(square);
+void initHash() {
+    for (unsigned long long &i : randTable) {
+        i = randBB().bb;
+    }
+}
+
+void Position::clearSquare(Square square) {
+    Piece piece = pieceAt(square);
+
+    pieceBB[piece.type].clear(square);
     allPieceBB[WHITE].clear(square);
     allPieceBB[BLACK].clear(square);
     board[square] = {};
+
+    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 }
 
 void Position::setSquare(Square square, Piece piece) {
-    clearSquare(square);
+    if (!piece.isNull())
+        clearSquare(square);
 
     pieceBB[piece.type].set(square);
     allPieceBB[piece.color].set(square);
     board[square] = piece;
+
+    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 }
 
 void Position::movePiece(Square from, Square to) {
@@ -58,15 +75,11 @@ void Position::clearPosition() {
     allPieceBB[BLACK] = 0;
 
     states.push({});
-
-    state->stm = WHITE;
-    state->epSquare = NULL_SQUARE;
-    state->castlingRights = 0;
-    state->capturedPiece = {};
 }
 
 void Position::display() {
     std::vector<string> text;
+    text.emplace_back(string("Hash: ") + std::to_string(state->hash));
     if (getEpSquare() != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
     string cr;
@@ -126,6 +139,7 @@ void Position::loadPositionFromFen(const string &fen) {
             break;
         case 'b':
             state->stm = BLACK;
+            state->hash ^= *blackRand;
             break;
         default:
             assert(0);
@@ -154,6 +168,9 @@ void Position::loadPositionFromFen(const string &fen) {
     }
 
     ss >> state->epSquare;
+
+    state->hash ^= castlingRandTable[state->castlingRights];
+    state->hash ^= epRandTable[squareToFile(state->epSquare)];
 }
 
 Position::Position() {

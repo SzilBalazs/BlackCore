@@ -20,8 +20,18 @@
 #include <string>
 
 typedef unsigned long long U64;
+typedef int Score;
+typedef unsigned int Depth;
+typedef unsigned int Ply;
+
+constexpr Score UNKNOWN_SCORE = 100002;
+constexpr Score INF_SCORE = 100001;
+constexpr Score MATE_VALUE = 100000;
+constexpr Score DRAW_VALUE = 0;
 
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+constexpr unsigned int RANDOM_SEED = 1254383;
 
 enum Square : int {
     A1 = 0, B1 = 1, C1 = 2, D1 = 3, E1 = 4, F1 = 5, G1 = 6, H1 = 7,
