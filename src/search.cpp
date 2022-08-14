@@ -21,7 +21,7 @@
 #include "tt.h"
 #include "eval.h"
 
-uint64_t nodeCount = 0;
+U64 nodeCount = 0;
 std::chrono::steady_clock::time_point searchBegin;
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
@@ -137,7 +137,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     std::string pvLine = getPvLine(pos);
 
     if (uci) {
-        std::cout << "info depth " << depth << " nodes " << nodeCount << " score " << score << " time " << millis
+        std::cout << "info depth " << depth << " nodes " << nodeCount << " score cp " << score << " time " << millis
                   << " nps " << nps << " pv "
                   << pvLine
                   << std::endl;
@@ -146,7 +146,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     return score;
 }
 
-void iterativeDeepening(Position &pos, Depth depth, bool uci) {
+U64 iterativeDeepening(Position &pos, Depth depth, bool uci) {
     nodeCount = 0;
 
     searchBegin = std::chrono::steady_clock::now();
@@ -154,5 +154,9 @@ void iterativeDeepening(Position &pos, Depth depth, bool uci) {
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         searchRoot(pos, currDepth, uci);
     }
-    std::cout << "bestmove " << getHashMove(pos.getHash()) << std::endl;
+
+    if (uci)
+        std::cout << "bestmove " << getHashMove(pos.getHash()) << std::endl;
+
+    return nodeCount;
 }
