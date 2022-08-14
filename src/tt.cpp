@@ -35,7 +35,7 @@ void ttResize(unsigned int MBSize) {
         free(tt.table);
 
     unsigned int i = 10;
-    while ((1ULL << i) < MBSize * 1024 * 1024 / sizeof(TTBucket)) i++;
+    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket)) i++;
 
     tt.bucketCount = (1ULL << (i - 1));
     tt.mask = tt.bucketCount - 1ULL;

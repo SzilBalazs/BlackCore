@@ -15,6 +15,7 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <chrono>
 
 #include "search.h"
 #include "tt.h"
@@ -23,6 +24,8 @@
 unsigned int nodeCount = 0;
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
+    nodeCount++;
+
     Score staticEval = eval(pos);
 
     if (staticEval >= beta) {
@@ -107,10 +110,45 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
 
-    // Root node
-    if (ply == 0) {
-        std::cout << "bestmove " << bestMove << std::endl << "nodecount " << nodeCount << std::endl;
+    return alpha;
+}
+
+std::string getPvLine(Position &pos) {
+    Move m = getHashMove(pos.getHash());
+    if (m) {
+        pos.makeMove(m);
+        std::string str = m.str() + " " + getPvLine(pos);
+        pos.undoMove(m);
+        return str;
+    } else {
+        return "";
+    }
+}
+
+Score searchRoot(Position &pos, Depth depth, bool uci) {
+    nodeCount = 0;
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    long milli = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+    long nps = milli == 0 ? 0 : nodeCount * 1000 / milli;
+
+    std::string pvLine = getPvLine(pos);
+
+    if (uci) {
+        std::cout << "info depth " << depth << " nodes " << nodeCount << " score " << score << " nps " << nps << " pv "
+                  << pvLine
+                  << std::endl;
     }
 
-    return alpha;
+    return score;
+}
+
+void iterativeDeepening(Position &pos, Depth depth, bool uci) {
+    for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
+        searchRoot(pos, currDepth, uci);
+    }
+    std::cout << "bestmove " << getHashMove(pos.getHash()) << std::endl;
 }

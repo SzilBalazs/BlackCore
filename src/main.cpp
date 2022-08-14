@@ -56,12 +56,9 @@ int main() {
     ttResize(512);
 
 
-    Position position = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
+    Position position = {STARTING_FEN};
 
-    for (Depth depth = 2; depth <= 7; depth++) {
-        search(position, depth, -INF_SCORE, INF_SCORE, 0);
-    }
-    std::cout << "\n\n" << search(position, 8, -INF_SCORE, INF_SCORE, 0) << std::endl;
+    iterativeDeepening(position, 9, true);
 
     return 0;
 }

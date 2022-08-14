@@ -19,6 +19,6 @@
 
 #include "movegen.h"
 
-Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply);
+void iterativeDeepening(Position &pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H
