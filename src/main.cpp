@@ -53,19 +53,15 @@ int main() {
     srand(RANDOM_SEED);
     initHash();
     initBitboard();
-    ttResize(32);
+    ttResize(512);
 
-    return 0;
 
-    Position pos = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"};
+    Position position = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
 
-    pos.display();
-    return 0;
-
-    Position position = {"6k1/3b4/1p1p4/p1n2p1r/1PPNp3/P3q1p1/1R1R2P1/5K2 w - - 0 4"};
-
-    std::cout << search(position, 5, -INF_SCORE, INF_SCORE, 0) << std::endl;
-    std::cout << eval(position) << std::endl;
+    for (Depth depth = 2; depth <= 7; depth++) {
+        search(position, depth, -INF_SCORE, INF_SCORE, 0);
+    }
+    std::cout << "\n\n" << search(position, 8, -INF_SCORE, INF_SCORE, 0) << std::endl;
 
     return 0;
 }

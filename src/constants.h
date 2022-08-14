@@ -24,9 +24,9 @@ typedef int Score;
 typedef unsigned int Depth;
 typedef unsigned int Ply;
 
-constexpr Score UNKNOWN_SCORE = 10002;
-constexpr Score INF_SCORE = 10001;
-constexpr Score MATE_VALUE = 10000;
+constexpr Score UNKNOWN_SCORE = 100002;
+constexpr Score INF_SCORE = 100001;
+constexpr Score MATE_VALUE = 100000;
 constexpr Score DRAW_VALUE = 0;
 
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

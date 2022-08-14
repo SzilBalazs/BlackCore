@@ -14,9 +14,13 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "search.h"
 #include <iostream>
+
+#include "search.h"
+#include "tt.h"
 #include "eval.h"
+
+unsigned int nodeCount = 0;
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     Score staticEval = eval(pos);
@@ -29,7 +33,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, false};
+    MoveList moves = {pos, true};
 
     while (!moves.empty()) {
 
@@ -55,6 +59,11 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
 Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
+    nodeCount++;
+
+    Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
+    if (ttScore != UNKNOWN_SCORE) return ttScore;
+
     if (depth == 0) return quiescence(pos, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
@@ -71,6 +80,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     }
 
     Move bestMove;
+    EntryFlag ttFlag = ALPHA;
 
     while (!moves.empty()) {
 
@@ -83,19 +93,23 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
         pos.undoMove(m);
 
         if (score >= beta) {
+            ttSave(pos.getHash(), depth, beta, BETA, m);
             return beta;
         }
 
         if (score > alpha) {
             alpha = score;
             bestMove = m;
+            ttFlag = EXACT;
         }
 
     }
 
+    ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
+
     // Root node
     if (ply == 0) {
-        std::cout << "bestmove " << bestMove << std::endl;
+        std::cout << "bestmove " << bestMove << std::endl << "nodecount " << nodeCount << std::endl;
     }
 
     return alpha;

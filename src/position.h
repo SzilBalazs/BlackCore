@@ -115,6 +115,8 @@ public:
 
     inline BoardState *getState() { return state; }
 
+    inline U64 getHash() const { return state->hash; }
+
     inline void makeMove(Move move);
 
     inline void undoMove(Move move);

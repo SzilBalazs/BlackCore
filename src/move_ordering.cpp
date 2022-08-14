@@ -15,12 +15,15 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "move_ordering.h"
+#include "tt.h"
 #include "eval.h"
 
 Score scoreMove(const Position &pos, Move m) {
     Square from = m.getFrom();
     Square to = m.getTo();
-    if (m.isCapture()) {
+    if (m == getHashMove(pos.getHash())) {
+        return 10000;
+    } else if (m.isCapture()) {
         return PIECE_VALUES[pos.pieceAt(to).type] - PIECE_VALUES[pos.pieceAt(from).type];
     }
     return 0;
