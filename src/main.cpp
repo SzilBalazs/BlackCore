@@ -19,6 +19,7 @@
 #include "search.h"
 #include "utils.h"
 #include "eval.h"
+#include "tt.h"
 
 const int DEPTH = 6;
 
@@ -52,6 +53,9 @@ int main() {
     srand(RANDOM_SEED);
     initHash();
     initBitboard();
+    ttResize(32);
+
+    return 0;
 
     Position pos = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"};
 
