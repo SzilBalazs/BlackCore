@@ -14,21 +14,24 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_UCI_H
-#define BLACKCORE_UCI_H
+#include "timeman.h"
+#include "position.h"
 
-#include <iostream>
+#include <chrono>
 
-inline void out() {
-    std::cout << std::endl;
+std::chrono::steady_clock::time_point searchBegin;
+
+void startSearch() {
+    nodeCount = 0;
+    searchBegin = std::chrono::steady_clock::now();
 }
 
-template<typename T, typename... Args>
-inline void out(T a, Args... args) {
-    std::cout << a << " ";
-    out(args...);
+U64 getSearchTime() {
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - searchBegin).count();
 }
 
-void uciLoop();
-
-#endif //BLACKCORE_UCI_H
+U64 getNps() {
+    U64 millis = getSearchTime();
+    return millis == 0 ? 0 : nodeCount * 1000 / millis;
+}

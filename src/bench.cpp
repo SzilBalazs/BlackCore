@@ -21,6 +21,7 @@
 #include "tt.h"
 #include "search.h"
 #include "movegen.h"
+#include "timeman.h"
 
 struct TestPosition {
     std::string fen;
@@ -83,17 +84,17 @@ void testPerft() {
 
 void testSearch() {
     ttResize(searchTestHashSize);
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    
     U64 totalNodes = 0;
+    U64 elapsedTime = 0;
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
-        totalNodes += iterativeDeepening(pos, tPos.searchDepth, false);
+        iterativeDeepening(pos, tPos.searchDepth, false);
+        totalNodes += nodeCount;
+        elapsedTime += getSearchTime();
     }
 
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    U64 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
     U64 nps = totalNodes / (elapsedTime / 1000);
 
     std::cout << totalNodes << " nodes " << nps << " nps" << std::endl;

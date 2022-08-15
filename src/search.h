@@ -19,6 +19,6 @@
 
 #include "movegen.h"
 
-U64 iterativeDeepening(Position &pos, Depth depth, bool uci);
+void iterativeDeepening(Position &pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H

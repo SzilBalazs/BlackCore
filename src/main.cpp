@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     srand(RANDOM_SEED);
     initHash();
     initBitboard();
-
+    
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);

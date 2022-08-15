@@ -22,6 +22,8 @@
 #include "utils.h"
 #include "move.h"
 
+extern U64 nodeCount;
+
 struct BoardState {
     Color stm;
     Square epSquare;
@@ -158,6 +160,8 @@ private:
 
 template<Color color>
 void Position::makeMove(Move move) {
+    nodeCount++;
+
     BoardState newState;
 
     constexpr Color enemyColor = EnemyColor<color>();

@@ -14,19 +14,13 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <chrono>
-
 #include "search.h"
+#include "timeman.h"
 #include "tt.h"
 #include "eval.h"
 #include "uci.h"
 
-U64 nodeCount = 0;
-std::chrono::steady_clock::time_point searchBegin;
-
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
-    nodeCount++;
 
     Score staticEval = eval(pos);
 
@@ -63,8 +57,6 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 }
 
 Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
-
-    nodeCount++;
 
     Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
@@ -130,23 +122,19 @@ std::string getPvLine(Position &pos) {
 Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-    uint64_t millis = std::chrono::duration_cast<std::chrono::milliseconds>(end - searchBegin).count();
-    uint64_t nps = millis == 0 ? 0 : nodeCount * 1000 / millis;
 
     std::string pvLine = getPvLine(pos);
-    if (uci) {
-        out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", millis, "nps", nps, "pv", pvLine);
-    }
+    if (uci)
+        out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", getSearchTime(), "nps", getNps(),
+            "pv",
+            pvLine);
+
 
     return score;
 }
 
-U64 iterativeDeepening(Position &pos, Depth depth, bool uci) {
-    nodeCount = 0;
-
-    searchBegin = std::chrono::steady_clock::now();
+void iterativeDeepening(Position &pos, Depth depth, bool uci) {
+    startSearch();
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         searchRoot(pos, currDepth, uci);
@@ -154,6 +142,4 @@ U64 iterativeDeepening(Position &pos, Depth depth, bool uci) {
 
     if (uci)
         out("bestmove", getHashMove(pos.getHash()));
-
-    return nodeCount;
 }

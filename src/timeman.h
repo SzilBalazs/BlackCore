@@ -14,21 +14,15 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_UCI_H
-#define BLACKCORE_UCI_H
+#ifndef BLACKCORE_TIMEMAN_H
+#define BLACKCORE_TIMEMAN_H
 
-#include <iostream>
+#include "constants.h"
 
-inline void out() {
-    std::cout << std::endl;
-}
+void startSearch();
 
-template<typename T, typename... Args>
-inline void out(T a, Args... args) {
-    std::cout << a << " ";
-    out(args...);
-}
+U64 getSearchTime();
 
-void uciLoop();
+U64 getNps();
 
-#endif //BLACKCORE_UCI_H
+#endif //BLACKCORE_TIMEMAN_H
