@@ -15,7 +15,7 @@ jobs:
     - name: Updating g++
       run: |
         sudo apt-get update
-        sudo apt-get install build-essential g++-10
+        sudo apt install g++-10
         g++ --version
         make --version
     - uses: actions/checkout@v3
