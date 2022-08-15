@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Updating g++
+      run: sudo apt install g++ make
     - uses: actions/checkout@v3
     - name: Making BlackCore 
       run: make -C src
