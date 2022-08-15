@@ -14,8 +14,10 @@ jobs:
     steps:
     - name: Updating g++
       run: |
-        sudo apt update
-        sudo apt install g++ make
+        sudo apt-get update
+        sudo apt-get install g++ make
+        g++ --version
+        make --version
     - uses: actions/checkout@v3
     - name: Making BlackCore 
       run: make -C src
