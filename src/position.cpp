@@ -30,7 +30,7 @@ using std::cout, std::string;
 U64 randTable[781];
 
 void initHash() {
-    for (unsigned long long &i : randTable) {
+    for (U64 &i : randTable) {
         i = randBB().bb;
     }
 }
@@ -90,7 +90,7 @@ void Position::display() {
     if (cr.empty()) cr = "None";
     text.emplace_back(string("Castling rights: ") + cr);
     text.emplace_back(string("Side to move: ") + string(getSideToMove() == WHITE ? "White" : "Black"));
-    // TODO FEN, hash key, full-half move counter
+    // TODO FEN, full-half move counter
 
     cout << "\n     A   B   C   D   E   F   G   H  \n";
     for (int i = 8; i >= 1; i--) {

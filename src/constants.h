@@ -19,10 +19,10 @@
 
 #include <string>
 
-typedef unsigned long long U64;
-typedef int Score;
-typedef unsigned int Depth;
-typedef unsigned int Ply;
+typedef uint64_t U64;
+typedef int32_t Score;
+typedef uint32_t Depth;
+typedef uint32_t Ply;
 
 constexpr Score UNKNOWN_SCORE = 100002;
 constexpr Score INF_SCORE = 100001;

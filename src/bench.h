@@ -14,32 +14,12 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include "bench.h"
-#include "utils.h"
-#include "eval.h"
 
-int main(int argc, char **argv) {
-    srand(RANDOM_SEED);
-    initHash();
-    initBitboard();
+#ifndef BLACKCORE_BENCH_H
+#define BLACKCORE_BENCH_H
 
-    std::string mode;
-    if (argc >= 2) {
-        mode = std::string(argv[1]);
-    }
+void testPerft();
 
-    if (mode.empty()) {
-        std::cin >> mode;
-    }
+void testSearch();
 
-    if (mode == "bench") {
-        testSearch();
-    } else if (mode == "perft") {
-        testPerft();
-    } else if (mode == "uci") {
-
-    }
-
-    return 0;
-}
+#endif //BLACKCORE_BENCH_H
