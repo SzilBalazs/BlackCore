@@ -20,9 +20,11 @@ jobs:
         make --version
     - uses: actions/checkout@v3
     - name: Making BlackCore 
-      run: make -C src
+      run: 
+        make -C src CXX=g++-10
     - name: Running perft test
       run: 
-        make -C src test | grep -q "PERFT OK"
+        make -C src perft CXX=g++10
     - name: Running benchmark
-      run: make -C src bench
+      run: 
+        make -C src bench CXX=g++10
