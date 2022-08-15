@@ -20,6 +20,7 @@
 #include "search.h"
 #include "tt.h"
 #include "eval.h"
+#include "uci.h"
 
 U64 nodeCount = 0;
 std::chrono::steady_clock::time_point searchBegin;
@@ -135,12 +136,8 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     uint64_t nps = millis == 0 ? 0 : nodeCount * 1000 / millis;
 
     std::string pvLine = getPvLine(pos);
-
     if (uci) {
-        std::cout << "info depth " << depth << " nodes " << nodeCount << " score cp " << score << " time " << millis
-                  << " nps " << nps << " pv "
-                  << pvLine
-                  << std::endl;
+        out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", millis, "nps", nps, "pv", pvLine);
     }
 
     return score;
@@ -156,7 +153,7 @@ U64 iterativeDeepening(Position &pos, Depth depth, bool uci) {
     }
 
     if (uci)
-        std::cout << "bestmove " << getHashMove(pos.getHash()) << std::endl;
+        out("bestmove", getHashMove(pos.getHash()));
 
     return nodeCount;
 }

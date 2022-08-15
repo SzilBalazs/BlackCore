@@ -25,7 +25,12 @@ $(OBJECT_DIR)/%.o: %.cpp
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-all: test bench
+all: build perft bench
+
+build: $(TARGET)
+
+uci: $(TARGET)
+	./$(TARGET) uci
 
 perft: $(TARGET)
 	@RESULT=$$(./$(TARGET) perft) && \
@@ -38,4 +43,4 @@ bench: $(TARGET)
 clean:
 	@rm -r objects $(TARGET) || true
 
-.PHONY: all perft bench clean
+.PHONY: all build uci perft bench clean

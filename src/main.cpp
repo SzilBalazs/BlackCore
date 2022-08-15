@@ -15,9 +15,10 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include "position.h"
+#include "bitboard.h"
 #include "bench.h"
-#include "utils.h"
-#include "eval.h"
+#include "uci.h"
 
 int main(int argc, char **argv) {
     srand(RANDOM_SEED);
@@ -38,7 +39,9 @@ int main(int argc, char **argv) {
     } else if (mode == "perft") {
         testPerft();
     } else if (mode == "uci") {
-
+        uciLoop();
+    } else {
+        std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
     }
 
     return 0;
