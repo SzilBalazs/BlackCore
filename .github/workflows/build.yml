@@ -1,0 +1,24 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" , "dev"]
+  pull_request:
+    branches: [ "master" , "dev"]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Entering src
+      run: cd src
+    - name: Making BlackCore 
+      run: make
+    - name: Running perft test
+      run: 
+        make test | grep -q "PERFT OK"
+    - name: Running benchmark
+      run: make bench
