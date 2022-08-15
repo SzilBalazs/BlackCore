@@ -57,7 +57,6 @@ U64 perft(Position &position, Depth depth) {
 }
 
 void testPerft() {
-
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     U64 totalNodes = 0;
     bool ok = true;
