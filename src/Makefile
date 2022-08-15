@@ -28,7 +28,7 @@ $(OBJECT_DIR)/%.o: %.cpp
 all: test bench
 
 perft: $(TARGET)
-	@export RESULT=$$(./$(TARGET) perft) && \
+	export RESULT=$$(./$(TARGET) perft) && \
 	echo "$$RESULT" && \
 	echo $$RESULT | grep -q "PERFT OK"
 
