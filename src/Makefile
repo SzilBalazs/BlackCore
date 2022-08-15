@@ -1,4 +1,4 @@
-CC = g++
+CC = g++-10
 CFLAGS = -std=c++20 -Ofast -march=native -flto=auto -pthread -Wall -Wno-class-memaccess
 NAME = BlackCore
 VERSION = _v0
