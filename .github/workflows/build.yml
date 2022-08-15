@@ -13,14 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Entering src
-      run: cd src
-    - name: Debug
-      run: ls
     - name: Making BlackCore 
-      run: make
+      run: make -C src
     - name: Running perft test
       run: 
-        make test | grep -q "PERFT OK"
+        make -C src test | grep -q "PERFT OK"
     - name: Running benchmark
-      run: make bench
+      run: make -C src bench
