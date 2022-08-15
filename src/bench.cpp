@@ -73,10 +73,10 @@ void testPerft() {
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     U64 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
-    U64 nps = totalNodes / (elapsedTime / 1000);
+    U64 nps = totalNodes * 1000 / elapsedTime;
 
     if (ok) {
-        std::cout << "PERFT OK\nPerft speed = " << nps << " nps" << std::endl;
+        std::cout << "PERFT OK\n" << totalNodes << " nodes " << nps << " nps" << std::endl;
     } else {
         std::cout << "PERFT FAILED" << std::endl;
     }
@@ -97,5 +97,5 @@ void testSearch() {
     U64 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
     U64 nps = totalNodes / (elapsedTime / 1000);
 
-    std::cout << "Search test finished.\n" << totalNodes << " nodes " << nps << " nps" << std::endl;
+    std::cout << totalNodes << " nodes " << nps << " nps" << std::endl;
 }
