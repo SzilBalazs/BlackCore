@@ -16,7 +16,16 @@
 
 #include "move_ordering.h"
 #include "tt.h"
-#include "eval.h"
+
+constexpr Score mmvlva[6][6] = {
+        //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
+        {0, 0,    0,    0,    0,    0},     // KING
+        {0, 8004, 8104, 8204, 8304, 8404},  // PAWN
+        {0, 8003, 8103, 8203, 8303, 8403},  // KNIGHT
+        {0, 8002, 8102, 8202, 8302, 8402},  // BISHOP
+        {0, 8001, 8101, 8201, 8301, 8401},  // ROOK
+        {0, 8000, 8100, 8200, 8300, 8400},  // QUEEN
+};
 
 Score scoreMove(const Position &pos, Move m) {
     Square from = m.getFrom();
@@ -24,7 +33,7 @@ Score scoreMove(const Position &pos, Move m) {
     if (m == getHashMove(pos.getHash())) {
         return 10000;
     } else if (m.isCapture()) {
-        return PIECE_VALUES[pos.pieceAt(to).type] - PIECE_VALUES[pos.pieceAt(from).type];
+        return mmvlva[pos.pieceAt(from).type][pos.pieceAt(to).type];
     }
     return 0;
 }
