@@ -2,16 +2,16 @@ CXX = g++
 CXXFLAGS = -std=c++20 -Ofast -march=native -flto=auto -pthread -Wall
 NAME = BlackCore
 VERSION = _v0
-TARGET = $(NAME)$(VERSION)
+EXE = $(NAME)$(VERSION)
 
 OBJECT_DIR = objects
 
 SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp, $(OBJECT_DIR)/%.o, $(SOURCES))
 
-default: $(TARGET)
+default: $(EXE)
 
-$(TARGET): $(OBJECTS)
+$(EXE): $(OBJECTS)
 	@echo Linking $(NAME)
 	@$(CXX) $(CXXFLAGS) -o $@ $^
 	@echo Build has finished.
@@ -27,20 +27,20 @@ $(OBJECT_DIR)/%.o: %.cpp
 
 all: build perft bench
 
-build: $(TARGET)
+build: $(EXE)
 
-uci: $(TARGET)
-	./$(TARGET) uci
+uci: $(EXE)
+	./$(EXE) uci
 
-perft: $(TARGET)
-	@RESULT=$$(./$(TARGET) perft) && \
+perft: $(EXE)
+	@RESULT=$$(./$(EXE) perft) && \
 	echo "$$RESULT" && \
 	echo $$RESULT | grep -q "PERFT OK"
 
-bench: $(TARGET)
-	@./$(TARGET) bench
+bench: $(EXE)
+	@./$(EXE) bench
 
 clean:
-	@rm -r objects $(TARGET) || true
+	@rm -r objects $(EXE) || true
 
 .PHONY: all build uci perft bench clean
