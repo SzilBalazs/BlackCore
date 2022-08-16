@@ -19,7 +19,11 @@
 
 #include "constants.h"
 
-void startSearch();
+void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime);
+
+bool shouldEnd();
+
+void stopSearch();
 
 U64 getSearchTime();
 

@@ -16,19 +16,46 @@
 
 #include "timeman.h"
 #include "position.h"
+#include "uci.h"
 
 #include <chrono>
 
-std::chrono::steady_clock::time_point searchBegin;
+constexpr U64 mask = (1ULL << 15) - 1;
+U64 searchStartedAt = 0;
+U64 searchShouldEnd = 0;
+bool stop = false;
 
-void startSearch() {
+U64 getTime() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime) {
     nodeCount = 0;
-    searchBegin = std::chrono::steady_clock::now();
+    searchStartedAt = getTime();
+    stop = false;
+    if (time == 0 || movetime != 0) {
+        searchShouldEnd = searchStartedAt + movetime;
+    } else {
+        out(inc, time, movestogo, movetime);
+        searchShouldEnd = searchStartedAt + inc + (time / (movestogo + 5));
+        out(searchShouldEnd, searchStartedAt);
+    }
+}
+
+void stopSearch() {
+    stop = true;
+}
+
+bool shouldEnd() {
+    if ((nodeCount & mask) == 0 && !stop) {
+        stop = searchShouldEnd != searchStartedAt && searchShouldEnd <= getTime();
+    }
+    return stop;
 }
 
 U64 getSearchTime() {
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    return std::chrono::duration_cast<std::chrono::milliseconds>(end - searchBegin).count();
+    return getTime() - searchStartedAt;
 }
 
 U64 getNps() {

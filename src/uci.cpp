@@ -16,8 +16,11 @@
 
 #include <sstream>
 #include <vector>
+#include <thread>
 #include "uci.h"
 #include "tt.h"
+#include "search.h"
+#include "timeman.h"
 #include "position.h"
 #include "movegen.h"
 
@@ -43,6 +46,7 @@ void uciLoop() {
     out("uciok");
 
     Position pos;
+    std::thread searchThread;
 
     while (true) {
         std::string line, command, token;
@@ -62,7 +66,9 @@ void uciLoop() {
         } else if (command == "quit") {
             break;
         } else if (command == "stop") {
-
+            stopSearch();
+            if (searchThread.joinable())
+                searchThread.join();
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -95,9 +101,40 @@ void uciLoop() {
             }
         } else if (command == "go") {
 
+            if (searchThread.joinable())
+                searchThread.join();
+
+            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 50, depth = 64, movetime = 0;
+
+            for (int i = 0; i < tokens.size(); i += 2) {
+                if (tokens[i] == "wtime") {
+                    wtime = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "btime") {
+                    btime = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "winc") {
+                    winc = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "binc") {
+                    binc = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "movestogo") {
+                    movestogo = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "depth") {
+                    depth = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "movetime") {
+                    movetime = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "infinite") {
+                    depth = 64;
+                }
+            }
+
+            if (pos.getSideToMove() == WHITE)
+                startSearch(wtime, winc, movestogo, movetime);
+            else
+                startSearch(btime, binc, movestogo, movetime);
+
+            searchThread = std::thread(iterativeDeepening, pos, depth, true);
+
         } else if (command == "d") {
             pos.display();
         }
     }
-
 }

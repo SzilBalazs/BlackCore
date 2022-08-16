@@ -84,18 +84,13 @@ void testPerft() {
 
 void testSearch() {
     ttResize(searchTestHashSize);
-    
-    U64 totalNodes = 0;
-    U64 elapsedTime = 0;
+
+    startSearch(0, 0, 0, 0);
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
         iterativeDeepening(pos, tPos.searchDepth, false);
-        totalNodes += nodeCount;
-        elapsedTime += getSearchTime();
     }
 
-    U64 nps = totalNodes / (elapsedTime / 1000);
-
-    std::cout << totalNodes << " nodes " << nps << " nps" << std::endl;
+    std::cout << nodeCount << " nodes " << getNps() << " nps" << std::endl;
 }

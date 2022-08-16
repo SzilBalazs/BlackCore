@@ -22,6 +22,8 @@
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
+    if (shouldEnd()) return UNKNOWN_SCORE;
+
     Score staticEval = eval(pos);
 
     if (staticEval >= beta) {
@@ -44,6 +46,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         pos.undoMove(m);
 
+        if (shouldEnd()) return UNKNOWN_SCORE;
+
         if (score >= beta) {
             return beta;
         }
@@ -57,6 +61,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 }
 
 Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+
+    if (shouldEnd()) return UNKNOWN_SCORE;
 
     Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
@@ -88,6 +94,8 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
         Score score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
 
         pos.undoMove(m);
+
+        if (shouldEnd()) return UNKNOWN_SCORE;
 
         if (score >= beta) {
             ttSave(pos.getHash(), depth, beta, BETA, m);
@@ -123,6 +131,8 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
 
+    if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
+
     std::string pvLine = getPvLine(pos);
     if (uci)
         out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", getSearchTime(), "nps", getNps(),
@@ -133,13 +143,16 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     return score;
 }
 
-void iterativeDeepening(Position &pos, Depth depth, bool uci) {
-    startSearch();
+void iterativeDeepening(Position pos, Depth depth, bool uci) {
+
+    Move bestMove;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        searchRoot(pos, currDepth, uci);
+        Score score = searchRoot(pos, currDepth, uci);
+        if (score == UNKNOWN_SCORE) break;
+        bestMove = getHashMove(pos.getHash());
     }
 
     if (uci)
-        out("bestmove", getHashMove(pos.getHash()));
+        out("bestmove", bestMove);
 }
