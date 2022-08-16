@@ -58,17 +58,23 @@ inline Square operator+=(Square &a, int b) { return a = a + b; }
 
 inline Square operator-=(Square &a, int b) { return a = a - b; }
 
+inline Square stringToSquare(std::string s) {
+    if (s[0] == '-') {
+        return NULL_SQUARE;
+    } else if ('a' <= s[0] && s[0] <= 'z') {
+        return Square((s[0] - 'a') + (s[1] - '1') * 8);
+    } else if ('A' <= s[0] && s[0] <= 'Z') {
+        return Square((s[0] - 'A') + (s[1] - '1') * 8);
+    }
+
+    return NULL_SQUARE;
+}
+
 inline std::istream &operator>>(std::istream &is, Square &square) {
     std::string s;
     is >> s;
 
-    if (s[0] == '-') {
-        square = NULL_SQUARE;
-    } else if ('a' <= s[0] && s[0] <= 'z') {
-        square = Square((s[0] - 'a') + (s[1] - '1') * 8);
-    } else if ('A' <= s[0] && s[0] <= 'Z') {
-        square = Square((s[0] - 'A') + (s[1] - '1') * 8);
-    }
+    square = stringToSquare(s);
 
     return is;
 }

@@ -178,7 +178,7 @@ void Position::makeMove(Move move) {
 
     // Removing ep and castling rights from hash
     newState.hash ^= castlingRandTable[state->castlingRights];
-    if (newState.epSquare != NULL_SQUARE) {
+    if (state->epSquare != NULL_SQUARE) {
         newState.hash ^= epRandTable[squareToFile(state->epSquare)];
     }
 

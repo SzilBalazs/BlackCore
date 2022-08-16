@@ -22,14 +22,48 @@
 #include "search.h"
 #include "timeman.h"
 #include "position.h"
-#include "movegen.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
-    Move moves[200];
-    Move *endPtr = generateMoves(pos, moves, false);
-    for (Move *m = moves; m != endPtr; m += 1) {
-        if (m->str() == s) return *m;
+    Square from = stringToSquare(s.substr(0, 2));
+    Square to = stringToSquare(s.substr(2, 2));
+    Piece piece = pos.pieceAt(from);
+    Piece capturedPiece = pos.pieceAt(to);
+    Color enemyColor = piece.color == WHITE ? BLACK : WHITE;
+    unsigned int flags = QUIET_MOVE;
+    if (!capturedPiece.isNull())
+        flags = CAPTURE_FLAG;
+
+    if (s.size() == 5) {
+        PieceType type = charToPiece(s[4]).type;
+        switch (type) {
+            case QUEEN:
+                return {from, to, flags | PROMO_QUEEN, capturedPiece};
+            case ROOK:
+                return {from, to, flags | PROMO_ROOK, capturedPiece};
+            case BISHOP:
+                return {from, to, flags | PROMO_BISHOP, capturedPiece};
+            case KNIGHT:
+                return {from, to, flags | PROMO_KNIGHT, capturedPiece};
+            default:
+                out("Invalid move!");
+                return {};
+        }
     }
+
+    if (piece.type == PAWN && pos.getEpSquare() == to) {
+        flags = EP_CAPTURE;
+        capturedPiece = {PAWN, enemyColor};
+    } else if (piece.type == PAWN && std::abs((long) squareToRank(from) - squareToRank(to)) == 2) {
+        flags = DOUBLE_PAWN_PUSH;
+    } else if (piece.type == KING && squareToFile(from) == 4) {
+        if (squareToFile(to) == 6) {
+            flags = KING_CASTLE;
+        } else if (squareToFile(to) == 2) {
+            flags = QUEEN_CASTLE;
+        }
+    }
+
+    return {from, to, flags, capturedPiece};
 }
 
 void uciLoop() {
@@ -78,14 +112,15 @@ void uciLoop() {
                 }
             }
         } else if (command == "position" || command == "pos") {
+
             if (tokens[0] == "fen") {
                 std::string fen;
                 for (int i = 1; i < tokens.size() && tokens[i] != "moves"; i++) {
                     fen += tokens[i] + ' ';
                 }
-                pos.loadPositionFromFen(fen);
+                pos = {fen};
             } else if (tokens[0] == "startpos") {
-                pos.loadPositionFromFen(STARTING_FEN);
+                pos = {STARTING_FEN};
             }
 
             if (line.find("moves") != std::string::npos) {
@@ -99,6 +134,7 @@ void uciLoop() {
                     i++;
                 }
             }
+
         } else if (command == "go") {
 
             if (searchThread.joinable())
