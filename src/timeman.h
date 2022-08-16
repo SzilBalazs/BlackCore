@@ -14,11 +14,19 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_SEARCH_H
-#define BLACKCORE_SEARCH_H
+#ifndef BLACKCORE_TIMEMAN_H
+#define BLACKCORE_TIMEMAN_H
 
-#include "movegen.h"
+#include "constants.h"
 
-void iterativeDeepening(Position pos, Depth depth, bool uci);
+void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime);
 
-#endif //BLACKCORE_SEARCH_H
+bool shouldEnd();
+
+void stopSearch();
+
+U64 getSearchTime();
+
+U64 getNps();
+
+#endif //BLACKCORE_TIMEMAN_H

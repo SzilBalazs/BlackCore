@@ -29,6 +29,8 @@ using std::cout, std::string;
 // 1 number if the side is black
 U64 randTable[781];
 
+U64 nodeCount = 0;
+
 void initHash() {
     for (U64 &i : randTable) {
         i = randBB().bb;

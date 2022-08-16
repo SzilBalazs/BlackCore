@@ -14,11 +14,21 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_SEARCH_H
-#define BLACKCORE_SEARCH_H
+#ifndef BLACKCORE_UCI_H
+#define BLACKCORE_UCI_H
 
-#include "movegen.h"
+#include <iostream>
 
-void iterativeDeepening(Position pos, Depth depth, bool uci);
+inline void out() {
+    std::cout << std::endl;
+}
 
-#endif //BLACKCORE_SEARCH_H
+template<typename T, typename... Args>
+inline void out(T a, Args... args) {
+    std::cout << a << " ";
+    out(args...);
+}
+
+void uciLoop();
+
+#endif //BLACKCORE_UCI_H
