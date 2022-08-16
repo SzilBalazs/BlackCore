@@ -37,9 +37,7 @@ void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime) {
     if (time == 0 || movetime != 0) {
         searchShouldEnd = searchStartedAt + movetime;
     } else {
-        out(inc, time, movestogo, movetime);
         searchShouldEnd = searchStartedAt + inc + (time / (movestogo + 5));
-        out(searchShouldEnd, searchStartedAt);
     }
 }
 
