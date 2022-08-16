@@ -51,23 +51,23 @@ struct MoveList {
 
     unsigned int count;
 
-    MoveList(const Position &pos, bool capturesOnly) {
+    MoveList(const Position &pos, Ply ply, bool capturesOnly) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
 
         // Scoring moves
         for (unsigned int i = 0; i < count; i++) {
-            scores[i] = scoreMove(pos, moves[i]);
+            scores[i] = scoreMove(pos, moves[i], ply);
         }
     }
 
-    inline bool empty() {
+    inline bool empty() const {
         return index == count;
     }
 
     inline Move nextMove() {
-        int best = index;
+        unsigned int best = index;
         for (unsigned int i = index; i < count; i++) {
             if (scores[i] > scores[best]) {
                 best = i;

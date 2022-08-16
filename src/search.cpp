@@ -34,7 +34,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, true};
+    MoveList moves = {pos, ply, true};
 
     while (!moves.empty()) {
 
@@ -71,7 +71,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     Color color = pos.getSideToMove();
 
-    MoveList moves = {pos, false};
+    MoveList moves = {pos, ply, false};
 
     if (moves.count == 0) {
         Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
@@ -98,6 +98,11 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
         if (shouldEnd()) return UNKNOWN_SCORE;
 
         if (score >= beta) {
+
+            if (m.isQuiet()) {
+                recordKillerMove(m, ply);
+            }
+
             ttSave(pos.getHash(), depth, beta, BETA, m);
             return beta;
         }
@@ -128,6 +133,8 @@ std::string getPvLine(Position &pos) {
 }
 
 Score searchRoot(Position &pos, Depth depth, bool uci) {
+
+    clearKillerMoves();
 
     Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
 

@@ -20,6 +20,10 @@
 #include "move.h"
 #include "position.h"
 
-Score scoreMove(const Position &pos, Move m);
+Score scoreMove(const Position &pos, Move m, Ply ply);
+
+void clearKillerMoves();
+
+void recordKillerMove(Move m, Ply ply);
 
 #endif //BLACKCORE_MOVE_ORDERING_H
