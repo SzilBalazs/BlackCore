@@ -16,7 +16,6 @@
 
 #include "timeman.h"
 #include "position.h"
-#include "uci.h"
 
 #include <chrono>
 

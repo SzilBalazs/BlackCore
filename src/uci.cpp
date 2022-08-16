@@ -98,6 +98,8 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
+            if (searchThread.joinable())
+                searchThread.join();
             break;
         } else if (command == "stop") {
             stopSearch();
