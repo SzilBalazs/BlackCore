@@ -3,8 +3,6 @@ name: Perft test and benchmark
 on:
   push:
     branches: [ "master" , "dev"]
-  pull_request:
-    branches: [ "master" , "dev"]
 
 jobs:
   build:
