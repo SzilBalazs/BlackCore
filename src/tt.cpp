@@ -64,7 +64,7 @@ Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta) {
 
     if (entry->depth >= depth) {
         if (entry->flag == EXACT) {
-            return entry->flag;
+            return entry->eval;
         }
         if (entry->flag == ALPHA && entry->eval <= alpha) {
             return alpha;
