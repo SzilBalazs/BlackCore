@@ -32,7 +32,7 @@ struct TestPosition {
 
 const unsigned int posCount = 7;
 
-const unsigned int searchTestHashSize = 512;
+const unsigned int searchTestHashSize = 8;
 
 const TestPosition testPositions[posCount] = {
         {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",                 6, 119060324, 7},
