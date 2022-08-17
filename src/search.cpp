@@ -160,6 +160,8 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
         bestMove = getHashMove(pos.getHash());
     }
 
+    globalAge++;
+
     if (uci)
         out("bestmove", bestMove);
 }
