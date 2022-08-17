@@ -63,14 +63,6 @@ struct StateStack {
 
 #define state states.top()
 
-extern U64 randTable[781];
-constexpr U64 *pieceRandTable = randTable;
-constexpr U64 *castlingRandTable = randTable + 768;
-constexpr U64 *epRandTable = randTable + 772;
-constexpr U64 *blackRand = randTable + 780;
-
-void initHash();
-
 class Position {
 public:
 

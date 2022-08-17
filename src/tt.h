@@ -20,6 +20,8 @@
 #include "constants.h"
 #include "move.h"
 
+extern uint16_t globalAge;
+
 enum EntryFlag : uint16_t {
     NONE = 0, EXACT = 1, ALPHA = 2, BETA = 3
 };

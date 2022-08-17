@@ -15,16 +15,14 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <iostream>
-#include "position.h"
 #include "bitboard.h"
 #include "bench.h"
 #include "uci.h"
 
 int main(int argc, char **argv) {
     srand(RANDOM_SEED);
-    initHash();
     initBitboard();
-    
+
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);

@@ -73,8 +73,8 @@ void uciLoop() {
     out("id", "author", "SzilBalazs");
 
     // We tell the GUI what options we have
-    out("option", "name", "Hash", "type", "spin", "default", 128, "min", 1, "max", 1024);
-    ttResize(128);
+    out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
+    ttResize(16);
 
     // We have sent all the parameters
     out("uciok");

@@ -23,19 +23,7 @@
 
 using std::cout, std::string;
 
-// 2 colors * 6 types * 64 square = 768
-// 4 for castling rights
-// 8 number for the file of the epSquare
-// 1 number if the side is black
-U64 randTable[781];
-
 U64 nodeCount = 0;
-
-void initHash() {
-    for (U64 &i : randTable) {
-        i = randBB().bb;
-    }
-}
 
 void Position::clearSquare(Square square) {
     Piece piece = pieceAt(square);

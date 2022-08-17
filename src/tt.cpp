@@ -19,14 +19,15 @@
 #include "tt.h"
 
 TTable tt;
+uint16_t globalAge = 0;
 
-
-TTBucket &getBucket(U64 hash) {
-    return tt.table[hash & tt.mask];
+TTBucket *getBucket(U64 hash) {
+    return tt.table + (hash & tt.mask);
 }
 
 void ttClear() {
     std::memset(tt.table, 0, tt.bucketCount * sizeof(TTBucket));
+    globalAge = 0;
 }
 
 void ttResize(unsigned int MBSize) {
@@ -39,6 +40,7 @@ void ttResize(unsigned int MBSize) {
 
     tt.bucketCount = (1ULL << (i - 1));
     tt.mask = tt.bucketCount - 1ULL;
+    globalAge = 0;
 
     // Allocate memory with 1MB alignment
     tt.table = static_cast<TTBucket *>(aligned_alloc((1ULL << 20), tt.bucketCount * sizeof(TTBucket)));
@@ -49,27 +51,25 @@ void ttResize(unsigned int MBSize) {
 }
 
 Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta) {
-    TTBucket &bucket = getBucket(hash);
-    TTEntry entry;
-    if (bucket.entryA.hash == hash) {
-        entry = bucket.entryA;
-        // bucket.entryA.age = 0;
-    } else if (bucket.entryB.hash == hash) {
-        entry = bucket.entryB;
-        // bucket.entryA.age++;
+    TTBucket *bucket = getBucket(hash);
+    TTEntry *entry;
+    if (bucket->entryA.hash == hash) {
+        entry = &bucket->entryA;
+        entry->age = globalAge;
+    } else if (bucket->entryB.hash == hash) {
+        entry = &bucket->entryB;
     } else {
-        // bucket.entryA.age++;
         return UNKNOWN_SCORE;
     }
 
-    if (entry.depth >= depth) {
-        if (entry.flag == EXACT) {
-            return entry.flag;
+    if (entry->depth >= depth) {
+        if (entry->flag == EXACT) {
+            return entry->flag;
         }
-        if (entry.flag == ALPHA && entry.eval <= alpha) {
+        if (entry->flag == ALPHA && entry->eval <= alpha) {
             return alpha;
         }
-        if (entry.flag == BETA && entry.eval >= beta) {
+        if (entry->flag == BETA && entry->eval >= beta) {
             return beta;
         }
     }
@@ -78,30 +78,26 @@ Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta) {
 }
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
-    TTBucket &bucket = getBucket(hash);
-    // We default to the always replace entry
-    TTEntry &entry = bucket.entryB;
+    TTBucket *bucket = getBucket(hash);
+    TTEntry *entry;
 
-    // TODO aging system
-    if (bucket.entryA.hash == hash || bucket.entryA.depth <= depth) {
-        entry = bucket.entryA;
+    if (bucket->entryA.hash == hash || bucket->entryA.depth <= depth || globalAge - bucket->entryA.age >= 2) {
+        entry = &bucket->entryA;
+    } else {
+        entry = &bucket->entryB;
     }
 
-    // We want to keep the more valuable entry
-    if (hash == entry.hash && flag != EXACT && depth < entry.depth * 2 / 3)
-        return;
-
-    entry.hash = hash;
-    entry.depth = depth;
-    entry.eval = eval;
-    entry.flag = flag;
-    entry.hashMove = bestMove;
-    entry.age = 0;
+    entry->hash = hash;
+    entry->depth = depth;
+    entry->eval = eval;
+    entry->flag = flag;
+    entry->hashMove = bestMove;
+    entry->age = globalAge;
 }
 
 Move getHashMove(U64 hash) {
-    TTBucket &bucket = getBucket(hash);
-    if (bucket.entryA.hash == hash) return bucket.entryA.hashMove;
-    else if (bucket.entryB.hash == hash) return bucket.entryB.hashMove;
+    TTBucket *bucket = getBucket(hash);
+    if (bucket->entryA.hash == hash) return bucket->entryA.hashMove;
+    else if (bucket->entryB.hash == hash) return bucket->entryB.hashMove;
     return {};
 }
