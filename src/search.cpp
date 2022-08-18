@@ -64,8 +64,8 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
+    /*Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
+    if (ttScore != UNKNOWN_SCORE) return ttScore;*/
 
     if (depth == 0) return quiescence(pos, alpha, beta, ply);
 
@@ -164,4 +164,6 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     if (uci)
         out("bestmove", bestMove);
+
+    out("Go finished");
 }
