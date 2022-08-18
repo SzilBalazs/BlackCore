@@ -120,11 +120,13 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-std::string getPvLine(Position &pos) {
+// maxDepth necessary, because the way it's implemented it can find repetition cycles and it makes the StateStack overflow
+// TODO smarter fix then limiting the pv line depth to a maximum of 10
+std::string getPvLine(Position &pos, Depth maxDepth) {
     Move m = getHashMove(pos.getHash());
-    if (m) {
+    if (maxDepth >= 1 && m) {
         pos.makeMove(m);
-        std::string str = m.str() + " " + getPvLine(pos);
+        std::string str = m.str() + " " + getPvLine(pos, maxDepth - 1);
         pos.undoMove(m);
         return str;
     } else {
@@ -140,7 +142,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
-    std::string pvLine = getPvLine(pos);
+    std::string pvLine = getPvLine(pos, 10);
     if (uci)
         out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", getSearchTime(), "nps", getNps(),
             "pv",
