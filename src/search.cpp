@@ -45,6 +45,11 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         Move m = moves.nextMove();
 
+        // Delta pruning
+        if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
+            staticEval + DELTA_MARGIN < alpha)
+            continue;
+
         pos.makeMove(m);
 
         Score score = -quiescence(pos, -beta, -alpha, ply + 1);
