@@ -19,7 +19,7 @@
 
 #include "movegen.h"
 
-constexpr Score DELTA_MARGIN = 400;
+constexpr Score DELTA_MARGIN = 450;
 
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
