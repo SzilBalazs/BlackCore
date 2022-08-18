@@ -32,12 +32,15 @@ struct BoardState {
 
     Piece capturedPiece;
 
-    BoardState() {
+    BoardState *lastIrreversibleMove;
+
+    constexpr BoardState() {
         stm = COLOR_EMPTY;
         epSquare = NULL_SQUARE;
         castlingRights = 0;
         capturedPiece = {};
         hash = 0;
+        lastIrreversibleMove = nullptr;
     }
 };
 
@@ -50,6 +53,7 @@ struct StateStack {
     }
 
     inline void push(BoardState newState) {
+        newState.lastIrreversibleMove = currState->lastIrreversibleMove;
         currState++;
         *currState = newState;
     }
@@ -117,6 +121,8 @@ public:
 
     inline void undoMove(Move move);
 
+    bool isRepetition();
+
     void display();
 
     void loadPositionFromFen(const std::string &fen);
@@ -170,8 +176,7 @@ void Position::makeMove(Move move) {
     newState.stm = enemyColor;
     newState.hash = state->hash ^ *blackRand;
 
-    // Removing ep and castling rights from hash
-    newState.hash ^= castlingRandTable[state->castlingRights];
+    // Removing ep from hash
     if (state->epSquare != NULL_SQUARE) {
         newState.hash ^= epRandTable[squareToFile(state->epSquare)];
     }
@@ -185,7 +190,12 @@ void Position::makeMove(Move move) {
 
     states.push(newState);
 
+    if (move.isCapture() || pieceAt(from).type == PAWN) {
+        state->lastIrreversibleMove = state;
+    }
+
     // Removing castling rights
+    newState.hash ^= castlingRandTable[state->castlingRights];
     if (getCastleRight(WK_MASK) && (from == E1 || from == H1 || to == H1)) {
         removeCastleRight(WK_MASK);
     }
