@@ -32,12 +32,15 @@ struct BoardState {
 
     Piece capturedPiece;
 
-    BoardState() {
+    BoardState *lastIrreversibleMove;
+
+    constexpr BoardState() {
         stm = COLOR_EMPTY;
         epSquare = NULL_SQUARE;
         castlingRights = 0;
         capturedPiece = {};
         hash = 0;
+        lastIrreversibleMove = nullptr;
     }
 };
 
@@ -47,9 +50,11 @@ struct StateStack {
 
     StateStack() {
         currState = stateStart;
+        currState->lastIrreversibleMove = currState;
     }
 
     inline void push(BoardState newState) {
+        newState.lastIrreversibleMove = currState->lastIrreversibleMove;
         currState++;
         *currState = newState;
     }
@@ -61,6 +66,8 @@ struct StateStack {
     inline BoardState *top() const { return currState; }
 
     inline void clear() { currState = stateStart; }
+
+    inline Ply getMove50() const { return currState - currState->lastIrreversibleMove; }
 };
 
 #define state states.top()
@@ -113,9 +120,13 @@ public:
 
     inline U64 getHash() const { return state->hash; }
 
+    inline Ply getMove50() const { return states.getMove50(); }
+
     inline void makeMove(Move move);
 
     inline void undoMove(Move move);
+
+    bool isRepetition();
 
     void display();
 
@@ -170,8 +181,7 @@ void Position::makeMove(Move move) {
     newState.stm = enemyColor;
     newState.hash = state->hash ^ *blackRand;
 
-    // Removing ep and castling rights from hash
-    newState.hash ^= castlingRandTable[state->castlingRights];
+    // Removing ep from hash
     if (state->epSquare != NULL_SQUARE) {
         newState.hash ^= epRandTable[squareToFile(state->epSquare)];
     }
@@ -185,7 +195,12 @@ void Position::makeMove(Move move) {
 
     states.push(newState);
 
+    if (move.isCapture() || pieceAt(from).type == PAWN) {
+        state->lastIrreversibleMove = state;
+    }
+
     // Removing castling rights
+    state->hash ^= castlingRandTable[state->castlingRights];
     if (getCastleRight(WK_MASK) && (from == E1 || from == H1 || to == H1)) {
         removeCastleRight(WK_MASK);
     }
@@ -198,8 +213,6 @@ void Position::makeMove(Move move) {
     if (getCastleRight(BQ_MASK) && (from == E8 || from == A8 || to == A8)) {
         removeCastleRight(BQ_MASK);
     }
-
-    // Readding castling rights
     state->hash ^= castlingRandTable[state->castlingRights];
 
     // Moving rook in case of a castle

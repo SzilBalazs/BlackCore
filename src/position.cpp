@@ -26,6 +26,9 @@ using std::cout, std::string;
 U64 nodeCount = 0;
 
 void Position::clearSquare(Square square) {
+    if (pieceAt(square).isNull())
+        return;
+
     Piece piece = pieceAt(square);
 
     pieceBB[piece.type].clear(square);
@@ -37,8 +40,7 @@ void Position::clearSquare(Square square) {
 }
 
 void Position::setSquare(Square square, Piece piece) {
-    if (!piece.isNull())
-        clearSquare(square);
+    clearSquare(square);
 
     pieceBB[piece.type].set(square);
     allPieceBB[piece.color].set(square);
@@ -66,6 +68,17 @@ void Position::clearPosition() {
 
     states.clear();
     states.push({});
+    state->lastIrreversibleMove = state;
+}
+
+bool Position::isRepetition() {
+    // TODO we can make this faster, because we only have to check every second ply
+    for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
+        if (state->hash == ptr->hash) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Position::display() {
