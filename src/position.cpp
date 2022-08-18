@@ -72,13 +72,11 @@ void Position::clearPosition() {
 }
 
 bool Position::isRepetition() {
-    unsigned int cnt = 1;
+    // TODO we can make this faster, because we only have to check every second ply
     for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
         if (state->hash == ptr->hash) {
-            cnt++;
+            return true;
         }
-
-        if (cnt == 3) return true;
     }
     return false;
 }

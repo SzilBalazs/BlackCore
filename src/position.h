@@ -50,6 +50,7 @@ struct StateStack {
 
     StateStack() {
         currState = stateStart;
+        currState->lastIrreversibleMove = currState;
     }
 
     inline void push(BoardState newState) {
@@ -65,6 +66,8 @@ struct StateStack {
     inline BoardState *top() const { return currState; }
 
     inline void clear() { currState = stateStart; }
+
+    inline Ply getMove50() const { return currState - currState->lastIrreversibleMove; }
 };
 
 #define state states.top()
@@ -116,6 +119,8 @@ public:
     inline BoardState *getState() { return state; }
 
     inline U64 getHash() const { return state->hash; }
+
+    inline Ply getMove50() const { return states.getMove50(); }
 
     inline void makeMove(Move move);
 
@@ -195,7 +200,7 @@ void Position::makeMove(Move move) {
     }
 
     // Removing castling rights
-    newState.hash ^= castlingRandTable[state->castlingRights];
+    state->hash ^= castlingRandTable[state->castlingRights];
     if (getCastleRight(WK_MASK) && (from == E1 || from == H1 || to == H1)) {
         removeCastleRight(WK_MASK);
     }
@@ -208,8 +213,6 @@ void Position::makeMove(Move move) {
     if (getCastleRight(BQ_MASK) && (from == E8 || from == A8 || to == A8)) {
         removeCastleRight(BQ_MASK);
     }
-
-    // Readding castling rights
     state->hash ^= castlingRandTable[state->castlingRights];
 
     // Moving rook in case of a castle
