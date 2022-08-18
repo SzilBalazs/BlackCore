@@ -20,9 +20,14 @@
 #include "eval.h"
 #include "uci.h"
 
+Ply selectiveDepth = 0;
+
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
+
+    if (ply > selectiveDepth)
+        selectiveDepth = ply;
 
     Score staticEval = eval(pos);
 
@@ -137,16 +142,33 @@ std::string getPvLine(Position &pos, Depth maxDepth) {
 Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     clearKillerMoves();
+    selectiveDepth = 0;
 
     Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
     std::string pvLine = getPvLine(pos, 10);
-    if (uci)
-        out("info", "depth", depth, "nodes", nodeCount, "score", "cp", score, "time", getSearchTime(), "nps", getNps(),
-            "pv",
-            pvLine);
+    if (uci) {
+        Score absScore = std::abs(score);
+        int mateDepth = MATE_VALUE - absScore;
+        std::string scoreStr = "cp " + std::to_string(score);
+
+        if (mateDepth <= 64) {
+            int matePly;
+            // We are giving the mate
+            if (score > 0) {
+                matePly = mateDepth / 2 + 1;
+
+            } else {
+                matePly = -(mateDepth / 2);
+            }
+            scoreStr = "mate " + std::to_string(matePly);
+        }
+
+        out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
+            getSearchTime(), "nps", getNps(), "pv", pvLine);
+    }
 
 
     return score;
