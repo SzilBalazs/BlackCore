@@ -59,6 +59,8 @@ struct StateStack {
     }
 
     inline BoardState *top() const { return currState; }
+
+    inline void clear() { currState = stateStart; }
 };
 
 #define state states.top()
