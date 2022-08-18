@@ -164,6 +164,4 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     if (uci)
         out("bestmove", bestMove);
-
-    out("Go finished");
 }
