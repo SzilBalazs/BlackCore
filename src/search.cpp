@@ -120,6 +120,8 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
+// maxDepth necessary, because the way it's implemented it can find repetition cycles and it makes the StateStack overflow
+// TODO smarter fix then limiting the pv line depth to a maximum of 10
 std::string getPvLine(Position &pos, Depth maxDepth) {
     Move m = getHashMove(pos.getHash());
     if (maxDepth >= 1 && m) {
