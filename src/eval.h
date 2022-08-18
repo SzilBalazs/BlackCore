@@ -21,6 +21,10 @@
 #include "position.h"
 
 constexpr Score TEMPO_SCORE = 10;
+
+constexpr Score ROOK_OPEN_BONUS = 15;
+constexpr Score ROOK_HOPEN_BONUS = 5;
+
 constexpr Score PIECE_VALUES[6] = {0, 90, 300, 350, 520, 1000};
 
 Score eval(const Position &pos);

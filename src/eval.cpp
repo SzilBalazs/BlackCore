@@ -98,6 +98,9 @@ constexpr Score bKingTable[64] = {-60, -60, -60, -60, -60, -60, -60, -60,
                                   30, 30, 10, 0, 0, 10, 30, 30};
 
 Score eval(const Position &pos) {
+
+    Bitboard pawns = pos.pieces<PAWN>();
+
     Score whiteEval = 0;
 
     Square wKing = pos.pieces<WHITE, KING>().lsb();
@@ -127,7 +130,16 @@ Score eval(const Position &pos) {
     }
 
     while (wRooks) {
-        whiteEval += wRookTable[wRooks.popLsb()];
+        Square square = wRooks.popLsb();
+        whiteEval += wRookTable[square];
+
+        unsigned int pawnCntOnFile = (rookMask(square) & pawns).popCount();
+
+        if (pawnCntOnFile == 0) {
+            whiteEval += ROOK_OPEN_BONUS;
+        } else if (pawnCntOnFile == 1) {
+            whiteEval += ROOK_HOPEN_BONUS;
+        }
     }
 
     Score blackEval = 0;
@@ -159,7 +171,16 @@ Score eval(const Position &pos) {
     }
 
     while (bRooks) {
-        blackEval += bRookTable[bRooks.popLsb()];
+        Square square = bRooks.popLsb();
+        blackEval += bRookTable[square];
+
+        unsigned int pawnCntOnFile = (rookMask(square) & pawns).popCount();
+
+        if (pawnCntOnFile == 0) {
+            blackEval += ROOK_OPEN_BONUS;
+        } else if (pawnCntOnFile == 1) {
+            blackEval += ROOK_HOPEN_BONUS;
+        }
     }
 
     if (pos.getSideToMove() == WHITE)
