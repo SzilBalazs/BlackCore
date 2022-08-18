@@ -103,7 +103,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
                 recordKillerMove(m, ply);
             }
 
-            ttSave(pos.getHash(), depth, beta, BETA, m);
+            // ttSave(pos.getHash(), depth, beta, BETA, m);
             return beta;
         }
 
@@ -115,7 +115,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     }
 
-    ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
+    // ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
 
     return alpha;
 }
