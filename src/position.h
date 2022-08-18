@@ -58,6 +58,8 @@ struct StateStack {
         currState--;
     }
 
+    inline void clear() { currState = stateStart; }
+
     inline BoardState *top() const { return currState; }
 };
 

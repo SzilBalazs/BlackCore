@@ -120,9 +120,9 @@ void uciLoop() {
                 for (int i = 1; i < tokens.size() && tokens[i] != "moves"; i++) {
                     fen += tokens[i] + ' ';
                 }
-                pos = {fen};
+                pos.loadPositionFromFen(fen);
             } else if (tokens[0] == "startpos") {
-                pos = {STARTING_FEN};
+                pos.loadPositionFromFen(STARTING_FEN);
             }
 
             if (line.find("moves") != std::string::npos) {

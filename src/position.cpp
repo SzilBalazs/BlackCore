@@ -63,7 +63,8 @@ void Position::clearPosition() {
 
     allPieceBB[WHITE] = 0;
     allPieceBB[BLACK] = 0;
-
+    
+    states.clear();
     states.push({});
 }
 
