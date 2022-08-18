@@ -100,6 +100,7 @@ constexpr Score bKingTable[64] = {-60, -60, -60, -60, -60, -60, -60, -60,
 Score eval(const Position &pos) {
     Score whiteEval = 0;
 
+    Square wKing = pos.pieces<WHITE, KING>().lsb();
     Bitboard wPawns = pos.pieces<WHITE, PAWN>();
     Bitboard wKnights = pos.pieces<WHITE, KNIGHT>();
     Bitboard wBishops = pos.pieces<WHITE, BISHOP>();
@@ -111,6 +112,7 @@ Score eval(const Position &pos) {
     whiteEval += wBishops.popCount() * PIECE_VALUES[BISHOP];
     whiteEval += wRooks.popCount() * PIECE_VALUES[ROOK];
     whiteEval += wQueens.popCount() * PIECE_VALUES[QUEEN];
+    whiteEval += wKingTable[wKing];
 
     while (wPawns) {
         whiteEval += wPawnTable[wPawns.popLsb()];
@@ -130,6 +132,7 @@ Score eval(const Position &pos) {
 
     Score blackEval = 0;
 
+    Square bKing = pos.pieces<BLACK, KING>().lsb();
     Bitboard bPawns = pos.pieces<BLACK, PAWN>();
     Bitboard bKnights = pos.pieces<BLACK, KNIGHT>();
     Bitboard bBishops = pos.pieces<BLACK, BISHOP>();
@@ -141,6 +144,7 @@ Score eval(const Position &pos) {
     blackEval += bBishops.popCount() * PIECE_VALUES[BISHOP];
     blackEval += bRooks.popCount() * PIECE_VALUES[ROOK];
     blackEval += bQueens.popCount() * PIECE_VALUES[QUEEN];
+    blackEval += bKingTable[bKing];
 
     while (bPawns) {
         blackEval += bPawnTable[bPawns.popLsb()];
@@ -159,7 +163,7 @@ Score eval(const Position &pos) {
     }
 
     if (pos.getSideToMove() == WHITE)
-        return whiteEval - blackEval;
+        return whiteEval - blackEval + TEMPO_SCORE;
     else
-        return blackEval - whiteEval;
+        return blackEval - whiteEval + TEMPO_SCORE;
 }
