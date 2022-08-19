@@ -128,7 +128,9 @@ public:
 
     bool isRepetition();
 
-    void display();
+    void display() const;
+
+    void displayEval();
 
     void loadPositionFromFen(const std::string &fen);
 

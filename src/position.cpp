@@ -14,10 +14,12 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "position.h"
+#include "eval.h"
+
 #include <iostream>
 #include <vector>
-#include <sstream>
-#include "position.h"
+#include <iomanip>
 
 #define state states.top()
 
@@ -81,7 +83,7 @@ bool Position::isRepetition() {
     return false;
 }
 
-void Position::display() {
+void Position::display() const {
     std::vector<string> text;
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
     if (getEpSquare() != NULL_SQUARE)
@@ -114,6 +116,37 @@ void Position::display() {
         cout << "\n";
     }
     cout << "   +---+---+---+---+---+---+---+---+\n\n" << std::endl;
+}
+
+void Position::displayEval() {
+    Score score = eval(*this);
+    cout << "\n      A     B     C     D     E     F     G     H    \n";
+    for (int i = 8; i >= 1; i--) {
+        cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+";
+        cout << "\n " << i << " |";
+        for (int j = 1; j <= 8; j++) {
+            Square square = Square((i - 1) * 8 + (j - 1));
+            cout << "  " << pieceToChar(pieceAt(square)) << "  |";
+        }
+        cout << "\n   |";
+        for (int j = 1; j <= 8; j++) {
+            Square square = Square((i - 1) * 8 + (j - 1));
+            Piece piece = pieceAt(square);
+            string evalStr = " ";
+            if (!piece.isNull() && piece.type != KING) {
+                clearSquare(square);
+                Score newScore = eval(*this);
+                Score scoreDiff = score-newScore;
+                evalStr = std::to_string(scoreDiff);
+                setSquare(square, piece);
+            }
+            cout << std::setw(5) << evalStr << "|";
+        }
+        cout << "\n";
+    }
+    cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+\n" << std::endl;
+
+    cout << "Eval: " << score << std::endl;
 }
 
 void Position::loadPositionFromFen(const string &fen) {

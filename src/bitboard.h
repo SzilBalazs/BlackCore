@@ -254,8 +254,7 @@ constexpr Bitboard rank6 = rank1 << (5 * 8);
 constexpr Bitboard rank7 = rank1 << (6 * 8);
 constexpr Bitboard rank8 = rank1 << (7 * 8);
 
-constexpr Bitboard notRank2 = ~rank2;
-constexpr Bitboard notRank7 = ~rank7;
+constexpr Bitboard sideBB[2] = {rank1 | rank2 | rank3 | rank4, rank5 | rank6 | rank7 | rank8};
 
 constexpr Bitboard WK_CASTLE_SAFE = 0x70ULL;
 constexpr Bitboard WK_CASTLE_EMPTY = 0x60ULL;
