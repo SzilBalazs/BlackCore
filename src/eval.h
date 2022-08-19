@@ -28,6 +28,8 @@ struct Value {
 
     inline Value operator+(Value a) const { return {mg+a.mg, eg+a.eg}; }
 
+    inline Value operator-(Value a) const { return {mg-a.mg, eg-a.eg}; }
+
     inline Value operator*(int a) const { return {mg*a, eg*a}; }
 
     inline Value& operator+=(Value a) {
@@ -51,7 +53,7 @@ constexpr Value PIECE_VALUES[6] = {{0,    0},
                                    {1300, 1700}};
 
 
-constexpr Value TEMPO_SCORE = {10, 10};
+constexpr Score TEMPO_SCORE = 10;
 
 constexpr Value BISHOP_ATTACK_BONUS = {15, 5};
 

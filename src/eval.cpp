@@ -138,8 +138,17 @@ Score eval(const Position &pos) {
     blackEval += evalQueens<BLACK>(pos);
     blackEval += evalKings<BLACK>(pos);
 
-    Score s = whiteEval.mg - blackEval.mg;
+    Value value = whiteEval - blackEval;
+
+    int phase = 0;
+    phase += pos.pieces<KNIGHT>().popCount();
+    phase += pos.pieces<BISHOP>().popCount();
+    phase += 2 * pos.pieces<ROOK>().popCount();
+    phase += 4 * pos.pieces<QUEEN>().popCount();
+
+    // Formula from https://www.chessprogramming.org/Tapered_Eval
+    Score score = ((value.eg * (24 - phase)) + (value.mg * phase)) / 24;
 
 
-    return TEMPO_SCORE.mg + (pos.getSideToMove()==WHITE?s:-s);
+    return TEMPO_SCORE + (pos.getSideToMove()==WHITE?score:-score);
 }
