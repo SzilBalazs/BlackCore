@@ -45,6 +45,11 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         Move m = moves.nextMove();
 
+        // Delta pruning
+        if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
+            staticEval + DELTA_MARGIN < alpha)
+            continue;
+
         pos.makeMove(m);
 
         Score score = -quiescence(pos, -beta, -alpha, ply + 1);
@@ -68,6 +73,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
+
+    if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
     Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
@@ -127,11 +134,11 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
 // maxDepth necessary, because the way it's implemented it can find repetition cycles and it makes the StateStack overflow
 // TODO smarter fix then limiting the pv line depth to a maximum of 10
-std::string getPvLine(Position &pos, Depth maxDepth) {
+std::string getPvLine(Position &pos) {
     Move m = getHashMove(pos.getHash());
-    if (maxDepth >= 1 && m) {
+    if (!pos.isRepetition() && m) {
         pos.makeMove(m);
-        std::string str = m.str() + " " + getPvLine(pos, maxDepth - 1);
+        std::string str = m.str() + " " + getPvLine(pos);
         pos.undoMove(m);
         return str;
     } else {
@@ -148,7 +155,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
-    std::string pvLine = getPvLine(pos, 10);
+    std::string pvLine = getPvLine(pos);
     if (uci) {
         Score absScore = std::abs(score);
         int mateDepth = MATE_VALUE - absScore;
@@ -175,7 +182,6 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
-
     Move bestMove;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {

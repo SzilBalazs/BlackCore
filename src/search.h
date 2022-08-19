@@ -19,6 +19,8 @@
 
 #include "movegen.h"
 
+constexpr Score DELTA_MARGIN = 400;
+
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H
