@@ -19,6 +19,8 @@
 
 #include <chrono>
 
+unsigned int MOVE_OVERHEAD = 50;
+
 constexpr U64 mask = (1ULL << 15) - 1;
 U64 searchStartedAt = 0;
 U64 searchShouldEnd = 0;
@@ -36,7 +38,7 @@ void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime) {
     if (time == 0 || movetime != 0) {
         searchShouldEnd = searchStartedAt + movetime;
     } else {
-        searchShouldEnd = searchStartedAt + inc + (time / (movestogo + 5));
+        searchShouldEnd = searchStartedAt + inc + (time / (movestogo + 5)) - MOVE_OVERHEAD;
     }
 }
 
