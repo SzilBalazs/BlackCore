@@ -170,6 +170,11 @@ void uciLoop() {
                 }
             }
 
+            // A little more time, so we can fill up the TT
+            if (getHashMove(pos.getHash()).isNull()) {
+                movestogo /= 2;
+            }
+
             if (pos.getSideToMove() == WHITE)
                 startSearch(wtime, winc, movestogo, movetime);
             else
