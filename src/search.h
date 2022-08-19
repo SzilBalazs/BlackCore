@@ -20,6 +20,7 @@
 #include "movegen.h"
 
 constexpr Score DELTA_MARGIN = 400;
+constexpr Score RAZOR_MARGIN = 130;
 
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 

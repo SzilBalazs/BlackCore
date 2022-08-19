@@ -84,26 +84,42 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     Color color = pos.getSideToMove();
 
     MoveList moves = {pos, ply, false};
-
+    bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
     if (moves.count == 0) {
-        Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
-        if (checkers) {
+        if (inCheck) {
             return -MATE_VALUE + ply;
         } else {
             return DRAW_VALUE;
         }
     }
 
+    Score staticEval = eval(pos);
+    bool pvNode = beta - alpha > 1;
+
+    if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
+        return quiescence(pos, alpha, beta, ply);
+    }
+
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
+    bool searchPv = true;
 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
+        Score score;
 
         pos.makeMove(m);
 
-        Score score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+        if (searchPv)
+            score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+        else {
+            score = -search(pos, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+            if (score > alpha && score < beta) {
+                score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+            }
+        }
 
         pos.undoMove(m);
 
@@ -125,6 +141,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
             ttFlag = EXACT;
         }
 
+        searchPv = false;
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
