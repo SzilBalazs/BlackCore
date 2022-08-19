@@ -55,6 +55,11 @@ constexpr Value PIECE_VALUES[6] = {{0,    0},
 
 constexpr Score TEMPO_SCORE = 10;
 
+constexpr Value PAWN_PASSED_BONUS = {40, 60};
+constexpr Value PAWN_SUPPORTED_BONUS = {3, 10};
+constexpr Value PAWN_DOUBLE_PENALTY = {-15, -25};
+constexpr Value PAWN_ISOLATED_PENALTY = {-10, -30};
+
 constexpr Value BISHOP_ATTACK_BONUS = {15, 5};
 
 constexpr Value ROOK_OPEN_BONUS = {30, 20};

@@ -20,7 +20,6 @@ template<Color color>
 Value evalPawns(const Position &pos) {
     constexpr Color enemyColor = EnemyColor<color>();
 
-    Bitboard allPawn = pos.pieces<PAWN>();
     Bitboard ownPawns = pos.pieces<color, PAWN>();
     Bitboard enemyPawns = pos.pieces<enemyColor, PAWN>();
 
@@ -30,6 +29,27 @@ Value evalPawns(const Position &pos) {
         Bitboard _wPawns = ownPawns;
         while (_wPawns) {
             Square square = _wPawns.popLsb();
+
+            // Double pawns
+            if (fileMask(square) & ownPawns) {
+                value += PAWN_DOUBLE_PENALTY;
+            }
+
+            // Passed pawn
+            if (!(adjacentNorthMask(square) & enemyPawns)) {
+                value += PAWN_PASSED_BONUS;
+            }
+
+            // Isolated pawn
+            if (!(adjacentFileMask(square) & ownPawns)) {
+                value += PAWN_ISOLATED_PENALTY;
+            }
+
+            // Pawn chain
+            if (pawnMask(square, BLACK) & ownPawns) {
+                value += PAWN_SUPPORTED_BONUS;
+            }
+
             value += wPawnTable[square];
         }
     } else {
@@ -37,6 +57,27 @@ Value evalPawns(const Position &pos) {
 
         while (_bPawns) {
             Square square = _bPawns.popLsb();
+
+            // Double pawns
+            if (fileMask(square) & ownPawns) {
+                value += PAWN_DOUBLE_PENALTY;
+            }
+
+            // Passed pawn
+            if (!(adjacentSouthMask(square) & enemyPawns)) {
+                value += PAWN_PASSED_BONUS;
+            }
+
+            // Isolated pawn
+            if (!(adjacentFileMask(square) & ownPawns)) {
+                value += PAWN_ISOLATED_PENALTY;
+            }
+
+            // Pawn chain
+            if (pawnMask(square, WHITE) & ownPawns) {
+                value += PAWN_SUPPORTED_BONUS;
+            }
+
             value += bPawnTable[square];
         }
     }
