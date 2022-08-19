@@ -102,7 +102,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     }
 
     // Reverse futility pruning
-    if (depth < RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE)
+    if (depth < RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
         return beta;
 
     Move bestMove;
