@@ -16,175 +16,130 @@
 
 #include "eval.h"
 
-constexpr Score wPawnTable[64] = {0, 0, 0, 0, 0, 0, 0, 0,
-                                  10, 10, 10, -30, -30, 10, 10, 10,
-                                  10, 10, -5, 0, 0, -5, 10, 10,
-                                  0, 0, 0, 30, 30, 0, 0, 0,
-                                  5, 5, 5, 20, 20, 5, 5, 5,
-                                  5, 5, 15, 15, 15, 15, 5, 5,
-                                  50, 50, 50, 50, 50, 50, 50, 50,
-                                  0, 0, 0, 0, 0, 0, 0, 0};
+template<Color color>
+Value evalPawns(const Position &pos) {
+    constexpr Color enemyColor = EnemyColor<color>();
 
-constexpr Score bPawnTable[64] = {0, 0, 0, 0, 0, 0, 0, 0,
-                                  50, 50, 50, 50, 50, 50, 50, 50,
-                                  5, 5, 15, 15, 15, 15, 5, 5,
-                                  5, 5, 5, 20, 20, 5, 5, 5,
-                                  0, 0, 0, 30, 30, 0, 0, 0,
-                                  10, 10, -5, 0, 0, -5, 10, 10,
-                                  10, 10, 10, -30, -30, 10, 10, 10,
-                                  0, 0, 0, 0, 0, 0, 0, 0};
+    Bitboard allPawn = pos.pieces<PAWN>();
+    Bitboard ownPawns = pos.pieces<color, PAWN>();
+    Bitboard enemyPawns = pos.pieces<enemyColor, PAWN>();
 
-constexpr Score knightTable[64] = {-50, -40, -30, -30, -30, -30, -40, -50,
-                                   -40, -20, 5, 5, 5, 5, -20, -40,
-                                   -30, 5, 10, 15, 15, 10, 5, -30,
-                                   -30, 5, 15, 20, 20, 15, 5, -30,
-                                   -30, 5, 15, 20, 20, 15, 5, -30,
-                                   -30, 5, 10, 15, 15, 10, 5, -30,
-                                   -40, -20, 5, 5, 5, 5, -20, -40,
-                                   -50, -40, -30, -30, -30, -30, -40, -50};
+    Value value = PIECE_VALUES[PAWN] * ownPawns.popCount();
 
-constexpr Score wBishopTable[64] = {-20, -10, -15, -10, -10, -15, -10, -20,
-                                    -5, 5, 0, 7, 7, 0, 5, -5,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -5, 0, 15, 10, 10, 15, 0, -5,
-                                    -5, 15, 0, 5, 5, 0, 15, -5,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -20, -10, -10, -10, -10, -10, -10, -20};
+    if constexpr (color == WHITE) {
+        Bitboard _wPawns = ownPawns;
+        while (_wPawns) {
+            Square square = _wPawns.popLsb();
+            value += wPawnTable[square];
+        }
+    } else {
+        Bitboard _bPawns = ownPawns;
 
-constexpr Score bBishopTable[64] = {-20, -10, -10, -10, -10, -10, -10, -20,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -5, 15, 0, 5, 5, 0, 15, -5,
-                                    -5, 0, 15, 10, 10, 15, 0, -5,
-                                    -5, 0, 0, 0, 0, 0, 0, -5,
-                                    -5, 5, 0, 7, 7, 0, 5, -5,
-                                    -20, -10, -15, -10, -10, -15, -10, -20};
+        while (_bPawns) {
+            Square square = _bPawns.popLsb();
+            value += bPawnTable[square];
+        }
+    }
+    return value;
+}
 
-constexpr Score wRookTable[64] = {-5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  5, 15, 15, 15, 15, 15, 15, 5,
-                                  0, 0, 0, 0, 0, 0, 0, 0};
+template<Color color>
+Value evalKnights(const Position &pos) {
+    constexpr Color enemyColor = EnemyColor<color>();
 
-constexpr Score bRookTable[64] = {0, 0, 0, 0, 0, 0, 0, 0,
-                                  5, 15, 15, 15, 15, 15, 15, 5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5,
-                                  -5, 0, 0, 0, 0, 0, 0, -5};
+    Bitboard knights = pos.pieces<color, KNIGHT>();
 
-constexpr Score wKingTable[64] = {30, 30, 10, 0, 0, 10, 30, 30,
-                                  20, 20, 0, 0, 0, 0, 20, 20,
-                                  -10, -20, -20, -20, -20, -20, -20, -10,
-                                  -20, -25, -30, -40, -40, -30, -25, -20,
-                                  -30, -40, -40, -40, -40, -40, -40, -30,
-                                  -40, -40, -40, -40, -40, -40, -40, -40,
-                                  -40, -50, -50, -50, -50, -50, -50, -40,
-                                  -60, -60, -60, -60, -60, -60, -60, -60};
+    Value value = PIECE_VALUES[KNIGHT] * knights.popCount();
 
-constexpr Score bKingTable[64] = {-60, -60, -60, -60, -60, -60, -60, -60,
-                                  -40, -50, -50, -50, -50, -50, -50, -40,
-                                  -40, -40, -40, -40, -40, -40, -40, -40,
-                                  -30, -40, -40, -40, -40, -40, -40, -30,
-                                  -20, -25, -30, -40, -40, -30, -25, -20,
-                                  -10, -20, -20, -20, -20, -20, -20, -10,
-                                  20, 20, 0, 0, 0, 0, 20, 20,
-                                  30, 30, 10, 0, 0, 10, 30, 30};
+    while (knights) {
+        value += knightTable[knights.popLsb()];
+    }
+
+    return value;
+
+}
+
+template<Color color>
+Value evalBishops(const Position &pos) {
+    constexpr Color enemyColor = EnemyColor<color>();
+
+    Bitboard pawns = pos.pieces<PAWN>();
+    Bitboard bishops = pos.pieces<color, BISHOP>();
+
+    Value value = PIECE_VALUES[BISHOP] * bishops.popCount();
+
+    while (bishops) {
+        Square square = bishops.popLsb();
+        Bitboard attacks = bishopAttacks(square, pawns) & sideBB[enemyColor];
+        value += BISHOP_ATTACK_BONUS * attacks.popCount();
+    }
+
+    return value;
+}
+
+template<Color color>
+Value evalRooks(const Position& pos) {
+
+    Bitboard pawns = pos.pieces<PAWN>();
+    Bitboard rooks = pos.pieces<color, ROOK>();
+
+    Value value = PIECE_VALUES[ROOK] * rooks.popCount();
+
+    while (rooks) {
+        Square square = rooks.popLsb();
+        int pawnsOnFile = (fileMask(square) & pawns).popCount();
+
+        if (pawnsOnFile == 0) {
+            value += ROOK_OPEN_BONUS;
+        } else if (pawnsOnFile == 1) {
+            value += ROOK_HALF_BONUS;
+        }
+    }
+
+    return value;
+}
+
+template<Color color>
+Value evalQueens(const Position& pos) {
+
+    Bitboard queens = pos.pieces<color, QUEEN>();
+
+    Value value = PIECE_VALUES[QUEEN] * queens.popCount();
+
+    return value;
+}
+
+template<Color color>
+Value evalKings(const Position& pos) {
+    if constexpr (color == WHITE) {
+        Square king = pos.pieces<WHITE, KING>().lsb();
+        return wKingTable[king];
+    } else {
+        Square king = pos.pieces<BLACK, KING>().lsb();
+        return bKingTable[king];
+    }
+}
 
 Score eval(const Position &pos) {
 
-    Bitboard pawns = pos.pieces<PAWN>();
+    Value whiteEval, blackEval;
 
-    Score whiteEval = 0;
+    whiteEval += evalPawns<WHITE>(pos);
+    whiteEval += evalKnights<WHITE>(pos);
+    whiteEval += evalBishops<WHITE>(pos);
+    whiteEval += evalRooks<WHITE>(pos);
+    whiteEval += evalQueens<WHITE>(pos);
+    whiteEval += evalKings<WHITE>(pos);
 
-    Square wKing = pos.pieces<WHITE, KING>().lsb();
-    Bitboard wPawns = pos.pieces<WHITE, PAWN>();
-    Bitboard wKnights = pos.pieces<WHITE, KNIGHT>();
-    Bitboard wBishops = pos.pieces<WHITE, BISHOP>();
-    Bitboard wRooks = pos.pieces<WHITE, ROOK>();
-    Bitboard wQueens = pos.pieces<WHITE, QUEEN>();
+    blackEval += evalPawns<BLACK>(pos);
+    blackEval += evalKnights<BLACK>(pos);
+    blackEval += evalBishops<BLACK>(pos);
+    blackEval += evalRooks<BLACK>(pos);
+    blackEval += evalQueens<BLACK>(pos);
+    blackEval += evalKings<BLACK>(pos);
 
-    whiteEval += wPawns.popCount() * PIECE_VALUES[PAWN];
-    whiteEval += wKnights.popCount() * PIECE_VALUES[KNIGHT];
-    whiteEval += wBishops.popCount() * PIECE_VALUES[BISHOP];
-    whiteEval += wRooks.popCount() * PIECE_VALUES[ROOK];
-    whiteEval += wQueens.popCount() * PIECE_VALUES[QUEEN];
-    whiteEval += wKingTable[wKing];
+    Score s = whiteEval.mg - blackEval.mg;
 
-    while (wPawns) {
-        whiteEval += wPawnTable[wPawns.popLsb()];
-    }
 
-    while (wKnights) {
-        whiteEval += knightTable[wKnights.popLsb()];
-    }
-
-    while (wBishops) {
-        whiteEval += wBishopTable[wBishops.popLsb()];
-    }
-
-    while (wRooks) {
-        Square square = wRooks.popLsb();
-        whiteEval += wRookTable[square];
-
-        unsigned int pawnCntOnFile = (rookMask(square) & pawns).popCount();
-
-        if (pawnCntOnFile == 0) {
-            whiteEval += ROOK_OPEN_BONUS;
-        } else if (pawnCntOnFile == 1) {
-            whiteEval += ROOK_HOPEN_BONUS;
-        }
-    }
-
-    Score blackEval = 0;
-
-    Square bKing = pos.pieces<BLACK, KING>().lsb();
-    Bitboard bPawns = pos.pieces<BLACK, PAWN>();
-    Bitboard bKnights = pos.pieces<BLACK, KNIGHT>();
-    Bitboard bBishops = pos.pieces<BLACK, BISHOP>();
-    Bitboard bRooks = pos.pieces<BLACK, ROOK>();
-    Bitboard bQueens = pos.pieces<BLACK, QUEEN>();
-
-    blackEval += bPawns.popCount() * PIECE_VALUES[PAWN];
-    blackEval += bKnights.popCount() * PIECE_VALUES[KNIGHT];
-    blackEval += bBishops.popCount() * PIECE_VALUES[BISHOP];
-    blackEval += bRooks.popCount() * PIECE_VALUES[ROOK];
-    blackEval += bQueens.popCount() * PIECE_VALUES[QUEEN];
-    blackEval += bKingTable[bKing];
-
-    while (bPawns) {
-        blackEval += bPawnTable[bPawns.popLsb()];
-    }
-
-    while (bKnights) {
-        blackEval += knightTable[bKnights.popLsb()];
-    }
-
-    while (bBishops) {
-        blackEval += bBishopTable[bBishops.popLsb()];
-    }
-
-    while (bRooks) {
-        Square square = bRooks.popLsb();
-        blackEval += bRookTable[square];
-
-        unsigned int pawnCntOnFile = (rookMask(square) & pawns).popCount();
-
-        if (pawnCntOnFile == 0) {
-            blackEval += ROOK_OPEN_BONUS;
-        } else if (pawnCntOnFile == 1) {
-            blackEval += ROOK_HOPEN_BONUS;
-        }
-    }
-
-    if (pos.getSideToMove() == WHITE)
-        return whiteEval - blackEval + TEMPO_SCORE;
-    else
-        return blackEval - whiteEval + TEMPO_SCORE;
+    return TEMPO_SCORE.mg + (pos.getSideToMove()==WHITE?s:-s);
 }

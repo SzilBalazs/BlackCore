@@ -34,6 +34,10 @@ constexpr unsigned int squareToRank(Square square) { return square >> 3; }
 
 constexpr unsigned int squareToFile(Square square) { return square & 7; }
 
+constexpr Square mirrorSquare(Square square) {
+    return Square(56 - square + squareToFile(square));
+}
+
 constexpr unsigned char encodePiece(Piece piece) { return (piece.color << 3) | piece.type; }
 
 constexpr Piece decodePiece(unsigned char encodedPiece) {

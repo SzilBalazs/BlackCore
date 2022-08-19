@@ -46,7 +46,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         Move m = moves.nextMove();
 
         // Delta pruning
-        if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
+        if (m.isPromo() * PIECE_VALUES[QUEEN].mg + PIECE_VALUES[pos.pieceAt(m.getTo()).type].mg +
             staticEval + DELTA_MARGIN < alpha)
             continue;
 

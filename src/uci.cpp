@@ -179,6 +179,8 @@ void uciLoop() {
 
         } else if (command == "d") {
             pos.display();
+        } else if (command == "e") {
+            pos.displayEval();
         }
     }
 }
