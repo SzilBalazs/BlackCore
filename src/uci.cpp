@@ -74,6 +74,10 @@ void uciLoop() {
 
     // We tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
+    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
+    out("option", "name", "Ponder", "type", "check", "default", "false");
+    out("option", "name", "Move Overhead", "type", "spin", "default", 50, "min", 0, "max", 10000);
+
     ttResize(16);
 
     // We have sent all the parameters
@@ -111,6 +115,8 @@ void uciLoop() {
             if (tokens.size() >= 4) {
                 if (tokens[1] == "Hash") {
                     ttResize(std::stoi(tokens[3]));
+                } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
+                    MOVE_OVERHEAD = std::stoi(tokens[4]);
                 }
             }
         } else if (command == "position" || command == "pos") {

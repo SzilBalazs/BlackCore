@@ -19,14 +19,20 @@
 
 #include <iostream>
 
-inline void out() {
+inline void _out() {
     std::cout << std::endl;
 }
 
 template<typename T, typename... Args>
+inline void _out(T a, Args... args) {
+    std::cout << " " << a;
+    _out(args...);
+}
+
+template<typename T, typename... Args>
 inline void out(T a, Args... args) {
-    std::cout << a << " ";
-    out(args...);
+    std::cout << a;
+    _out(args...);
 }
 
 void uciLoop();

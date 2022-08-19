@@ -19,6 +19,8 @@
 
 #include "constants.h"
 
+extern unsigned int MOVE_OVERHEAD;
+
 void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime);
 
 bool shouldEnd();
