@@ -96,9 +96,14 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     Score staticEval = eval(pos);
     bool pvNode = beta - alpha > 1;
 
+    // Razoring
     if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
         return quiescence(pos, alpha, beta, ply);
     }
+
+    // Reverse futility pruning
+    if (depth < RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE)
+        return beta;
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;

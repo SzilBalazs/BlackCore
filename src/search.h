@@ -21,6 +21,8 @@
 
 constexpr Score DELTA_MARGIN = 400;
 constexpr Score RAZOR_MARGIN = 130;
+constexpr Score RFP_DEPTH = 6;
+constexpr Score RFP_DEPTH_MULTIPLIER = 160;
 
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
