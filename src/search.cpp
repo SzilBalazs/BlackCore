@@ -70,7 +70,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
@@ -79,31 +79,71 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
-    if (depth == 0) return quiescence(pos, alpha, beta, ply);
+    if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
 
     MoveList moves = {pos, ply, false};
-
+    bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
     if (moves.count == 0) {
-        Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
-        if (checkers) {
+        if (inCheck) {
             return -MATE_VALUE + ply;
         } else {
             return DRAW_VALUE;
         }
     }
 
+    bool pvNode = beta - alpha > 1;
+
+    Score staticEval = state->eval = eval(pos);
+
+    // Razoring
+    if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
+        return quiescence(pos, alpha, beta, ply);
+    }
+
+    // Reverse futility pruning
+    if (depth <= RFP_DEPTH && !inCheck && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
+        return beta;
+
+    // Null move pruning
+    if (!pvNode && ply > 0 && !inCheck && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        // We don't want to make a null move in a Zugzwang position
+        if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
+            state->move = Move();
+            pos.makeNullMove();
+            Score score = -search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+            pos.undoNullMove();
+
+            if (score >= beta) {
+                if (std::abs(score) > MATE_VALUE - 100) return beta;
+                return score;
+            }
+        }
+    }
+
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
+    bool searchPv = true;
 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
+        state->move = m;
+
+        Score score;
 
         pos.makeMove(m);
 
-        Score score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+        if (searchPv)
+            score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+        else {
+            score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+            if (score > alpha && score < beta) {
+                score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+            }
+        }
 
         pos.undoMove(m);
 
@@ -125,6 +165,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
             ttFlag = EXACT;
         }
 
+        searchPv = false;
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
@@ -132,8 +173,6 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-// maxDepth necessary, because the way it's implemented it can find repetition cycles and it makes the StateStack overflow
-// TODO smarter fix then limiting the pv line depth to a maximum of 10
 std::string getPvLine(Position &pos) {
     Move m = getHashMove(pos.getHash());
     if (!pos.isRepetition() && m) {
@@ -150,8 +189,9 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     clearKillerMoves();
     selectiveDepth = 0;
+    SearchState stateStack[400];
 
-    Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
+    Score score = search(pos, stateStack+1, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 

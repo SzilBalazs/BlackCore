@@ -126,6 +126,10 @@ public:
 
     inline void undoMove(Move move);
 
+    void makeNullMove();
+
+    void undoNullMove();
+
     bool isRepetition();
 
     void display() const;

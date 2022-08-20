@@ -73,6 +73,25 @@ void Position::clearPosition() {
     state->lastIrreversibleMove = state;
 }
 
+void Position::makeNullMove() {
+    BoardState newState;
+
+    newState.stm = state->stm==WHITE?BLACK:WHITE;
+    newState.castlingRights = state->castlingRights;
+    newState.hash = state->hash ^ *blackRand;
+    newState.lastIrreversibleMove = state->lastIrreversibleMove;
+
+    if (state->epSquare != NULL_SQUARE) {
+        newState.hash ^= epRandTable[squareToFile(state->epSquare)];
+    }
+
+    states.push(newState);
+}
+
+void Position::undoNullMove() {
+    states.pop();
+}
+
 bool Position::isRepetition() {
     // TODO we can make this faster, because we only have to check every second ply
     for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
