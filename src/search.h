@@ -20,9 +20,19 @@
 #include "movegen.h"
 
 constexpr Score DELTA_MARGIN = 400;
+
 constexpr Score RAZOR_MARGIN = 130;
-constexpr Score RFP_DEPTH = 6;
+
+constexpr Depth RFP_DEPTH = 6;
 constexpr Score RFP_DEPTH_MULTIPLIER = 160;
+
+constexpr Depth NULL_MOVE_DEPTH = 3;
+constexpr Depth NULL_MOVE_REDUCTION = 5;
+
+struct SearchState {
+    bool doNullMove = true;
+    Score eval = 0;
+};
 
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 

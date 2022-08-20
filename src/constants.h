@@ -21,7 +21,7 @@
 
 typedef uint64_t U64;
 typedef int32_t Score;
-typedef uint32_t Depth;
+typedef int32_t Depth;
 typedef uint32_t Ply;
 
 constexpr Score UNKNOWN_SCORE = 100002;

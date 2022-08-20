@@ -70,7 +70,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
@@ -79,7 +79,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
-    if (depth == 0) return quiescence(pos, alpha, beta, ply);
+    if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
 
@@ -93,8 +93,10 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
         }
     }
 
-    Score staticEval = eval(pos);
     bool pvNode = beta - alpha > 1;
+
+    Score staticEval = state->eval = eval(pos);
+    state++;
 
     // Razoring
     if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
@@ -102,8 +104,24 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     }
 
     // Reverse futility pruning
-    if (depth < RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
+    if (depth <= RFP_DEPTH && !inCheck && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
         return beta;
+
+    if (ply > 0 && !inCheck && (state-1)->doNullMove && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        // We check if is this a Zugzwang position
+        if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
+            state->doNullMove = false;
+            pos.makeNullMove();
+            Score score = search(pos, state, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+            pos.undoNullMove();
+            state->doNullMove = true;
+
+            if (score >= beta) {
+                if (std::abs(score) > MATE_VALUE - 100) return beta;
+                return score;
+            }
+        }
+    }
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
@@ -117,12 +135,12 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
         pos.makeMove(m);
 
         if (searchPv)
-            score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+            score = -search(pos, state, depth - 1, -beta, -alpha, ply + 1);
         else {
-            score = -search(pos, depth - 1, -alpha - 1, -alpha, ply + 1);
+            score = -search(pos, state, depth - 1, -alpha - 1, -alpha, ply + 1);
 
             if (score > alpha && score < beta) {
-                score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+                score = -search(pos, state, depth - 1, -beta, -alpha, ply + 1);
             }
         }
 
@@ -170,8 +188,9 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 
     clearKillerMoves();
     selectiveDepth = 0;
+    SearchState stateStack[400];
 
-    Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
+    Score score = search(pos, stateStack, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
