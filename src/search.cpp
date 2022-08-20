@@ -76,7 +76,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
-    Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
+    bool ttHit = false;
+    Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
@@ -97,34 +98,40 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     Score staticEval = state->eval = eval(pos);
 
-    // Razoring
-    if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
-        return quiescence(pos, alpha, beta, ply);
-    }
+    if (ply > 0 && !inCheck) {
+        // Razoring
+        if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
+            return quiescence(pos, alpha, beta, ply);
+        }
 
-    // Reverse futility pruning
-    if (depth <= RFP_DEPTH && !inCheck && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
-        return beta;
+        // Reverse futility pruning
+        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
+            return beta;
 
-    // Null move pruning
-    if (!pvNode && ply > 0 && !inCheck && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
-        // We don't want to make a null move in a Zugzwang position
-        if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
-            state->move = Move();
-            pos.makeNullMove();
-            Score score = -search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
-            pos.undoNullMove();
+        // Null move pruning
+        if (!pvNode && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+            // We don't want to make a null move in a Zugzwang position
+            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
+                state->move = Move();
+                pos.makeNullMove();
+                Score score = -search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+                pos.undoNullMove();
 
-            if (score >= beta) {
-                if (std::abs(score) > MATE_VALUE - 100) return beta;
-                return score;
+                if (score >= beta) {
+                    if (std::abs(score) > MATE_VALUE - 100) return beta;
+                    return score;
+                }
             }
         }
+
+        // Internal iterative deepening
+        if (!ttHit && depth >= IID_DEPTH) depth--;
     }
+
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
-    bool searchPv = true;
+    int index = 0;
 
     while (!moves.empty()) {
 
@@ -135,14 +142,28 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         pos.makeMove(m);
 
-        if (searchPv)
-            score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
-        else {
-            score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+        if (index == 0) {
+            score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+        } else {
+            // Late move reduction
+            /*if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && !m.isPromo()) {
 
-            if (score > alpha && score < beta) {
-                score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+                Depth reduction = index > 6 ? 3 : 2;
+
+                score = -search(pos, state+1, depth - reduction, -alpha - 1, -alpha, ply + 1);
+
+                if (score > alpha)
+                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+
             }
+            // Principal variation search
+            else {*/
+                score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+                if (score > alpha && score < beta) {
+                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+                }
+            //}
         }
 
         pos.undoMove(m);
@@ -153,6 +174,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
             if (m.isQuiet()) {
                 recordKillerMove(m, ply);
+                recordHHMove(m, color, depth);
             }
 
             ttSave(pos.getHash(), depth, beta, BETA, m);
@@ -165,7 +187,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             ttFlag = EXACT;
         }
 
-        searchPv = false;
+        index++;
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
@@ -187,7 +209,7 @@ std::string getPvLine(Position &pos) {
 
 Score searchRoot(Position &pos, Depth depth, bool uci) {
 
-    clearKillerMoves();
+    clearTables();
     selectiveDepth = 0;
     SearchState stateStack[400];
 
