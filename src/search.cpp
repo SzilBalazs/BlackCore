@@ -146,7 +146,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && !m.isPromo()) {
+            /*if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && !m.isPromo()) {
 
                 Depth reduction = index > 6 ? 3 : 2;
 
@@ -157,13 +157,13 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
             }
             // Principal variation search
-            else {
+            else {*/
                 score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
                 if (score > alpha && score < beta) {
                     score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
                 }
-            }
+            //}
         }
 
         pos.undoMove(m);
