@@ -153,6 +153,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
             if (m.isQuiet()) {
                 recordKillerMove(m, ply);
+                recordHHMove(m, color, depth);
             }
 
             ttSave(pos.getHash(), depth, beta, BETA, m);
@@ -187,7 +188,7 @@ std::string getPvLine(Position &pos) {
 
 Score searchRoot(Position &pos, Depth depth, bool uci) {
 
-    clearKillerMoves();
+    clearTables();
     selectiveDepth = 0;
     SearchState stateStack[400];
 
