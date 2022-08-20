@@ -131,7 +131,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
-    bool searchPv = true;
+    unsigned int moveIndex = 0;
 
     while (!moves.empty()) {
 
@@ -142,13 +142,25 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         pos.makeMove(m);
 
-        if (searchPv)
-            score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
-        else {
-            score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+        if (moveIndex == 0) {
+            score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+        } else {
+            // LMR
+            if (!inCheck && depth >= LMR_DEPTH && !pvNode && moveIndex >= LMR_MIN_MOVE_INDEX && m.isQuiet() && !m.isPromo()) {
 
-            if (score > alpha && score < beta) {
-                score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+                Depth reduction = moveIndex > 6 ? 3 : 2;
+
+                score = -search(pos, state+1, depth - reduction, -alpha - 1, -alpha, ply + 1);
+
+                if (score > alpha)
+                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+
+            } else {
+                score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+                if (score > alpha && score < beta) {
+                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+                }
             }
         }
 
@@ -173,7 +185,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             ttFlag = EXACT;
         }
 
-        searchPv = false;
+        moveIndex++;
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
