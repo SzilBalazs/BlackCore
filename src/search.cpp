@@ -82,10 +82,11 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
-    Color color = pos.getSideToMove();
-
     MoveList moves = {pos, ply, false};
+
+    Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
+
     if (moves.count == 0) {
         if (inCheck) {
             return -MATE_VALUE + ply;
@@ -146,7 +147,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
                 Depth reduction = index > 6 ? depth / 3 : 2;
 
