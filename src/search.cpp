@@ -107,7 +107,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         return beta;
 
     // Null move pruning
-    if (ply > 0 && !inCheck && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+    if (!pvNode && ply > 0 && !inCheck && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
         // We don't want to make a null move in a Zugzwang position
         if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
             state->move = Move();
