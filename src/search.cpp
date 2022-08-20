@@ -80,9 +80,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
-    // Internal iterative deepening
-    if (!ttHit && depth >= IID_DEPTH) depth--;
-
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
@@ -126,6 +123,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
                 }
             }
         }
+
+        // Internal iterative deepening
+        if (!ttHit && depth >= IID_DEPTH) depth--;
     }
 
 
