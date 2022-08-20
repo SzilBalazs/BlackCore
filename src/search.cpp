@@ -149,22 +149,21 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             // Late move reduction
             if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                Depth reduction = index > 6 ? depth / 3 : 2;
+                Depth reduction = 2;
 
                 score = -search(pos, state+1, depth - reduction, -alpha - 1, -alpha, ply + 1);
+            } else score = alpha + 1;
 
-                if (score > alpha)
-                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
 
-            }
             // Principal variation search
-            else {
+            if (score > alpha) {
                 score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
-                if (score > alpha && score < beta) {
+                if (score > alpha) {
                     score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
                 }
             }
+
         }
 
         pos.undoMove(m);

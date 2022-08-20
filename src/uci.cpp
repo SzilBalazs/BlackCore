@@ -76,7 +76,7 @@ void uciLoop() {
     out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
     out("option", "name", "Ponder", "type", "check", "default", "false");
-    out("option", "name", "Move Overhead", "type", "spin", "default", 50, "min", 0, "max", 10000);
+    out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
     ttResize(16);
 
