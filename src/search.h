@@ -29,6 +29,8 @@ constexpr Score RFP_DEPTH_MULTIPLIER = 160;
 constexpr Depth NULL_MOVE_DEPTH = 3;
 constexpr Depth NULL_MOVE_REDUCTION = 5;
 
+constexpr Depth IID_DEPTH = 5;
+
 struct SearchState {
     Move move;
     Score eval = 0;

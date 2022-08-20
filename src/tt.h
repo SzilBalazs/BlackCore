@@ -51,7 +51,7 @@ void ttResize(unsigned int MBSize);
 
 void ttClear();
 
-Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta);
+Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta);
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
 
