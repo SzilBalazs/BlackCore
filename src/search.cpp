@@ -112,7 +112,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
             state->move = Move();
             pos.makeNullMove();
-            Score score = search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+            Score score = -search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
             pos.undoNullMove();
 
             if (score >= beta) {
