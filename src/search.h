@@ -30,7 +30,7 @@ constexpr Depth NULL_MOVE_DEPTH = 3;
 constexpr Depth NULL_MOVE_REDUCTION = 5;
 
 struct SearchState {
-    bool doNullMove = true;
+    Move move;
     Score eval = 0;
 };
 

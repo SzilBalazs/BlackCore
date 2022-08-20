@@ -96,7 +96,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     bool pvNode = beta - alpha > 1;
 
     Score staticEval = state->eval = eval(pos);
-    state++;
 
     // Razoring
     if (depth == 1 && !pvNode && !inCheck && staticEval + RAZOR_MARGIN < alpha) {
@@ -107,14 +106,14 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     if (depth <= RFP_DEPTH && !inCheck && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
         return beta;
 
-    if (ply > 0 && !inCheck && (state-1)->doNullMove && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
-        // We check if is this a Zugzwang position
+    // Null move pruning
+    if (ply > 0 && !inCheck && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        // We don't want to make a null move in a Zugzwang position
         if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
-            state->doNullMove = false;
+            state->move = Move();
             pos.makeNullMove();
-            Score score = search(pos, state, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+            Score score = search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
             pos.undoNullMove();
-            state->doNullMove = true;
 
             if (score >= beta) {
                 if (std::abs(score) > MATE_VALUE - 100) return beta;
@@ -130,17 +129,19 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
+        state->move = m;
+
         Score score;
 
         pos.makeMove(m);
 
         if (searchPv)
-            score = -search(pos, state, depth - 1, -beta, -alpha, ply + 1);
+            score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
         else {
-            score = -search(pos, state, depth - 1, -alpha - 1, -alpha, ply + 1);
+            score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
             if (score > alpha && score < beta) {
-                score = -search(pos, state, depth - 1, -beta, -alpha, ply + 1);
+                score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
             }
         }
 
@@ -190,7 +191,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     selectiveDepth = 0;
     SearchState stateStack[400];
 
-    Score score = search(pos, stateStack, depth, -INF_SCORE, INF_SCORE, 0);
+    Score score = search(pos, stateStack+1, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
