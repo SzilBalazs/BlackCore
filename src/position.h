@@ -109,6 +109,8 @@ public:
 
     inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
 
+    inline unsigned char getCastlingRights() const { return state->castlingRights; }
+
     inline BoardState *getState() { return state; }
 
     inline U64 getHash() const { return state->hash; }
@@ -175,7 +177,13 @@ void Position::makeMove(Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    newState.capturedPiece = move.getCapturedPiece();
+
+    if (move.equalFlag(EP_CAPTURE)) {
+        newState.capturedPiece = {PAWN, enemyColor};
+        clearSquare(to + DOWN);
+    } else {
+        newState.capturedPiece = pieceAt(to);
+    }
     newState.castlingRights = state->castlingRights;
     newState.stm = enemyColor;
     newState.hash = state->hash ^ *blackRand;
@@ -227,10 +235,6 @@ void Position::makeMove(Move move) {
         } else {
             movePiece(A8, D8);
         }
-    }
-
-    if (move.equalFlag(EP_CAPTURE)) {
-        clearSquare(to + DOWN);
     }
 
     movePiece(from, to);

@@ -26,13 +26,13 @@ enum EntryFlag : uint16_t {
     NONE = 0, EXACT = 1, ALPHA = 2, BETA = 3
 };
 
-struct TTEntry {    // Total: 24 bytes
+struct TTEntry {    // Total: 21 bytes -> compiler makes it 24
     U64 hash;       // 8 bytes
     Depth depth;    // 4 bytes
     Score eval;     // 4 bytes
-    Move hashMove;  // 4 bytes
+    Move hashMove;  // 2 bytes
     EntryFlag flag; // 1 bytes
-    uint16_t age;    // 1 bytes
+    uint16_t age;   // 2 bytes
 };
 
 struct TTBucket {               // 64 bytes

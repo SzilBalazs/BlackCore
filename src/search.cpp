@@ -28,9 +28,9 @@ Ply selectiveDepth = 0;
 Depth reductions[200][64];
 
 void initLmr() {
-    for (int moveIndex=0; moveIndex < 200; moveIndex++) {
+    for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
-            reductions[moveIndex][depth] = moveIndex>6?depth / 3:2;
+            reductions[moveIndex][depth] = moveIndex > 6 ? depth / 3 : 2;
         }
     }
 }
@@ -119,16 +119,18 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Reverse futility pruning
-        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int)depth >= beta && std::abs(beta) < MATE_VALUE - 100)
+        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth >= beta &&
+            std::abs(beta) < MATE_VALUE - 100)
             return beta;
 
         // Null move pruning
-        if (!pvNode && !(state-1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        if (!pvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
             // We don't want to make a null move in a Zugzwang position
-            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) | pos.pieces<QUEEN>(color)) {
+            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
+                pos.pieces<QUEEN>(color)) {
                 state->move = Move();
                 pos.makeNullMove();
-                Score score = -search(pos, state+1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+                Score score = -search(pos, state + 1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {
@@ -142,6 +144,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (!ttHit && depth >= IID_DEPTH) depth--;
     }
 
+    if (inCheck)
+        depth++;
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
@@ -160,18 +164,19 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() &&
+                m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                score = -search(pos, state+1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
+                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
             } else score = alpha + 1;
 
 
             // Principal variation search
             if (score > alpha) {
-                score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
+                score = -search(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
                 if (score > alpha) {
-                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
+                    score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
                 }
             }
 
@@ -224,7 +229,7 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     selectiveDepth = 0;
     SearchState stateStack[400];
 
-    Score score = search(pos, stateStack+1, depth, -INF_SCORE, INF_SCORE, 0);
+    Score score = search(pos, stateStack + 1, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 
