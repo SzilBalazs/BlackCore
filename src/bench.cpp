@@ -27,27 +27,28 @@ struct TestPosition {
     std::string fen;
     Depth perftDepth;
     U64 perftResult;
-    Depth searchDepth;
 };
 
 const unsigned int posCount = 10;
 
 const unsigned int searchTestHashSize = 8;
 
+const Depth SEARCH_DEPTH = 11;
+
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
-        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",                 6, 119060324, 8},
-        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ",         5, 193690690, 6},
-        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -",                                     7, 178633661, 8},
-        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",          5, 15833292,  8},
-        {"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ",         5, 15833292,  8},
-        {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ",                5, 89941194,  8},
-        {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ", 5, 164075551, 7},
+        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",                 6, 119060324},
+        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ",         5, 193690690},
+        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -",                                     7, 178633661},
+        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",          5, 15833292},
+        {"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ",         5, 15833292},
+        {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ",                5, 89941194},
+        {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ", 5, 164075551},
 
         // Own positions
-        {"r3kb1r/1p3ppp/pqn1pn2/1Bpp1b2/3P1B2/1QP1PN2/PP1N1PPP/R3K2R w KQkq - 0 9",   5, 140824446, 7},
-        {"rnb1k2r/pppp1ppp/5q2/2b5/2BNP3/2N5/PPP2KPP/R1BQ3R w kq - 1 8",              5, 19782759,  7},
-        {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32",                              7, 13312960,  8}
+        {"r3kb1r/1p3ppp/pqn1pn2/1Bpp1b2/3P1B2/1QP1PN2/PP1N1PPP/R3K2R w KQkq - 0 9",   5, 140824446},
+        {"rnb1k2r/pppp1ppp/5q2/2b5/2BNP3/2N5/PPP2KPP/R1BQ3R w kq - 1 8",              5, 19782759},
+        {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32",                              7, 13312960}
 };
 
 U64 perft(Position &position, Depth depth) {
@@ -95,7 +96,7 @@ void testSearch() {
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
-        iterativeDeepening(pos, tPos.searchDepth, false);
+        iterativeDeepening(pos, SEARCH_DEPTH, false);
     }
 
     std::cout << nodeCount << " nodes " << getNps() << " nps" << std::endl;
