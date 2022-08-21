@@ -25,23 +25,16 @@
 extern U64 nodeCount;
 
 struct BoardState {
-    Color stm;
-    Square epSquare;
-    unsigned char castlingRights;
-    U64 hash;
+    Color stm=COLOR_EMPTY;
+    Square epSquare=NULL_SQUARE;
+    unsigned char castlingRights=0;
+    U64 hash=0;
 
-    Piece capturedPiece;
+    Piece capturedPiece={};
 
-    BoardState *lastIrreversibleMove;
+    BoardState *lastIrreversibleMove= nullptr;
 
-    constexpr BoardState() {
-        stm = COLOR_EMPTY;
-        epSquare = NULL_SQUARE;
-        castlingRights = 0;
-        capturedPiece = {};
-        hash = 0;
-        lastIrreversibleMove = nullptr;
-    }
+    constexpr BoardState() = default;
 };
 
 struct StateStack {

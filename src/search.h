@@ -40,6 +40,8 @@ struct SearchState {
     Score eval = 0;
 };
 
+void initLmr();
+
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H

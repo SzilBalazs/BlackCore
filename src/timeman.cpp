@@ -19,7 +19,7 @@
 
 #include <chrono>
 
-unsigned int MOVE_OVERHEAD = 50;
+unsigned int MOVE_OVERHEAD = 10;
 
 constexpr U64 mask = (1ULL << 15) - 1;
 U64 searchStartedAt = 0;

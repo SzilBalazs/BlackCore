@@ -20,7 +20,21 @@
 #include "eval.h"
 #include "uci.h"
 
+#include <cmath>
+
 Ply selectiveDepth = 0;
+
+// Move index -> depth
+Depth reductions[200][64];
+
+void initLmr() {
+    for (int moveIndex=0; moveIndex < 200; moveIndex++) {
+        for (Depth depth = 0; depth < 64; depth++) {
+            // Logarithmic reduction from Stockfish
+            reductions[moveIndex][depth] = (int)(log((double)moveIndex) * log((double)depth) * 0.8);
+        }
+    }
+}
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
@@ -82,10 +96,11 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
-    Color color = pos.getSideToMove();
-
     MoveList moves = {pos, ply, false};
+
+    Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
+
     if (moves.count == 0) {
         if (inCheck) {
             return -MATE_VALUE + ply;
@@ -146,24 +161,21 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            /*if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && !m.isPromo()) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                Depth reduction = index > 6 ? 3 : 2;
+                score = -search(pos, state+1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
+            } else score = alpha + 1;
 
-                score = -search(pos, state+1, depth - reduction, -alpha - 1, -alpha, ply + 1);
 
-                if (score > alpha)
-                    score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
-
-            }
             // Principal variation search
-            else {*/
+            if (score > alpha) {
                 score = -search(pos, state+1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
-                if (score > alpha && score < beta) {
+                if (score > alpha) {
                     score = -search(pos, state+1, depth - 1, -beta, -alpha, ply + 1);
                 }
-            //}
+            }
+
         }
 
         pos.undoMove(m);

@@ -20,6 +20,8 @@
 #include "move.h"
 #include "position.h"
 
+extern Move killerMoves[101][2];
+
 Score scoreMove(const Position &pos, Move m, Ply ply);
 
 void clearTables();

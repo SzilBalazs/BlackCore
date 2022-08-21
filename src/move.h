@@ -56,7 +56,7 @@ public:
         data = ((encodePiece({}) << 16) | (flags << 12) | (from << 6) | (to));
     }
 
-    constexpr Move() { data = 0; }
+    constexpr Move() = default;
 
     constexpr Square getTo() const { return Square(data & 0x3f); }
 
@@ -84,10 +84,12 @@ public:
 
     constexpr bool operator==(Move a) const { return (data & 0xFFFF) == (a.data & 0xFFFF); }
 
+    constexpr bool operator!=(Move a) const { return (data & 0xFFFF) != (a.data & 0xFFFF); }
+
     std::string str() const;
 
 private:
-    unsigned int data;
+    unsigned int data=0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Move &move);
