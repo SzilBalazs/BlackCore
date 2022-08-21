@@ -34,8 +34,13 @@ inline Move *makePromoCapture(Move *moves, Square from, Square to) {
 
 template<Color color>
 inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
-    Bitboard pieces = pos.friendly<color>();
-    Bitboard result = 0;
+
+    constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
+    constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
+
+    Bitboard pawns = pos.pieces<color, PAWN>();
+    Bitboard pieces = pos.friendly<color>() & ~pawns;
+    Bitboard result = step<UP_LEFT>(pawns) | step<UP_RIGHT>(pawns);
 
     while (pieces) {
         Square from = pieces.popLsb();
@@ -392,32 +397,30 @@ Move *generateMoves(const Position &pos, Move *moves) {
                                                      checkMask,
                                                      pinH, pinV, pinD, pinA);
 
-    // Generating castling moves
-    if (checkMask == 0xffffffffffffffffULL && pos.getCastlingRights()) {
-        if constexpr (color == WHITE) {
-            if (pos.getCastleRight(WK_MASK) &&
-                (safeSquares & WK_CASTLE_SAFE) == WK_CASTLE_SAFE && (empty & WK_CASTLE_EMPTY) == WK_CASTLE_EMPTY) {
+    // Generating castling moves{
+    if constexpr (color == WHITE) {
+        if (pos.getCastleRight(WK_MASK) &&
+            (safeSquares & WK_CASTLE_SAFE) == WK_CASTLE_SAFE && (empty & WK_CASTLE_EMPTY) == WK_CASTLE_EMPTY) {
 
-                *moves++ = Move(E1, G1, KING_CASTLE);
-            }
+            *moves++ = Move(E1, G1, KING_CASTLE);
+        }
 
-            if (pos.getCastleRight(WQ_MASK) &&
-                (safeSquares & WQ_CASTLE_SAFE) == WQ_CASTLE_SAFE && (empty & WQ_CASTLE_EMPTY) == WQ_CASTLE_EMPTY) {
+        if (pos.getCastleRight(WQ_MASK) &&
+            (safeSquares & WQ_CASTLE_SAFE) == WQ_CASTLE_SAFE && (empty & WQ_CASTLE_EMPTY) == WQ_CASTLE_EMPTY) {
 
-                *moves++ = Move(E1, C1, QUEEN_CASTLE);
-            }
-        } else {
-            if (pos.getCastleRight(BK_MASK) &&
-                (safeSquares & BK_CASTLE_SAFE) == BK_CASTLE_SAFE && (empty & BK_CASTLE_EMPTY) == BK_CASTLE_EMPTY) {
+            *moves++ = Move(E1, C1, QUEEN_CASTLE);
+        }
+    } else {
+        if (pos.getCastleRight(BK_MASK) &&
+            (safeSquares & BK_CASTLE_SAFE) == BK_CASTLE_SAFE && (empty & BK_CASTLE_EMPTY) == BK_CASTLE_EMPTY) {
 
-                *moves++ = Move(E8, G8, KING_CASTLE);
-            }
+            *moves++ = Move(E8, G8, KING_CASTLE);
+        }
 
-            if (pos.getCastleRight(BQ_MASK) &&
-                (safeSquares & BQ_CASTLE_SAFE) == BQ_CASTLE_SAFE && (empty & BQ_CASTLE_EMPTY) == BQ_CASTLE_EMPTY) {
+        if (pos.getCastleRight(BQ_MASK) &&
+            (safeSquares & BQ_CASTLE_SAFE) == BQ_CASTLE_SAFE && (empty & BQ_CASTLE_EMPTY) == BQ_CASTLE_EMPTY) {
 
-                *moves++ = Move(E8, C8, QUEEN_CASTLE);
-            }
+            *moves++ = Move(E8, C8, QUEEN_CASTLE);
         }
     }
 
