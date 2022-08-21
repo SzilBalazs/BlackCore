@@ -30,8 +30,7 @@ Depth reductions[200][64];
 void initLmr() {
     for (int moveIndex=0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
-            // Logarithmic reduction from Stockfish
-            reductions[moveIndex][depth] = (int)(log((double)moveIndex) * log((double)depth) * 0.8);
+            reductions[moveIndex][depth] = moveIndex>6?depth / 3:2;
         }
     }
 }
