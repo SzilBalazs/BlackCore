@@ -102,13 +102,10 @@ enum Color {
 };
 
 struct Piece {
-    PieceType type;
-    Color color;
+    PieceType type=PIECE_EMPTY;
+    Color color=COLOR_EMPTY;
 
-    constexpr Piece() {
-        type = PIECE_EMPTY;
-        color = COLOR_EMPTY;
-    }
+    constexpr Piece() = default;
 
     constexpr Piece(PieceType t, Color c) {
         type = t;
