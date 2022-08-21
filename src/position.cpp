@@ -48,7 +48,7 @@ void Position::setSquare(Square square, Piece piece) {
         pieceBB[p.type].clear(square);
         allPieceBB[p.color].clear(square);
 
-        state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
+        state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
     }
 
     pieceBB[piece.type].set(square);

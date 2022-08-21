@@ -37,13 +37,13 @@ Move stringToMove(const Position &pos, const std::string &s) {
         PieceType type = charToPiece(s[4]).type;
         switch (type) {
             case QUEEN:
-                return {from, to, flags | PROMO_QUEEN, capturedPiece};
+                return {from, to, flags | PROMO_QUEEN};
             case ROOK:
-                return {from, to, flags | PROMO_ROOK, capturedPiece};
+                return {from, to, flags | PROMO_ROOK};
             case BISHOP:
-                return {from, to, flags | PROMO_BISHOP, capturedPiece};
+                return {from, to, flags | PROMO_BISHOP};
             case KNIGHT:
-                return {from, to, flags | PROMO_KNIGHT, capturedPiece};
+                return {from, to, flags | PROMO_KNIGHT};
             default:
                 out("Invalid move!");
                 return {};
@@ -52,7 +52,6 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
     if (piece.type == PAWN && pos.getEpSquare() == to) {
         flags = EP_CAPTURE;
-        capturedPiece = {PAWN, enemyColor};
     } else if (piece.type == PAWN && std::abs((long) squareToRank(from) - squareToRank(to)) == 2) {
         flags = DOUBLE_PAWN_PUSH;
     } else if (piece.type == KING && squareToFile(from) == 4) {
@@ -63,7 +62,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
         }
     }
 
-    return {from, to, flags, capturedPiece};
+    return {from, to, flags};
 }
 
 void uciLoop() {

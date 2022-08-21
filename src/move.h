@@ -48,12 +48,8 @@ constexpr unsigned int QUEEN_CASTLE = SPECIAL1_FLAG | SPECIAL2_FLAG;
 
 class Move {
 public:
-    constexpr Move(Square from, Square to, unsigned int flags, Piece capturedPiece) {
-        data = ((encodePiece(capturedPiece) << 16) | (flags << 12) | (from << 6) | (to));
-    }
-
     constexpr Move(Square from, Square to, unsigned int flags) {
-        data = ((encodePiece({}) << 16) | (flags << 12) | (from << 6) | (to));
+        data = (flags << 12) | (from << 6) | (to);
     }
 
     constexpr Move() = default;
@@ -62,11 +58,9 @@ public:
 
     constexpr Square getFrom() const { return Square((data >> 6) & 0x3f); }
 
-    constexpr Piece getCapturedPiece() const { return decodePiece(data >> 16); }
+    constexpr bool isFlag(unsigned int flag) const { return (data >> 12) & flag; }
 
-    constexpr bool isFlag(unsigned int flag) const { return ((data >> 12) & 0xf) & flag; }
-
-    constexpr bool equalFlag(unsigned int flag) const { return ((data >> 12) & 0xf) == (flag & 0xf); }
+    constexpr bool equalFlag(unsigned int flag) const { return (data >> 12) == flag; }
 
     constexpr bool isNull() const { return data == 0; }
 
@@ -89,7 +83,7 @@ public:
     std::string str() const;
 
 private:
-    unsigned int data=0;
+    uint16_t data=0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Move &move);
