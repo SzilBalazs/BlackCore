@@ -142,6 +142,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (!ttHit && depth >= IID_DEPTH) depth--;
     }
 
+    if (inCheck)
+        depth++;
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;

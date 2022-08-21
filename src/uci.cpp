@@ -83,7 +83,7 @@ void uciLoop() {
     // We have sent all the parameters
     out("uciok");
 
-    Position pos;
+    Position pos = {STARTING_FEN};
     std::thread searchThread;
 
     while (true) {
