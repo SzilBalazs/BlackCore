@@ -54,17 +54,6 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     MoveList moves = {pos, ply, true};
 
-    Color color = pos.getSideToMove();
-    bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
-
-    if (moves.count == 0) {
-        if (inCheck) {
-            return -MATE_VALUE + ply;
-        } else {
-            return DRAW_VALUE;
-        }
-    }
-
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
