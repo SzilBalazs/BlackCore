@@ -21,6 +21,27 @@
 
 constexpr Score DELTA_MARGIN = 400;
 
+constexpr Score RAZOR_MARGIN = 130;
+
+constexpr Depth RFP_DEPTH = 6;
+constexpr Score RFP_DEPTH_MULTIPLIER = 160;
+
+constexpr Depth NULL_MOVE_DEPTH = 3;
+constexpr Depth NULL_MOVE_REDUCTION = 5;
+
+constexpr Depth LMR_DEPTH = 4;
+constexpr int LMR_MIN_I = 3;
+constexpr int LMR_PVNODE_I = 3;
+
+constexpr Depth IID_DEPTH = 5;
+
+struct SearchState {
+    Move move;
+    Score eval = 0;
+};
+
+void initLmr();
+
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H

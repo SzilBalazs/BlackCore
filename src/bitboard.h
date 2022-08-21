@@ -22,13 +22,13 @@
 
 struct Bitboard {
 
-    U64 bb;
+    U64 bb = 0;
 
     constexpr Bitboard(U64 value) { bb = value; }
 
     inline Bitboard(Square square);
 
-    constexpr Bitboard() { bb = 0; }
+    constexpr Bitboard() = default;
 
     constexpr bool get(Square square) const { return (bb >> square) & 1; }
 

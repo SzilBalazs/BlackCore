@@ -21,7 +21,7 @@
 
 typedef uint64_t U64;
 typedef int32_t Score;
-typedef uint32_t Depth;
+typedef int32_t Depth;
 typedef uint32_t Ply;
 
 constexpr Score UNKNOWN_SCORE = 100002;
@@ -102,13 +102,10 @@ enum Color {
 };
 
 struct Piece {
-    PieceType type;
-    Color color;
+    PieceType type=PIECE_EMPTY;
+    Color color=COLOR_EMPTY;
 
-    constexpr Piece() {
-        type = PIECE_EMPTY;
-        color = COLOR_EMPTY;
-    }
+    constexpr Piece() = default;
 
     constexpr Piece(PieceType t, Color c) {
         type = t;

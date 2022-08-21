@@ -34,15 +34,22 @@ void Position::clearSquare(Square square) {
     Piece piece = pieceAt(square);
 
     pieceBB[piece.type].clear(square);
-    allPieceBB[WHITE].clear(square);
-    allPieceBB[BLACK].clear(square);
+    allPieceBB[piece.color].clear(square);
+
     board[square] = {};
 
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 }
 
 void Position::setSquare(Square square, Piece piece) {
-    clearSquare(square);
+    if (!pieceAt(square).isNull()) {
+        Piece p = pieceAt(square);
+
+        pieceBB[p.type].clear(square);
+        allPieceBB[p.color].clear(square);
+
+        state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
+    }
 
     pieceBB[piece.type].set(square);
     allPieceBB[piece.color].set(square);
@@ -71,6 +78,25 @@ void Position::clearPosition() {
     states.clear();
     states.push({});
     state->lastIrreversibleMove = state;
+}
+
+void Position::makeNullMove() {
+    BoardState newState;
+
+    newState.stm = state->stm==WHITE?BLACK:WHITE;
+    newState.castlingRights = state->castlingRights;
+    newState.hash = state->hash ^ *blackRand;
+    newState.lastIrreversibleMove = state->lastIrreversibleMove;
+
+    if (state->epSquare != NULL_SQUARE) {
+        newState.hash ^= epRandTable[squareToFile(state->epSquare)];
+    }
+
+    states.push(newState);
+}
+
+void Position::undoNullMove() {
+    states.pop();
 }
 
 bool Position::isRepetition() {

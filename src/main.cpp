@@ -18,10 +18,12 @@
 #include "bitboard.h"
 #include "bench.h"
 #include "uci.h"
+#include "search.h"
 
 int main(int argc, char **argv) {
     srand(RANDOM_SEED);
     initBitboard();
+    initLmr();
 
     std::string mode;
     if (argc >= 2) {

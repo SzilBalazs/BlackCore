@@ -20,7 +20,20 @@
 #include "eval.h"
 #include "uci.h"
 
+#include <cmath>
+
 Ply selectiveDepth = 0;
+
+// Move index -> depth
+Depth reductions[200][64];
+
+void initLmr() {
+    for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
+        for (Depth depth = 0; depth < 64; depth++) {
+            reductions[moveIndex][depth] = moveIndex > 6 ? depth / 3 : 2;
+        }
+    }
+}
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
@@ -70,40 +83,104 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
-    Score ttScore = ttProbe(pos.getHash(), depth, alpha, beta);
+    bool ttHit = false;
+    Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
-    if (depth == 0) return quiescence(pos, alpha, beta, ply);
-
-    Color color = pos.getSideToMove();
+    if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
     MoveList moves = {pos, ply, false};
 
+    Color color = pos.getSideToMove();
+    bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
+
     if (moves.count == 0) {
-        Bitboard checkers = getAttackers(pos, pos.pieces<KING>(color).lsb());
-        if (checkers) {
+        if (inCheck) {
             return -MATE_VALUE + ply;
         } else {
             return DRAW_VALUE;
         }
     }
 
+    bool pvNode = beta - alpha > 1;
+
+    Score staticEval = state->eval = eval(pos);
+
+    if (ply > 0 && !inCheck) {
+        // Razoring
+        if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
+            return quiescence(pos, alpha, beta, ply);
+        }
+
+        // Reverse futility pruning
+        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth >= beta &&
+            std::abs(beta) < MATE_VALUE - 100)
+            return beta;
+
+        // Null move pruning
+        if (!pvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+            // We don't want to make a null move in a Zugzwang position
+            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
+                pos.pieces<QUEEN>(color)) {
+                state->move = Move();
+                pos.makeNullMove();
+                Score score = -search(pos, state + 1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+                pos.undoNullMove();
+
+                if (score >= beta) {
+                    if (std::abs(score) > MATE_VALUE - 100) return beta;
+                    return score;
+                }
+            }
+        }
+
+        // Internal iterative deepening
+        if (!ttHit && depth >= IID_DEPTH) depth--;
+    }
+
+    if (inCheck)
+        depth++;
+
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
+    int index = 0;
 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
+        state->move = m;
+
+        Score score;
 
         pos.makeMove(m);
 
-        Score score = -search(pos, depth - 1, -beta, -alpha, ply + 1);
+        if (index == 0) {
+            score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+        } else {
+            // Late move reduction
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() &&
+                m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+
+                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
+            } else score = alpha + 1;
+
+
+            // Principal variation search
+            if (score > alpha) {
+                score = -search(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+                if (score > alpha) {
+                    score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+                }
+            }
+
+        }
 
         pos.undoMove(m);
 
@@ -113,6 +190,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
 
             if (m.isQuiet()) {
                 recordKillerMove(m, ply);
+                recordHHMove(m, color, depth);
             }
 
             ttSave(pos.getHash(), depth, beta, BETA, m);
@@ -125,6 +203,7 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
             ttFlag = EXACT;
         }
 
+        index++;
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
@@ -132,8 +211,6 @@ Score search(Position &pos, Depth depth, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
-// maxDepth necessary, because the way it's implemented it can find repetition cycles and it makes the StateStack overflow
-// TODO smarter fix then limiting the pv line depth to a maximum of 10
 std::string getPvLine(Position &pos) {
     Move m = getHashMove(pos.getHash());
     if (!pos.isRepetition() && m) {
@@ -148,10 +225,11 @@ std::string getPvLine(Position &pos) {
 
 Score searchRoot(Position &pos, Depth depth, bool uci) {
 
-    clearKillerMoves();
+    clearTables();
     selectiveDepth = 0;
+    SearchState stateStack[400];
 
-    Score score = search(pos, depth, -INF_SCORE, INF_SCORE, 0);
+    Score score = search(pos, stateStack + 1, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 

@@ -50,7 +50,7 @@ void ttResize(unsigned int MBSize) {
 
 }
 
-Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta) {
+Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
     TTBucket *bucket = getBucket(hash);
     TTEntry *entry;
     if (bucket->entryA.hash == hash) {
@@ -61,7 +61,7 @@ Score ttProbe(U64 hash, Depth depth, Score alpha, Score beta) {
     } else {
         return UNKNOWN_SCORE;
     }
-
+    ttHit = true;
     if (entry->depth >= depth) {
         if (entry->flag == EXACT) {
             return entry->eval;

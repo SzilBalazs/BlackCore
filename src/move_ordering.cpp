@@ -22,17 +22,21 @@
 constexpr Score mmvlva[6][6] = {
         //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
         {0, 0,    0,    0,    0,    0},     // KING
-        {0, 8004, 8104, 8204, 8304, 8404},  // PAWN
-        {0, 8003, 8103, 8203, 8303, 8403},  // KNIGHT
-        {0, 8002, 8102, 8202, 8302, 8402},  // BISHOP
-        {0, 8001, 8101, 8201, 8301, 8401},  // ROOK
-        {0, 8000, 8100, 8200, 8300, 8400},  // QUEEN
+        {0, 800004, 800104, 800204, 800304, 800404},  // PAWN
+        {0, 800003, 800103, 800203, 800303, 800403},  // KNIGHT
+        {0, 800002, 800102, 800202, 800302, 800402},  // BISHOP
+        {0, 800001, 800101, 800201, 800301, 800401},  // ROOK
+        {0, 800000, 800100, 800200, 800300, 800400},  // QUEEN
 };
 
 Move killerMoves[101][2];
 
-void clearKillerMoves() {
+// TODO Counter move history
+Score historyTable[2][64][64];
+
+void clearTables() {
     std::memset(killerMoves, 0, sizeof(killerMoves));
+    std::memset(historyTable, 0, sizeof(historyTable));
 }
 
 void recordKillerMove(Move m, Ply ply) {
@@ -40,23 +44,27 @@ void recordKillerMove(Move m, Ply ply) {
     killerMoves[ply][0] = m;
 }
 
+void recordHHMove(Move move, Color color, Depth depth) {
+    historyTable[color][move.getFrom()][move.getTo()] += depth * depth;
+}
+
 Score scoreMove(const Position &pos, Move m, Ply ply) {
     Square from = m.getFrom();
     Square to = m.getTo();
     if (m == getHashMove(pos.getHash())) {
-        return 10000;
+        return 1000000;
     } else if (m.isPromo()) {
         if (m.isSpecial1() && m.isSpecial2()) { // Queen promo
-            return 9000;
+            return 900000;
         } else { // Anything else, under promotions should only be played in really few cases
-            return -1000;
+            return -100000;
         }
     } else if (m.isCapture()) {
         return mmvlva[pos.pieceAt(from).type][pos.pieceAt(to).type];
     } else if (killerMoves[ply][0] == m) {
-        return 7500;
+        return 750000;
     } else if (killerMoves[ply][1] == m) {
-        return 7000;
+        return 700000;
     }
-    return 0;
+    return historyTable[pos.getSideToMove()][m.getFrom()][m.getTo()];
 }

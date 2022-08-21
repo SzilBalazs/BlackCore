@@ -37,13 +37,13 @@ Move stringToMove(const Position &pos, const std::string &s) {
         PieceType type = charToPiece(s[4]).type;
         switch (type) {
             case QUEEN:
-                return {from, to, flags | PROMO_QUEEN, capturedPiece};
+                return {from, to, flags | PROMO_QUEEN};
             case ROOK:
-                return {from, to, flags | PROMO_ROOK, capturedPiece};
+                return {from, to, flags | PROMO_ROOK};
             case BISHOP:
-                return {from, to, flags | PROMO_BISHOP, capturedPiece};
+                return {from, to, flags | PROMO_BISHOP};
             case KNIGHT:
-                return {from, to, flags | PROMO_KNIGHT, capturedPiece};
+                return {from, to, flags | PROMO_KNIGHT};
             default:
                 out("Invalid move!");
                 return {};
@@ -52,7 +52,6 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
     if (piece.type == PAWN && pos.getEpSquare() == to) {
         flags = EP_CAPTURE;
-        capturedPiece = {PAWN, enemyColor};
     } else if (piece.type == PAWN && std::abs((long) squareToRank(from) - squareToRank(to)) == 2) {
         flags = DOUBLE_PAWN_PUSH;
     } else if (piece.type == KING && squareToFile(from) == 4) {
@@ -63,7 +62,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
         }
     }
 
-    return {from, to, flags, capturedPiece};
+    return {from, to, flags};
 }
 
 void uciLoop() {
@@ -76,14 +75,14 @@ void uciLoop() {
     out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
     out("option", "name", "Ponder", "type", "check", "default", "false");
-    out("option", "name", "Move Overhead", "type", "spin", "default", 50, "min", 0, "max", 10000);
+    out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
     ttResize(16);
 
     // We have sent all the parameters
     out("uciok");
 
-    Position pos;
+    Position pos = {STARTING_FEN};
     std::thread searchThread;
 
     while (true) {
@@ -168,6 +167,11 @@ void uciLoop() {
                 } else if (tokens[i] == "infinite") {
                     depth = 64;
                 }
+            }
+
+            // A little more time, so we can fill up the TT
+            if (getHashMove(pos.getHash()).isNull()) {
+                movestogo /= 2;
             }
 
             if (pos.getSideToMove() == WHITE)

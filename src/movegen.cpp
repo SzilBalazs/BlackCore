@@ -24,18 +24,23 @@ inline Move *makePromo(Move *moves, Square from, Square to) {
     return moves;
 }
 
-inline Move *makePromoCapture(Move *moves, Square from, Square to, Piece capturedPiece) {
-    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT, capturedPiece);
-    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP, capturedPiece);
-    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK, capturedPiece);
-    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN, capturedPiece);
+inline Move *makePromoCapture(Move *moves, Square from, Square to) {
+    *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT);
+    *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP);
+    *moves++ = Move(from, to, PROMO_CAPTURE_ROOK);
+    *moves++ = Move(from, to, PROMO_CAPTURE_QUEEN);
     return moves;
 }
 
 template<Color color>
 inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
-    Bitboard pieces = pos.friendly<color>();
-    Bitboard result = 0;
+
+    constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
+    constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
+
+    Bitboard pawns = pos.pieces<color, PAWN>();
+    Bitboard pieces = pos.friendly<color>() & ~pawns;
+    Bitboard result = step<UP_LEFT>(pawns) | step<UP_RIGHT>(pawns);
 
     while (pieces) {
         Square from = pieces.popLsb();
@@ -64,7 +69,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         Bitboard captures = attacks & enemy;
         while (captures) {
             Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
+            *moves++ = Move(from, to, CAPTURE);
         }
     }
 
@@ -92,7 +97,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         Bitboard captures = attacks & enemy;
         while (captures) {
             Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE, pos.pieceAt(to));
+            *moves++ = Move(from, to, CAPTURE);
         }
     }
 
@@ -148,12 +153,12 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
 
     while (leftCapture) {
         Square to = leftCapture.popLsb();
-        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE);
     }
 
     while (rightCapture) {
         Square to = rightCapture.popLsb();
-        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE, pos.pieceAt(to));
+        *moves++ = Move(to + DOWN_LEFT, to, CAPTURE);
     }
 
     if (pawnsBeforePromo) {
@@ -170,12 +175,12 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
         Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
         while (rightPromo) {
             Square to = rightPromo.popLsb();
-            moves = makePromoCapture(moves, to + DOWN_LEFT, to, pos.pieceAt(to));
+            moves = makePromoCapture(moves, to + DOWN_LEFT, to);
         }
 
         while (leftPromo) {
             Square to = leftPromo.popLsb();
-            moves = makePromoCapture(moves, to + DOWN_RIGHT, to, pos.pieceAt(to));
+            moves = makePromoCapture(moves, to + DOWN_RIGHT, to);
         }
     }
 
@@ -210,7 +215,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
 
             if (!(pinRank || pinDiag || pinADiag))
-                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE);
 
             occ.set(attackingPawn);
             occ.set(attackedPawn);
@@ -241,7 +246,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             bool pinADiag = aDiagAttack.get(king) && seenADiagSliders;
 
             if (!(pinRank || pinDiag || pinADiag))
-                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE, {PAWN, enemyColor});
+                *moves++ = Move(attackingPawn, epSquare, EP_CAPTURE);
 
             occ.set(attackingPawn);
             occ.set(attackedPawn);
@@ -267,7 +272,7 @@ inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
     Bitboard kingCaptures = kingTarget & enemy;
     while (kingCaptures) {
         Square to = kingCaptures.popLsb();
-        *moves++ = Move(king, to, CAPTURE, pos.pieceAt(to));
+        *moves++ = Move(king, to, CAPTURE);
     }
 
     return moves;
@@ -392,7 +397,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
                                                      checkMask,
                                                      pinH, pinV, pinD, pinA);
 
-    // Generating castling moves
+    // Generating castling moves{
     if constexpr (color == WHITE) {
         if (pos.getCastleRight(WK_MASK) &&
             (safeSquares & WK_CASTLE_SAFE) == WK_CASTLE_SAFE && (empty & WK_CASTLE_EMPTY) == WK_CASTLE_EMPTY) {

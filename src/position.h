@@ -25,23 +25,16 @@
 extern U64 nodeCount;
 
 struct BoardState {
-    Color stm;
-    Square epSquare;
-    unsigned char castlingRights;
-    U64 hash;
+    Color stm=COLOR_EMPTY;
+    Square epSquare=NULL_SQUARE;
+    unsigned char castlingRights=0;
+    U64 hash=0;
 
-    Piece capturedPiece;
+    Piece capturedPiece={};
 
-    BoardState *lastIrreversibleMove;
+    BoardState *lastIrreversibleMove= nullptr;
 
-    constexpr BoardState() {
-        stm = COLOR_EMPTY;
-        epSquare = NULL_SQUARE;
-        castlingRights = 0;
-        capturedPiece = {};
-        hash = 0;
-        lastIrreversibleMove = nullptr;
-    }
+    constexpr BoardState() = default;
 };
 
 struct StateStack {
@@ -116,6 +109,8 @@ public:
 
     inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
 
+    inline unsigned char getCastlingRights() const { return state->castlingRights; }
+
     inline BoardState *getState() { return state; }
 
     inline U64 getHash() const { return state->hash; }
@@ -125,6 +120,10 @@ public:
     inline void makeMove(Move move);
 
     inline void undoMove(Move move);
+
+    void makeNullMove();
+
+    void undoNullMove();
 
     bool isRepetition();
 
@@ -178,7 +177,13 @@ void Position::makeMove(Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    newState.capturedPiece = move.getCapturedPiece();
+
+    if (move.equalFlag(EP_CAPTURE)) {
+        newState.capturedPiece = {PAWN, enemyColor};
+        clearSquare(to + DOWN);
+    } else {
+        newState.capturedPiece = pieceAt(to);
+    }
     newState.castlingRights = state->castlingRights;
     newState.stm = enemyColor;
     newState.hash = state->hash ^ *blackRand;
@@ -230,10 +235,6 @@ void Position::makeMove(Move move) {
         } else {
             movePiece(A8, D8);
         }
-    }
-
-    if (move.equalFlag(EP_CAPTURE)) {
-        clearSquare(to + DOWN);
     }
 
     movePiece(from, to);
