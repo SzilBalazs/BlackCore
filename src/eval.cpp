@@ -87,13 +87,20 @@ Value evalPawns(const Position &pos) {
 template<Color color>
 Value evalKnights(const Position &pos) {
     constexpr Color enemyColor = EnemyColor<color>();
+    constexpr Direction UP_LEFT = enemyColor == WHITE ? NORTH_WEST : -NORTH_WEST;
+    constexpr Direction UP_RIGHT = enemyColor == WHITE ? NORTH_EAST : -NORTH_EAST;
+
+
+    Bitboard enemyPawns = pos.pieces<enemyColor, PAWN>();
+    Bitboard safe = ~(step<UP_LEFT>(enemyPawns) | step<UP_RIGHT>(enemyPawns));
 
     Bitboard knights = pos.pieces<color, KNIGHT>();
 
     Value value = PIECE_VALUES[KNIGHT] * knights.popCount();
 
     while (knights) {
-        value += knightTable[knights.popLsb()];
+        Square square = knights.popLsb();
+        value += KNIGHT_MOBILITY * (knightMask(square) & safe).popCount();
     }
 
     return value;
@@ -128,6 +135,8 @@ Value evalRooks(const Position& pos) {
 
     while (rooks) {
         Square square = rooks.popLsb();
+        value += ROOK_MOBILITY * rookAttacks(square, pos.occupied()).popCount();
+
         int pawnsOnFile = (fileMask(square) & pawns).popCount();
 
         if (pawnsOnFile == 0) {
