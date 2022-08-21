@@ -109,6 +109,8 @@ public:
 
     inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
 
+    inline unsigned char getCastlingRights() const { return state->castlingRights; }
+
     inline BoardState *getState() { return state; }
 
     inline U64 getHash() const { return state->hash; }
