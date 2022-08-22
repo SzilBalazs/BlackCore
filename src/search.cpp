@@ -93,6 +93,12 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
+    // Mate distance pruning
+    Score matePly = MATE_VALUE - ply;
+    if (alpha < -matePly) alpha = -matePly;
+    if (beta > matePly - 1) beta = matePly - 1;
+    if (alpha >= beta) return alpha;
+
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
     MoveList moves = {pos, ply, false};
@@ -102,7 +108,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (moves.count == 0) {
         if (inCheck) {
-            return -MATE_VALUE + ply;
+            return -matePly;
         } else {
             return DRAW_VALUE;
         }
@@ -120,7 +126,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         // Reverse futility pruning
         if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth >= beta &&
-            std::abs(beta) < MATE_VALUE - 100)
+            std::abs(beta) < WORST_MATE)
             return beta;
 
         // Null move pruning
@@ -134,7 +140,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
                 pos.undoNullMove();
 
                 if (score >= beta) {
-                    if (std::abs(score) > MATE_VALUE - 100) return beta;
+                    if (std::abs(score) > WORST_MATE) return beta;
                     return score;
                 }
             }
