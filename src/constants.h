@@ -22,11 +22,12 @@
 typedef uint64_t U64;
 typedef int32_t Score;
 typedef int32_t Depth;
-typedef uint32_t Ply;
+typedef int32_t Ply;
 
 constexpr Score UNKNOWN_SCORE = 100002;
 constexpr Score INF_SCORE = 100001;
 constexpr Score MATE_VALUE = 100000;
+constexpr Score WORST_MATE = MATE_VALUE - 100;
 constexpr Score DRAW_VALUE = 0;
 
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

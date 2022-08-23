@@ -16,11 +16,26 @@
 
 #include "eval.h"
 
+constexpr Bitboard WK_AREA = 0xe0e0e0ULL;
+constexpr Bitboard WK_SHIELD_1 = 0xe000ULL;
+constexpr Bitboard WK_SHIELD_2 = 0xe00000ULL;
+
+constexpr Bitboard WQ_AREA = 0x70707ULL;
+constexpr Bitboard WQ_SHIELD_1 = 0x700ULL;
+constexpr Bitboard WQ_SHIELD_2 = 0x70000ULL;
+
+constexpr Bitboard BK_AREA = 0xe0e0e00000000000ULL;
+constexpr Bitboard BK_SHIELD_1 = 0xe0000000000000ULL;
+constexpr Bitboard BK_SHIELD_2 = 0xe00000000000ULL;
+
+constexpr Bitboard BQ_AREA = 0x707070000000000ULL;
+constexpr Bitboard BQ_SHIELD_1 = 0x7000000000000ULL;
+constexpr Bitboard BQ_SHIELD_2 = 0x70000000000ULL;
+
 template<Color color>
 Value evalPawns(const Position &pos) {
     constexpr Color enemyColor = EnemyColor<color>();
 
-    Bitboard allPawn = pos.pieces<PAWN>();
     Bitboard ownPawns = pos.pieces<color, PAWN>();
     Bitboard enemyPawns = pos.pieces<enemyColor, PAWN>();
 
@@ -30,6 +45,22 @@ Value evalPawns(const Position &pos) {
         Bitboard _wPawns = ownPawns;
         while (_wPawns) {
             Square square = _wPawns.popLsb();
+
+            // Double pawns
+            if (fileMask(square) & ownPawns) {
+                value += PAWN_DOUBLE_PENALTY;
+            }
+
+            // Passed pawn
+            if (!(adjacentNorthMask(square) & enemyPawns)) {
+                value += PAWN_PASSED_BONUS;
+            }
+
+            // Isolated pawn
+            if (!(adjacentFileMask(square) & ownPawns)) {
+                value += PAWN_ISOLATED_PENALTY;
+            }
+
             value += wPawnTable[square];
         }
     } else {
@@ -37,6 +68,22 @@ Value evalPawns(const Position &pos) {
 
         while (_bPawns) {
             Square square = _bPawns.popLsb();
+
+            // Double pawns
+            if (fileMask(square) & ownPawns) {
+                value += PAWN_DOUBLE_PENALTY;
+            }
+
+            // Passed pawn
+            if (!(adjacentSouthMask(square) & enemyPawns)) {
+                value += PAWN_PASSED_BONUS;
+            }
+
+            // Isolated pawn
+            if (!(adjacentFileMask(square) & ownPawns)) {
+                value += PAWN_ISOLATED_PENALTY;
+            }
+
             value += bPawnTable[square];
         }
     }
@@ -46,13 +93,20 @@ Value evalPawns(const Position &pos) {
 template<Color color>
 Value evalKnights(const Position &pos) {
     constexpr Color enemyColor = EnemyColor<color>();
+    constexpr Direction UP_LEFT = enemyColor == WHITE ? NORTH_WEST : -NORTH_WEST;
+    constexpr Direction UP_RIGHT = enemyColor == WHITE ? NORTH_EAST : -NORTH_EAST;
+
+
+    Bitboard enemyPawns = pos.pieces<enemyColor, PAWN>();
+    Bitboard safe = ~(step<UP_LEFT>(enemyPawns) | step<UP_RIGHT>(enemyPawns));
 
     Bitboard knights = pos.pieces<color, KNIGHT>();
 
     Value value = PIECE_VALUES[KNIGHT] * knights.popCount();
 
     while (knights) {
-        value += knightTable[knights.popLsb()];
+        Square square = knights.popLsb();
+        value += KNIGHT_MOBILITY * (knightMask(square) & safe).popCount();
     }
 
     return value;
@@ -87,6 +141,8 @@ Value evalRooks(const Position& pos) {
 
     while (rooks) {
         Square square = rooks.popLsb();
+        value += ROOK_MOBILITY * rookAttacks(square, pos.occupied()).popCount();
+
         int pawnsOnFile = (fileMask(square) & pawns).popCount();
 
         if (pawnsOnFile == 0) {
@@ -111,13 +167,78 @@ Value evalQueens(const Position& pos) {
 
 template<Color color>
 Value evalKings(const Position& pos) {
+
+    Bitboard pawns = pos.pieces<color, PAWN>();
+    Bitboard rooks = pos.pieces<color, ROOK>();
+
+    Value value;
+
     if constexpr (color == WHITE) {
         Square king = pos.pieces<WHITE, KING>().lsb();
-        return wKingTable[king];
+
+        // We castled king side
+        if (WK_AREA.get(king)) {
+
+            // King shield
+            value += KING_SHIELD_1 * (pawns & WK_SHIELD_1).popCount();
+            value += KING_SHIELD_2 * (pawns & WK_SHIELD_2).popCount();
+
+            // Trapped rook on the edge of the boards
+            if (rooks.get(H1))
+                value += ROOK_TRAPPED;
+
+        }
+        // We castled queen side
+        else if (WQ_AREA.get(king)) {
+
+            // King shield
+            value += KING_SHIELD_1 * (pawns & WQ_SHIELD_1).popCount();
+            value += KING_SHIELD_2 * (pawns & WQ_SHIELD_2).popCount();
+
+            // Trapped rook on the edge of the boards
+            if (rooks.get(A1))
+                value += ROOK_TRAPPED;
+
+        } else {
+            value += KING_UNSAFE;
+        }
+
+        value.eg += egKingTable[king];
+
     } else {
         Square king = pos.pieces<BLACK, KING>().lsb();
-        return bKingTable[king];
+
+        // We castled king side
+        if (BK_AREA.get(king)) {
+
+            // King shield
+            value += KING_SHIELD_1 * (pawns & BK_SHIELD_1).popCount();
+            value += KING_SHIELD_2 * (pawns & BK_SHIELD_2).popCount();
+
+            // Trapped rook on the edge of the boards
+            if (rooks.get(H8))
+                value += ROOK_TRAPPED;
+
+        }
+        // We castled queen side
+        else if (BQ_AREA.get(king)) {
+
+            // King shield
+            value += KING_SHIELD_1 * (pawns & BQ_SHIELD_1).popCount();
+            value += KING_SHIELD_2 * (pawns & BQ_SHIELD_2).popCount();
+
+            // Trapped rook on the edge of the boards
+            if (rooks.get(A8))
+                value += ROOK_TRAPPED;
+
+        } else {
+            value += KING_UNSAFE;
+        }
+
+        value.eg += egKingTable[king];
     }
+
+    return value;
 }
 
 Score eval(const Position &pos) {

@@ -62,6 +62,9 @@ Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
         return UNKNOWN_SCORE;
     }
     ttHit = true;
+
+    if (std::abs(entry->eval) > MATE_VALUE - 100) return UNKNOWN_SCORE;
+
     if (entry->depth >= depth) {
         if (entry->flag == EXACT) {
             return entry->eval;

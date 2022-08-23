@@ -267,6 +267,9 @@ constexpr Bitboard BQ_CASTLE_SAFE = 0x1c00000000000000ULL;
 constexpr Bitboard BQ_CASTLE_EMPTY = 0xe00000000000000ULL;
 
 extern Bitboard bitMasks[64];
+extern Bitboard adjacentFileMasks[64];
+extern Bitboard adjacentNorthMasks[64];
+extern Bitboard adjacentSouthMasks[64];
 extern Bitboard pawnMasks[64][2];
 extern Bitboard knightMasks[64];
 extern Bitboard kingMasks[64];
@@ -282,6 +285,12 @@ extern LineType lineType[64][64];
 void initBitboard();
 
 inline Bitboard::Bitboard(Square square) { bb = bitMasks[square].bb; }
+
+inline Bitboard adjacentFileMask(Square square) { return adjacentFileMasks[square]; }
+
+inline Bitboard adjacentNorthMask(Square square) { return adjacentNorthMasks[square]; }
+
+inline Bitboard adjacentSouthMask(Square square) { return adjacentSouthMasks[square]; }
 
 inline Bitboard pawnMask(Square square, Color color) { return pawnMasks[square][color]; }
 
