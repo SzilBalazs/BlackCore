@@ -30,6 +30,8 @@ constexpr Color EnemyColor() {
     else return WHITE;
 }
 
+inline Color EnemyColor(Color color) { return color==WHITE?BLACK:WHITE; }
+
 constexpr unsigned int squareToRank(Square square) { return square >> 3; }
 
 constexpr unsigned int squareToFile(Square square) { return square & 7; }

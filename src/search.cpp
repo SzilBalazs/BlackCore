@@ -35,6 +35,60 @@ void initLmr() {
     }
 }
 
+Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
+    for (PieceType t : PIECE_TYPES_BY_VALUE) {
+        Bitboard s = attackers & pos.pieces(stm, t);
+        if (s) {
+            type = t;
+            return s & -s.bb;
+        }
+    }
+    return 0;
+}
+
+inline Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
+    return (((pawnMask(square, WHITE) | pawnMask(square, BLACK)) & pos.pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) & occ;
+}
+
+Score see(const Position &pos, Move move) {
+    Score e[32];
+    Depth d = 0;
+    Square from = move.getFrom();
+    Square to = move.getTo();
+
+    e[0] = PIECE_VALUES[pos.pieceAt(to).type].mg;
+
+    Bitboard attacker = from;
+    Bitboard occ = pos.occupied() ^ Bitboard(to);
+
+    Color stm = pos.pieceAt(to).color;
+    PieceType type = pos.pieceAt(from).type;
+
+    do {
+        d++;
+        e[d] = PIECE_VALUES[type].mg - e[d-1];
+
+        //if (e[d] - PIECE_VALUES[type].mg > 0) break;
+
+        occ ^= attacker;
+        attacker = leastValuablePiece(pos, getAllAttackers(pos, to, occ), stm, type);
+        stm = EnemyColor(stm);
+
+    } while(attacker);
+
+    while (--d) {
+        e[d-1] = -std::max(-e[d-1], e[d]);
+    }
+
+    return e[0];
+}
+
+
+
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
@@ -90,14 +144,16 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
     bool ttHit = false;
+    Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
     // Mate distance pruning
-    Score matePly = MATE_VALUE - ply;
-    if (alpha < -matePly) alpha = -matePly;
-    if (beta > matePly - 1) beta = matePly - 1;
-    if (alpha >= beta) return alpha;
+    if (ply > 0) {
+        if (alpha < -matePly) alpha = -matePly;
+        if (beta > matePly - 1) beta = matePly - 1;
+        if (alpha >= beta) return alpha;
+    }
 
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
