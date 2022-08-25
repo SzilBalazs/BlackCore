@@ -24,16 +24,20 @@ constexpr Score DELTA_MARGIN = 400;
 constexpr Score RAZOR_MARGIN = 130;
 
 constexpr Depth RFP_DEPTH = 6;
-constexpr Score RFP_DEPTH_MULTIPLIER = 160;
+constexpr Score RFP_DEPTH_MULTIPLIER = 70;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 80;
 
 constexpr Depth NULL_MOVE_DEPTH = 3;
-constexpr Depth NULL_MOVE_REDUCTION = 5;
+constexpr Depth NULL_MOVE_R = 5;
+constexpr Depth NULL_MOVE_DEPTH_R = 4;
 
 constexpr Depth LMR_DEPTH = 4;
+constexpr Depth LMR_BASE_R = 1;
+constexpr double LMR_SCALE_R = 1.5;
 constexpr int LMR_MIN_I = 3;
 constexpr int LMR_PVNODE_I = 3;
 
-constexpr Score SEE_PRUNING_MARGIN = 100;
+constexpr Score SEE_PRUNING_MARGIN = 150;
 
 constexpr Depth IID_DEPTH = 5;
 

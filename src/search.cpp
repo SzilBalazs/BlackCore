@@ -30,7 +30,7 @@ Depth reductions[200][64];
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
-            reductions[moveIndex][depth] = moveIndex > 6 ? depth / 3 : 2;
+            reductions[moveIndex][depth] = LMR_BASE_R + Depth(log(moveIndex) * log(depth) / LMR_SCALE_R);
         }
     }
 }
@@ -195,7 +195,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Reverse futility pruning
-        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth >= beta &&
+        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
@@ -204,9 +204,12 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             // We don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
+
+                Depth R = NULL_MOVE_R + depth / NULL_MOVE_DEPTH_R;
+
                 state->move = Move();
                 pos.makeNullMove();
-                Score score = -search(pos, state + 1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+                Score score = -search(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {
