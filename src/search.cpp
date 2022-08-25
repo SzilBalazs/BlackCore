@@ -46,7 +46,7 @@ Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, 
     return 0;
 }
 
-inline Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
+Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
     return (((pawnMask(square, WHITE) | pawnMask(square, BLACK)) & pos.pieces<PAWN>()) |
             (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
             (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
@@ -62,8 +62,11 @@ Score see(const Position &pos, Move move) {
 
     e[0] = PIECE_VALUES[pos.pieceAt(to).type].mg;
 
-    Bitboard attacker = from;
+    Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
+    Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
     Bitboard occ = pos.occupied() ^ Bitboard(to);
+    Bitboard attacker = from;
+    Bitboard attackers = getAllAttackers(pos, to, occ);
 
     Color stm = pos.pieceAt(to).color;
     PieceType type = pos.pieceAt(from).type;
@@ -72,10 +75,15 @@ Score see(const Position &pos, Move move) {
         d++;
         e[d] = PIECE_VALUES[type].mg - e[d-1];
 
-        //if (e[d] - PIECE_VALUES[type].mg > 0) break;
+        if (std::max(-e[d-1], e[d]) < 0) break;
 
         occ ^= attacker;
-        attacker = leastValuablePiece(pos, getAllAttackers(pos, to, occ), stm, type);
+        attackers ^= attacker;
+        if (type == ROOK || type == QUEEN)
+            attackers |= rookAttacks(to, occ) & rooks & occ;
+        if (type == PAWN || type == BISHOP || type == QUEEN)
+            attackers |= bishopAttacks(to, occ) & bishops & occ;
+        attacker = leastValuablePiece(pos, attackers, stm, type);
         stm = EnemyColor(stm);
 
     } while(attacker);
@@ -115,6 +123,9 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         // Delta pruning
         if (m.isPromo() * PIECE_VALUES[QUEEN].mg + PIECE_VALUES[pos.pieceAt(m.getTo()).type].mg +
             staticEval + DELTA_MARGIN < alpha)
+            continue;
+
+        if (alpha > -WORST_MATE && see(pos, m) < -150)
             continue;
 
         pos.makeMove(m);
