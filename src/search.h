@@ -44,6 +44,8 @@ struct SearchState {
 
 void initLmr();
 
+Score see(const Position &pos, Move move);
+
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 
 #endif //BLACKCORE_SEARCH_H

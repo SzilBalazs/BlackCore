@@ -16,10 +16,11 @@
 
 #include "move_ordering.h"
 #include "tt.h"
+#include "search.h"
 
 #include <cstring>
 
-constexpr Score mmvlva[6][6] = {
+constexpr Score winningCapture[6][6] = {
         //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
         {0, 0,    0,    0,    0,    0},     // KING
         {0, 800004, 800104, 800204, 800304, 800404},  // PAWN
@@ -27,6 +28,16 @@ constexpr Score mmvlva[6][6] = {
         {0, 800002, 800102, 800202, 800302, 800402},  // BISHOP
         {0, 800001, 800101, 800201, 800301, 800401},  // ROOK
         {0, 800000, 800100, 800200, 800300, 800400},  // QUEEN
+};
+
+constexpr Score losingCapture[6][6] = {
+        //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
+        {0, 0,    0,    0,    0,    0},     // KING
+        {0, 100004, 100104, 100204, 100304, 100404},  // PAWN
+        {0, 100003, 100103, 100203, 100303, 100403},  // KNIGHT
+        {0, 100002, 100102, 100202, 100302, 100402},  // BISHOP
+        {0, 100001, 100101, 100201, 100301, 100401},  // ROOK
+        {0, 100000, 100100, 100200, 100300, 100400},  // QUEEN
 };
 
 Move killerMoves[101][2];
@@ -60,7 +71,10 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
             return -100000;
         }
     } else if (m.isCapture()) {
-        return mmvlva[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        if (see(pos, m) >= 0)
+            return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        else
+            return losingCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
     } else if (killerMoves[ply][0] == m) {
         return 750000;
     } else if (killerMoves[ply][1] == m) {
