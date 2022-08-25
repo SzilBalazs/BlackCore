@@ -33,6 +33,8 @@ constexpr Depth LMR_DEPTH = 4;
 constexpr int LMR_MIN_I = 3;
 constexpr int LMR_PVNODE_I = 3;
 
+constexpr Score SEE_PRUNING_MARGIN = 100;
+
 constexpr Depth IID_DEPTH = 5;
 
 struct SearchState {

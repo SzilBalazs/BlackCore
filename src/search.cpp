@@ -125,7 +125,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             staticEval + DELTA_MARGIN < alpha)
             continue;
 
-        if (alpha > -WORST_MATE && see(pos, m) < -150)
+        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
             continue;
 
         pos.makeMove(m);
@@ -186,6 +186,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Score staticEval = state->eval = eval(pos);
 
     if (ply > 0 && !inCheck) {
+
+        bool improving = ply >= 2 && staticEval >= (state-2)->eval;
+
         // Razoring
         if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
             return quiescence(pos, alpha, beta, ply);
