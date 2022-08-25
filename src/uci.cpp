@@ -147,7 +147,7 @@ void uciLoop() {
             if (searchThread.joinable())
                 searchThread.join();
 
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 50, depth = 64, movetime = 0;
+            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 25, depth = 64, movetime = 0;
 
             for (int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {
