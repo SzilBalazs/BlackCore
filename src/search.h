@@ -32,8 +32,7 @@ constexpr Depth NULL_MOVE_R = 4;
 constexpr Depth NULL_MOVE_DEPTH_R = 5;
 
 constexpr Depth LMR_DEPTH = 4;
-constexpr Depth LMR_BASE_R = 1;
-constexpr double LMR_SCALE_R = 2.3;
+constexpr double LMR_SCALE = 1.8;
 constexpr int LMR_MIN_I = 3;
 constexpr int LMR_PVNODE_I = 3;
 

@@ -30,7 +30,10 @@ Depth reductions[200][64];
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
-            reductions[moveIndex][depth] = LMR_BASE_R + Depth(log(moveIndex) * log(depth) / LMR_SCALE_R);
+
+            // Fruit reloaded formula
+            reductions[moveIndex][depth] = Depth((sqrt((double)moveIndex - 1) + sqrt((double)depth - 1)) / LMR_SCALE);
+
         }
     }
 }
