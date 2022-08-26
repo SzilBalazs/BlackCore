@@ -355,7 +355,7 @@ inline Bitboard bishopAttacks(Square square, Bitboard occ) {
     return m.ptr[getMagicIndex(m, occ)];
 }
 
-constexpr Bitboard queenAttacks(Square square, Bitboard occ) {
+inline Bitboard queenAttacks(Square square, Bitboard occ) {
     return rookAttacks(square, occ) | bishopAttacks(square, occ);
 }
 
