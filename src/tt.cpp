@@ -14,9 +14,12 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <sys/mman.h>
 #include <cstring>
 #include "tt.h"
+
+#ifdef __linux__
+#include <sys/mman.h>
+#endif
 
 TTable tt;
 uint16_t globalAge = 0;
@@ -42,11 +45,16 @@ void ttResize(unsigned int MBSize) {
     tt.mask = tt.bucketCount - 1ULL;
     globalAge = 0;
 
+
+#ifdef __linux__
     // Allocate memory with 1MB alignment
     tt.table = static_cast<TTBucket *>(aligned_alloc((1ULL << 20), tt.bucketCount * sizeof(TTBucket)));
 
     // For reference see https://man7.org/linux/man-pages/man2/madvise.2.html on MADV HUGEPAGE
     madvise(tt.table, tt.bucketCount * sizeof(TTBucket), MADV_HUGEPAGE);
+#else
+    tt.table = (TTBucket*)malloc(tt.bucketCount * sizeof(TTBucket));
+#endif
 
 }
 
