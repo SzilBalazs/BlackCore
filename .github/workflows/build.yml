@@ -2,27 +2,60 @@ name: Perft test and benchmark
 
 on:
   push:
-    branches: [ "master" , "dev"]
+    branches: [ "master"]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  BlackCore:
+    name: ${{matrix.config.name}}
+    runs-on: ${{matrix.config.os}}
+    env:
+      CXX: ${{matrix.config.compiler}}
+      EXE: ${{matrix.config.target}}
+    strategy:
+      matrix:
+        config:
+          - {
+              name: "Ubuntu g++",
+              os: ubuntu-latest,
+              compiler: g++,
+              target: BlackCore,
+              run: ./BlackCore
+          }
+          - {
+              name: "Ubuntu clang",
+              os: ubuntu-latest,
+              compiler: clang++,
+              target: BlackCore,
+              run: ./BlackCore
+          }
+          - {
+              name: "Windows g++",
+              os: windows-latest,
+              compiler: g++,
+              target: BlackCore.exe,
+              run: BlackCore.exe
+          }
+          - {
+              name: "Windows clang",
+              os: windows-latest,
+              compiler: clang++,
+              target: BlackCore.exe,
+              run: BlackCore.exe
+          }
 
     steps:
-    - name: Updating g++
-      run: |
-        sudo apt-get update
-        sudo apt install g++-10
-        g++ --version
-        make --version
     - uses: actions/checkout@v3
     - name: Making BlackCore 
-      run: 
-        make -C src CXX=g++-10
+      run: |
+        cd src
+        make
     - name: Running perft test
-      run: 
-        make -C src perft CXX=g++10
+      run: | 
+        cd src
+        ${{matrix.config.run}} perft
     - name: Running benchmark
-      run: 
-        make -C src bench CXX=g++10
+      run: | 
+        cd src
+        ${{matrix.config.run}} bench
