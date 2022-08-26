@@ -14,8 +14,7 @@ else
 	SUFFIX =
 endif
 
-TARGET = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)
-EXE = $(TARGET)$(SUFFIX)
+EXE = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
 

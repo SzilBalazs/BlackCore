@@ -17,19 +17,25 @@ jobs:
               name: "Ubuntu g++",
               os: ubuntu-latest,
               compiler: g++-10,
-              run: ./BlackCore
+              target: BlackCore,
+              upload_target: true,
+              artifact_name: "BlackCore-linux"
           }
           - {
               name: "Ubuntu clang",
               os: ubuntu-latest,
               compiler: clang++-10,
-              run: ./BlackCore
+              target: BlackCore,
+              upload_target: false,
+              artifact_name: ""
           }
           - {
               name: "Windows g++",
               os: windows-latest,
               compiler: g++,
-              run: BlackCore.exe
+              target: BlackCore.exe,
+              upload_target: true,
+              artifact_name: "BlackCore-win"
           }
 
     steps:
@@ -42,13 +48,18 @@ jobs:
     - name: Making BlackCore 
       run: |
         cd src
-        make CXX=${{matrix.config.compiler}} TARGET=BlackCore
+        make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}}
     - name: Running perft test
       run: | 
         cd src
-        dir
-        ${{matrix.config.run}} perft
+        ./${{matrix.config.target}} perft
     - name: Running benchmark
       run: | 
         cd src
-        ${{matrix.config.run}} bench
+        ./${{matrix.config.target}} bench
+    - name: Upload artifact
+      if: ${{matrix.config.upload_target}}
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{matrix.config.artifact_name}}
+        path: src/${{matrix.config.target}}
