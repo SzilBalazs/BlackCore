@@ -46,6 +46,7 @@ jobs:
     - name: Running perft test
       run: | 
         cd src
+        dir
         ${{matrix.config.run}} perft
     - name: Running benchmark
       run: | 
