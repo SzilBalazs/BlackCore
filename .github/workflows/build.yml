@@ -40,7 +40,7 @@ jobs:
           - {
               name: "macOS g++",
               os: macos-latest,
-              compiler: g++-11,
+              compiler: clang++,
               target: BlackCore,
               upload_target: true,
               artifact_name: "BlackCore-mac"
