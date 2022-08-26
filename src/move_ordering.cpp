@@ -71,10 +71,7 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
             return -100000;
         }
     } else if (m.isCapture()) {
-        if (see(pos, m) >= 0)
-            return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
-        else
-            return losingCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
     } else if (killerMoves[ply][0] == m) {
         return 750000;
     } else if (killerMoves[ply][1] == m) {
