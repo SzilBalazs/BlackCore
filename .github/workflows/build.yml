@@ -17,21 +17,18 @@ jobs:
               name: "Ubuntu g++",
               os: ubuntu-latest,
               compiler: g++-10,
-              target: BlackCore,
               run: ./BlackCore
           }
           - {
               name: "Ubuntu clang",
               os: ubuntu-latest,
               compiler: clang++-10,
-              target: BlackCore,
               run: ./BlackCore
           }
           - {
               name: "Windows g++",
               os: windows-latest,
               compiler: g++,
-              target: BlackCore.exe,
               run: BlackCore.exe
           }
 
@@ -45,7 +42,7 @@ jobs:
     - name: Making BlackCore 
       run: |
         cd src
-        make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}}
+        make CXX=${{matrix.config.compiler}} EXE=BlackCore
     - name: Running perft test
       run: | 
         cd src
