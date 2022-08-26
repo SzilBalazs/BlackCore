@@ -30,10 +30,75 @@ Depth reductions[200][64];
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
-            reductions[moveIndex][depth] = moveIndex > 6 ? depth / 3 : 2;
+
+            // Fruit reloaded formula
+            reductions[moveIndex][depth] = Depth(LMR_BASE + (sqrt((double)moveIndex - 1) + sqrt((double)depth - 1)) / LMR_SCALE);
+
         }
     }
 }
+
+Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
+    for (PieceType t : PIECE_TYPES_BY_VALUE) {
+        Bitboard s = attackers & pos.pieces(stm, t);
+        if (s) {
+            type = t;
+            return s & -s.bb;
+        }
+    }
+    return 0;
+}
+
+Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
+    return (((pawnMask(square, WHITE) | pawnMask(square, BLACK)) & pos.pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) & occ;
+}
+
+Score see(const Position &pos, Move move) {
+    Score e[32];
+    Depth d = 0;
+    Square from = move.getFrom();
+    Square to = move.getTo();
+
+    e[0] = PIECE_VALUES[pos.pieceAt(to).type].mg;
+
+    Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
+    Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
+    Bitboard occ = pos.occupied() ^ Bitboard(to);
+    Bitboard attacker = from;
+    Bitboard attackers = getAllAttackers(pos, to, occ);
+
+    Color stm = pos.pieceAt(to).color;
+    PieceType type = pos.pieceAt(from).type;
+
+    do {
+        d++;
+        e[d] = PIECE_VALUES[type].mg - e[d-1];
+
+        if (std::max(-e[d-1], e[d]) < 0) break;
+
+        occ ^= attacker;
+        attackers ^= attacker;
+        if (type == ROOK || type == QUEEN)
+            attackers |= rookAttacks(to, occ) & rooks & occ;
+        if (type == PAWN || type == BISHOP || type == QUEEN)
+            attackers |= bishopAttacks(to, occ) & bishops & occ;
+        attacker = leastValuablePiece(pos, attackers, stm, type);
+        stm = EnemyColor(stm);
+
+    } while(attacker);
+
+    while (--d) {
+        e[d-1] = -std::max(-e[d-1], e[d]);
+    }
+
+    return e[0];
+}
+
+
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
@@ -63,6 +128,9 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             staticEval + DELTA_MARGIN < alpha)
             continue;
 
+        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
+            continue;
+
         pos.makeMove(m);
 
         Score score = -quiescence(pos, -beta, -alpha, ply + 1);
@@ -90,14 +158,16 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
     bool ttHit = false;
+    Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (ttScore != UNKNOWN_SCORE) return ttScore;
 
     // Mate distance pruning
-    Score matePly = MATE_VALUE - ply;
-    if (alpha < -matePly) alpha = -matePly;
-    if (beta > matePly - 1) beta = matePly - 1;
-    if (alpha >= beta) return alpha;
+    if (ply > 0) {
+        if (alpha < -matePly) alpha = -matePly;
+        if (beta > matePly - 1) beta = matePly - 1;
+        if (alpha >= beta) return alpha;
+    }
 
     if (depth <= 0) return quiescence(pos, alpha, beta, ply);
 
@@ -119,13 +189,16 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Score staticEval = state->eval = eval(pos);
 
     if (ply > 0 && !inCheck) {
+
+        bool improving = ply >= 2 && staticEval >= (state-2)->eval;
+
         // Razoring
         if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
             return quiescence(pos, alpha, beta, ply);
         }
 
         // Reverse futility pruning
-        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth >= beta &&
+        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
@@ -134,9 +207,12 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             // We don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
+
+                Depth R = NULL_MOVE_R + depth / NULL_MOVE_DEPTH_R;
+
                 state->move = Move();
                 pos.makeNullMove();
-                Score score = -search(pos, state + 1, depth - NULL_MOVE_REDUCTION, -beta, -beta + 1, ply + 1);
+                Score score = -search(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {

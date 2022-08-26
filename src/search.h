@@ -23,15 +23,21 @@ constexpr Score DELTA_MARGIN = 400;
 
 constexpr Score RAZOR_MARGIN = 130;
 
-constexpr Depth RFP_DEPTH = 6;
-constexpr Score RFP_DEPTH_MULTIPLIER = 160;
+constexpr Depth RFP_DEPTH = 5;
+constexpr Score RFP_DEPTH_MULTIPLIER = 80;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 90;
 
 constexpr Depth NULL_MOVE_DEPTH = 3;
-constexpr Depth NULL_MOVE_REDUCTION = 5;
+constexpr Depth NULL_MOVE_R = 4;
+constexpr Depth NULL_MOVE_DEPTH_R = 5;
 
 constexpr Depth LMR_DEPTH = 4;
+constexpr double LMR_BASE = 0.6;
+constexpr double LMR_SCALE = 1.8;
 constexpr int LMR_MIN_I = 3;
 constexpr int LMR_PVNODE_I = 3;
+
+constexpr Score SEE_PRUNING_MARGIN = 150;
 
 constexpr Depth IID_DEPTH = 5;
 
@@ -41,6 +47,8 @@ struct SearchState {
 };
 
 void initLmr();
+
+Score see(const Position &pos, Move move);
 
 void iterativeDeepening(Position pos, Depth depth, bool uci);
 

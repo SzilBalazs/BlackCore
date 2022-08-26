@@ -102,6 +102,8 @@ enum Color {
     COLOR_EMPTY = 2, WHITE = 0, BLACK = 1
 };
 
+constexpr PieceType PIECE_TYPES_BY_VALUE[6] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
+
 struct Piece {
     PieceType type=PIECE_EMPTY;
     Color color=COLOR_EMPTY;

@@ -111,7 +111,6 @@ Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
                    slide<SOUTH_WEST>(square, occupied) | slide<SOUTH_EAST>(square, occupied);
         default:
             assert(0);
-            return 0;
     }
 }
 
