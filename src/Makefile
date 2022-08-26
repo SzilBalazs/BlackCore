@@ -4,18 +4,18 @@ TARGET_FLAGS = -static -static-libgcc -static-libstdc++
 NAME = BlackCore
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
-SUFFIX =
-
 OBJECT_DIR = objects
-
 SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp, $(OBJECT_DIR)/%.o, $(SOURCES))
 
 ifeq ($(OS), Windows_NT)
 	SUFFIX = .exe
+else
+	SUFFIX =
 endif
 
-EXE = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
+TARGET = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)
+EXE = $(TARGET)$(SUFFIX)
 
 default: $(EXE)
 

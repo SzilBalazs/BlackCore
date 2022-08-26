@@ -42,7 +42,7 @@ jobs:
     - name: Making BlackCore 
       run: |
         cd src
-        make CXX=${{matrix.config.compiler}} EXE=BlackCore
+        make CXX=${{matrix.config.compiler}} TARGET=BlackCore
     - name: Running perft test
       run: | 
         cd src
