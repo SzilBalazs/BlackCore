@@ -86,6 +86,7 @@ void testPerft() {
         std::cout << "PERFT OK\n" << totalNodes << " nodes " << nps << " nps" << std::endl;
     } else {
         std::cout << "PERFT FAILED" << std::endl;
+        exit(1);
     }
 }
 

@@ -33,16 +33,11 @@ $(OBJECT_DIR)/%.o: %.cpp
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-all: build perft bench
+all: clean build
 
 build: $(EXE)
-
-perft: $(EXE)
-	@RESULT=$$(./$(EXE) perft) && \
-	echo "$$RESULT" && \
-	echo $$RESULT | grep -q "PERFT OK"
 
 clean:
 	@rm -r objects $(EXE) || true
 
-.PHONY: all build uci perft bench clean
+.PHONY: all build clean

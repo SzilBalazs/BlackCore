@@ -34,13 +34,6 @@ jobs:
               target: BlackCore.exe,
               run: BlackCore.exe
           }
-          - {
-              name: "Windows clang",
-              os: windows-latest,
-              compiler: clang++,
-              target: BlackCore.exe,
-              run: BlackCore.exe
-          }
 
     steps:
     - uses: actions/checkout@v3
