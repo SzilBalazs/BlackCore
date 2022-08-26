@@ -20,6 +20,11 @@
 #include <cassert>
 #include "constants.h"
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#include <nmmintrin.h>
+#endif
+
 struct Bitboard {
 
     U64 bb = 0;
@@ -36,11 +41,19 @@ struct Bitboard {
 
     constexpr void clear(Square square) { bb &= ~(1ULL << square); }
 
-    constexpr int popCount() const { return __builtin_popcountll(bb); }
+    constexpr int popCount() const {
+        return __builtin_popcountll(bb);
+    }
 
     constexpr Square lsb() const {
         assert(bb != 0 && "The most common cause of this if the king bb empty");
+#ifdef __GNUC__
         return Square(__builtin_ctzll(bb));
+#else
+        unsigned long a;
+        _BitScanForward64(&a, bb);
+        return Square(a);
+#endif
     }
 
     constexpr Square popLsb() {
