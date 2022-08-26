@@ -43,9 +43,8 @@ char pieceToChar(Piece piece) {
         case KING:
             base = 'k';
             break;
-        case PIECE_EMPTY:
+        default:
             base = ' ';
-            break;
     }
     if (base != ' ' && piece.color == WHITE) base -= 32;
     return base;

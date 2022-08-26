@@ -70,7 +70,7 @@ void initBitboard() {
 
                 if (value) {
                     commonRay[sq][sq2] = value;
-                    LineType type;
+                    LineType type=HORIZONTAL;
                     switch (dir) {
                         case NORTH:
                         case SOUTH:
