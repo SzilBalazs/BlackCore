@@ -16,7 +16,7 @@ jobs:
           - {
               name: "Ubuntu g++",
               os: ubuntu-latest,
-              compiler: g++-10,
+              compiler: g++-11,
               target: BlackCore,
               upload_target: true,
               artifact_name: "BlackCore-linux"
@@ -24,7 +24,7 @@ jobs:
           - {
               name: "Ubuntu clang",
               os: ubuntu-latest,
-              compiler: clang++-10,
+              compiler: clang++-11,
               target: BlackCore,
               upload_target: false,
               artifact_name: ""
@@ -40,7 +40,7 @@ jobs:
           - {
               name: "macOS g++",
               os: macos-latest,
-              compiler: g++-10,
+              compiler: g++-11,
               target: BlackCore,
               upload_target: true,
               artifact_name: "BlackCore-mac"
@@ -52,7 +52,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install g++-10 clang++-10
+        sudo apt-get install g++-11 clang++-11
     - name: Making BlackCore 
       run: |
         cd src

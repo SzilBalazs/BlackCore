@@ -21,7 +21,7 @@ else
 endif
 
 ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14
+	NATIVE = -march=apple-a14
 else
 	NATIVE = -march=native
 endif
