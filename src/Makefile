@@ -1,5 +1,6 @@
 CXX = g++
 TARGET_FLAGS = -static -static-libgcc -static-libstdc++
+ARCH=native
 NAME = BlackCore
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
@@ -20,13 +21,21 @@ else
 	SUFFIX =
 endif
 
-ifeq ($(uname_S), Darwin)
-	NATIVE = -march=apple-a14
-else
-	NATIVE = -march=native
+ifeq ($(ARCH), native)
+	ARCH_FLAGS=-march=native
+	DEFINE_FLAGS=-DNATIVE
 endif
 
-CXXFLAGS = -std=c++20 -O3 -flto -pthread -Wall $(NATIVE)
+ifeq ($(ARCH), bmi2)
+	ARCH_FLAGS=-mbmi2
+	DEFINE_FLAGS=-DBMI2
+endif
+
+ifeq ($(ARCH), popcnt)
+    ARCH_FLAGS=-mpopcnt
+endif
+
+CXXFLAGS = -std=c++20 -Ofast -flto -pthread -Wall $(DEFINE_FLAGS) $(ARCH_FLAGS)
 EXE = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)

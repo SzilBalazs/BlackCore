@@ -132,7 +132,7 @@ void initMagic(const Magic *magics, PieceType type) {
         } while (occ != 0);
 
         for (unsigned int i = 0; i < length; i++) {
-            U64 index = (((occupied[i] & magic.mask) * magic.magic) >> (64 - magic.shift)).bb;
+            U64 index = getMagicIndex(magic, occupied[i]);
 
             magic.ptr[index] = attacked[i];
         }
