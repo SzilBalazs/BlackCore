@@ -10,9 +10,6 @@ jobs:
   BlackCore:
     name: ${{matrix.config.name}}
     runs-on: ${{matrix.config.os}}
-    env:
-      CXX: ${{matrix.config.compiler}}
-      EXE: ${{matrix.config.target}}
     strategy:
       matrix:
         config:
@@ -50,7 +47,7 @@ jobs:
     - name: Making BlackCore 
       run: |
         cd src
-        make
+        make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}}
     - name: Running perft test
       run: | 
         cd src

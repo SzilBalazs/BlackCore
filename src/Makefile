@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -O3 -march=native -flto=auto -pthread -Wall
+CXXFLAGS = -std=c++2a -O3 -march=native -flto=auto -pthread -Wall
 TARGET_FLAGS = -static -static-libgcc -static-libstdc++
 NAME = BlackCore
 VERSION_MAJOR = 1
