@@ -28,7 +28,6 @@ Move stringToMove(const Position &pos, const std::string &s) {
     Square to = stringToSquare(s.substr(2, 2));
     Piece piece = pos.pieceAt(from);
     Piece capturedPiece = pos.pieceAt(to);
-    Color enemyColor = piece.color == WHITE ? BLACK : WHITE;
     unsigned int flags = QUIET_MOVE;
     if (!capturedPiece.isNull())
         flags = CAPTURE_FLAG;
@@ -122,7 +121,7 @@ void uciLoop() {
 
             if (tokens[0] == "fen") {
                 std::string fen;
-                for (int i = 1; i < tokens.size() && tokens[i] != "moves"; i++) {
+                for (unsigned int i = 1; i < tokens.size() && tokens[i] != "moves"; i++) {
                     fen += tokens[i] + ' ';
                 }
                 pos.loadPositionFromFen(fen);
@@ -131,7 +130,7 @@ void uciLoop() {
             }
 
             if (line.find("moves") != std::string::npos) {
-                int i = 0;
+                unsigned int i = 0;
                 bool move = false;
                 while (i < tokens.size()) {
                     if (tokens[i] == "moves") move = true;
@@ -149,7 +148,7 @@ void uciLoop() {
 
             U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 25, depth = 64, movetime = 0;
 
-            for (int i = 0; i < tokens.size(); i += 2) {
+            for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {
                     wtime = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "btime") {
