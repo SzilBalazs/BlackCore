@@ -23,7 +23,7 @@ jobs:
           - {
               name: "Ubuntu clang",
               os: ubuntu-latest,
-              compiler: clang++,
+              compiler: clang++10,
               target: BlackCore,
               run: ./BlackCore
           }
@@ -44,6 +44,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Installing packages
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install g++-10 clang++-10
     - name: Making BlackCore 
       run: |
         cd src
