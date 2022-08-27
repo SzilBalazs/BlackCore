@@ -16,7 +16,7 @@ jobs:
           - {
             name: "Ubuntu g++ popcnt",
             os: ubuntu-latest,
-            compiler: g++-12,
+            compiler: g++-11,
             arch: popcnt,
             target: BlackCore-popcnt-linux,
             upload_target: true,
@@ -24,7 +24,7 @@ jobs:
           - {
             name: "Ubuntu g++ modern",
             os: ubuntu-latest,
-            compiler: g++,
+            compiler: g++-11,
             arch: modern,
             target: BlackCore-modern-linux,
             upload_target: true,
@@ -32,7 +32,7 @@ jobs:
           - {
             name: "Ubuntu g++ bmi2",
             os: ubuntu-latest,
-            compiler: g++,
+            compiler: g++-11,
             arch: bmi2,
             target: BlackCore-bmi2-linux,
             upload_target: true,
@@ -68,7 +68,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install g++
+          sudo apt-get install g++-11
       - name: Making BlackCore
         run: |
           cd src
