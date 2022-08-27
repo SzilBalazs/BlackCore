@@ -9,8 +9,6 @@ BlackCore is a UCI compatible c++ chess engine written from scratch, capable of 
 Its alpha beta search uses various pruning techniques, powered by a handcrafted evaluation function and a blazing fast
 move generator.
 
-***
-
 ## Files
 
 This project contains the following files:
@@ -19,8 +17,6 @@ This project contains the following files:
 - **LICENSE** containing the license of this repository.
 - **.github** folder contains automated GitHub workflows like building this project.
 - **.src** folder contains the source code of BlackCore
-
-***
 
 ## Features
 
@@ -95,8 +91,6 @@ This project contains the following files:
             * Bonuses for open and half open files
         * Tempo
 
-***
-
 ## Installation
 
 ### Building from source
@@ -122,8 +116,6 @@ To select the right binary, choose the bmi2 build if you have a fairly new CPU, 
 or in case of an older
 processor use the popcnt build. Only 64 bits CPUs with popcnt are supported at the moment.
 
-***
-
 ## Usage
 
 BlackCore in itself is a command line program, and requires a UCI compatible
@@ -137,8 +129,6 @@ or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experienc
 - **Move Overhead** - The delay (in ms) between finding the best move and the GUI reacting to it. You may want to make
   this
   higher if you notice that the engine often runs out of time.
-
-***
 
 ## Big thanks to
 
