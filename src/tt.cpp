@@ -49,7 +49,6 @@ void ttResize(unsigned int MBSize) {
 
     tt.bucketCount = (1ULL << (i - 1));
     tt.mask = tt.bucketCount - 1ULL;
-    globalAge = 0;
 
 
 #ifdef __linux__
@@ -61,6 +60,8 @@ void ttResize(unsigned int MBSize) {
 #else
     tt.table = (TTBucket*)malloc(tt.bucketCount * sizeof(TTBucket));
 #endif
+
+    ttClear();
 
 }
 
