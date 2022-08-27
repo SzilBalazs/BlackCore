@@ -187,4 +187,5 @@ void uciLoop() {
             pos.displayEval();
         }
     }
+    ttFree();
 }

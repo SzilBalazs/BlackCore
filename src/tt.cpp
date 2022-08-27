@@ -18,7 +18,9 @@
 #include "tt.h"
 
 #ifdef __linux__
+
 #include <sys/mman.h>
+
 #endif
 
 TTable tt;
@@ -31,6 +33,10 @@ TTBucket *getBucket(U64 hash) {
 void ttClear() {
     std::memset(tt.table, 0, tt.bucketCount * sizeof(TTBucket));
     globalAge = 0;
+}
+
+void ttFree() {
+    free(tt.table);
 }
 
 void ttResize(unsigned int MBSize) {
