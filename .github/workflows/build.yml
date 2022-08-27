@@ -24,7 +24,7 @@ jobs:
           - {
             name: "Ubuntu g++ modern",
             os: ubuntu-latest,
-            compiler: g++-12,
+            compiler: g++,
             arch: modern,
             target: BlackCore-modern-linux,
             upload_target: true,
@@ -32,7 +32,7 @@ jobs:
           - {
             name: "Ubuntu g++ bmi2",
             os: ubuntu-latest,
-            compiler: g++-12,
+            compiler: g++,
             arch: bmi2,
             target: BlackCore-bmi2-linux,
             upload_target: true,
@@ -68,7 +68,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install g++-12
+          sudo apt-get install g++
       - name: Making BlackCore
         run: |
           cd src
