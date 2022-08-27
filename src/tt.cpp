@@ -42,7 +42,7 @@ void ttFree() {
 void ttResize(unsigned int MBSize) {
 
     if (tt.bucketCount)
-        free(tt.table);
+        ttFree();
 
     unsigned int i = 10;
     while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket)) i++;
