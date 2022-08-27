@@ -32,7 +32,8 @@ void initLmr() {
         for (Depth depth = 0; depth < 64; depth++) {
 
             // Fruit reloaded formula
-            reductions[moveIndex][depth] = Depth(LMR_BASE + (sqrt((double)moveIndex - 1) + sqrt((double)depth - 1)) / LMR_SCALE);
+            reductions[moveIndex][depth] = Depth(
+                    LMR_BASE + (sqrt((double) moveIndex - 1) + sqrt((double) depth - 1)) / LMR_SCALE);
 
         }
     }
@@ -76,9 +77,9 @@ Score see(const Position &pos, Move move) {
 
     do {
         d++;
-        e[d] = PIECE_VALUES[type].mg - e[d-1];
+        e[d] = PIECE_VALUES[type].mg - e[d - 1];
 
-        if (std::max(-e[d-1], e[d]) < 0) break;
+        if (std::max(-e[d - 1], e[d]) < 0) break;
 
         occ ^= attacker;
         attackers ^= attacker;
@@ -89,15 +90,14 @@ Score see(const Position &pos, Move move) {
         attacker = leastValuablePiece(pos, attackers, stm, type);
         stm = EnemyColor(stm);
 
-    } while(attacker);
+    } while (attacker);
 
     while (--d) {
-        e[d-1] = -std::max(-e[d-1], e[d]);
+        e[d - 1] = -std::max(-e[d - 1], e[d]);
     }
 
     return e[0];
 }
-
 
 
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
@@ -128,6 +128,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             staticEval + DELTA_MARGIN < alpha)
             continue;
 
+        // SEE pruning
         if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
             continue;
 
@@ -190,7 +191,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (ply > 0 && !inCheck) {
 
-        bool improving = ply >= 2 && staticEval >= (state-2)->eval;
+        bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
 
         // Razoring
         if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
@@ -198,7 +199,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Reverse futility pruning
-        if (depth <= RFP_DEPTH && staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
+        if (depth <= RFP_DEPTH &&
+            staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 

@@ -1,4 +1,4 @@
-name: Perft test and benchmark
+name: Build
 
 on:
   push:
@@ -20,7 +20,6 @@ jobs:
             arch: popcnt,
             target: BlackCore-popcnt-linux,
             upload_target: true,
-            artifact_name: "BlackCore-popcnt-linux"
           }
           - {
             name: "Ubuntu g++ modern",
@@ -29,7 +28,6 @@ jobs:
             arch: modern,
             target: BlackCore-modern-linux,
             upload_target: true,
-            artifact_name: "BlackCore-modern-linux"
           }
           - {
             name: "Ubuntu g++ bmi2",
@@ -38,7 +36,6 @@ jobs:
             arch: bmi2,
             target: BlackCore-bmi2-linux,
             upload_target: true,
-            artifact_name: "BlackCore-bmi2-linux"
           }
           - {
             name: "Ubuntu clang popcnt",
@@ -56,7 +53,6 @@ jobs:
             arch: modern,
             target: BlackCore,
             upload_target: false,
-            artifact_name: ""
           }
           - {
             name: "Ubuntu clang bmi2",
@@ -65,7 +61,6 @@ jobs:
             arch: bmi2,
             target: BlackCore,
             upload_target: false,
-            artifact_name: ""
           }
           - {
             name: "Windows g++ popcnt",
@@ -74,7 +69,6 @@ jobs:
             arch: popcnt,
             target: BlackCore-popcnt-win.exe,
             upload_target: true,
-            artifact_name: "BlackCore-popcnt-win"
           }
           - {
             name: "Windows g++ modern",
@@ -83,7 +77,6 @@ jobs:
             arch: popcnt,
             target: BlackCore-modern-win.exe,
             upload_target: true,
-            artifact_name: "BlackCore-modern-win"
           }
           - {
             name: "Windows g++ bmi2",
@@ -92,7 +85,6 @@ jobs:
             arch: bmi2,
             target: BlackCore-bmi2-win.exe,
             upload_target: true,
-            artifact_name: "BlackCore-bmi2-win"
           }
 
     steps:
@@ -118,5 +110,5 @@ jobs:
         if: ${{matrix.config.upload_target}}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{matrix.config.artifact_name}}
+          name: BlackCore
           path: src/${{matrix.config.target}}
