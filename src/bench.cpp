@@ -33,7 +33,7 @@ const unsigned int posCount = 10;
 
 const unsigned int searchTestHashSize = 8;
 
-const Depth SEARCH_DEPTH = 11;
+const Depth SEARCH_DEPTH = 13;
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
@@ -86,6 +86,7 @@ void testPerft() {
         std::cout << "PERFT OK\n" << totalNodes << " nodes " << nps << " nps" << std::endl;
     } else {
         std::cout << "PERFT FAILED" << std::endl;
+        exit(1);
     }
 }
 

@@ -18,7 +18,17 @@
 #define BLACKCORE_BITBOARD_H
 
 #include <cassert>
+#include <immintrin.h>
 #include "constants.h"
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#include <nmmintrin.h>
+#endif
+
+#if defined(NATIVE) && defined(__BMI2__)
+#define BMI2
+#endif
 
 struct Bitboard {
 
@@ -36,11 +46,28 @@ struct Bitboard {
 
     constexpr void clear(Square square) { bb &= ~(1ULL << square); }
 
-    constexpr int popCount() const { return __builtin_popcountll(bb); }
+    constexpr int popCount() const {
+
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+        return (int)_mm_popcnt_u64(bb);
+#else
+        return __builtin_popcountll(bb);
+#endif
+
+    }
 
     constexpr Square lsb() const {
-        assert(bb != 0 && "The most common cause of this if the king bb empty");
+
+#ifdef __GNUC__
         return Square(__builtin_ctzll(bb));
+#elif defined(_MSC_VER)
+        unsigned long a;
+        _BitScanForward64(&a, bb);
+        return Square(a);
+#else
+#error "Unable to determine least significant bit please use a compatible compiler!"
+#endif
+
     }
 
     constexpr Square popLsb() {
@@ -310,17 +337,25 @@ inline Bitboard antiDiagonalMask(Square square) { return antiDiagonalMasks[squar
 
 inline Bitboard bishopMask(Square square) { return bishopMasks[square]; }
 
-constexpr Bitboard rookAttacks(Square square, Bitboard occ) {
+inline unsigned int getMagicIndex(const Magic &m, Bitboard occ) {
+#ifdef BMI2
+    return _pext_u64(occ.bb, m.mask.bb);
+#else
+    return (((occ & m.mask) * m.magic) >> (64 - m.shift)).bb;
+#endif
+}
+
+inline Bitboard rookAttacks(Square square, Bitboard occ) {
     const Magic &m = rookMagics[square];
-    return m.ptr[(((occ & m.mask) * m.magic) >> (64 - m.shift)).bb];
+    return m.ptr[getMagicIndex(m, occ)];
 }
 
-constexpr Bitboard bishopAttacks(Square square, Bitboard occ) {
+inline Bitboard bishopAttacks(Square square, Bitboard occ) {
     const Magic &m = bishopMagics[square];
-    return m.ptr[(((occ & m.mask) * m.magic) >> (64 - m.shift)).bb];
+    return m.ptr[getMagicIndex(m, occ)];
 }
 
-constexpr Bitboard queenAttacks(Square square, Bitboard occ) {
+inline Bitboard queenAttacks(Square square, Bitboard occ) {
     return rookAttacks(square, occ) | bishopAttacks(square, occ);
 }
 

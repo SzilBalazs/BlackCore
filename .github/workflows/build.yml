@@ -1,28 +1,89 @@
-name: Perft test and benchmark
+name: Build
 
 on:
   push:
-    branches: [ "master" , "dev"]
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  BlackCore:
+    name: ${{matrix.config.name}}
+    runs-on: ${{matrix.config.os}}
+    strategy:
+      matrix:
+        config:
+          - {
+            name: "Ubuntu g++ popcnt",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: popcnt,
+            target: BlackCore-popcnt-linux,
+            upload_target: true,
+          }
+          - {
+            name: "Ubuntu g++ modern",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: modern,
+            target: BlackCore-modern-linux,
+            upload_target: true,
+          }
+          - {
+            name: "Ubuntu g++ bmi2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: bmi2,
+            target: BlackCore-bmi2-linux,
+            upload_target: true,
+          }
+          - {
+            name: "Windows g++ popcnt",
+            os: windows-latest,
+            compiler: g++,
+            arch: popcnt,
+            target: BlackCore-popcnt-win.exe,
+            upload_target: true,
+          }
+          - {
+            name: "Windows g++ modern",
+            os: windows-latest,
+            compiler: g++,
+            arch: popcnt,
+            target: BlackCore-modern-win.exe,
+            upload_target: true,
+          }
+          - {
+            name: "Windows g++ bmi2",
+            os: windows-latest,
+            compiler: g++,
+            arch: bmi2,
+            target: BlackCore-bmi2-win.exe,
+            upload_target: true,
+          }
 
     steps:
-    - name: Updating g++
-      run: |
-        sudo apt-get update
-        sudo apt install g++-10
-        g++ --version
-        make --version
-    - uses: actions/checkout@v3
-    - name: Making BlackCore 
-      run: 
-        make -C src CXX=g++-10
-    - name: Running perft test
-      run: 
-        make -C src perft CXX=g++10
-    - name: Running benchmark
-      run: 
-        make -C src bench CXX=g++10
+      - uses: actions/checkout@v3
+      - name: Installing packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install g++-11
+      - name: Making BlackCore
+        run: |
+          cd src
+          make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}} ARCH=${{matrix.config.target}}
+      - name: Running perft
+        run: |
+          cd src
+          ./${{matrix.config.target}} perft
+      - name: Running bench
+        run: |
+          cd src
+          ./${{matrix.config.target}} bench
+      - name: Upload artifact
+        if: ${{matrix.config.upload_target}}
+        uses: actions/upload-artifact@v3
+        with:
+          name: BlackCore
+          path: src/${{matrix.config.target}}
