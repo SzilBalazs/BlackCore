@@ -51,7 +51,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
     if (piece.type == PAWN && pos.getEpSquare() == to) {
         flags = EP_CAPTURE;
-    } else if (piece.type == PAWN && std::abs((long)squareToRank(from) - (long)squareToRank(to)) == 2) {
+    } else if (piece.type == PAWN && std::abs((long) squareToRank(from) - (long) squareToRank(to)) == 2) {
         flags = DOUBLE_PAWN_PUSH;
     } else if (piece.type == KING && squareToFile(from) == 4) {
         if (squareToFile(to) == 6) {
@@ -100,6 +100,7 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
+            stopSearch();
             if (searchThread.joinable())
                 searchThread.join();
             break;
