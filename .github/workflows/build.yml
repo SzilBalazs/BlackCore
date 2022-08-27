@@ -73,11 +73,11 @@ jobs:
         run: |
           cd src
           make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}} ARCH=${{matrix.config.target}}
-      - name: Running perft test
+      - name: Running perft
         run: |
           cd src
           ./${{matrix.config.target}} perft
-      - name: Running benchmark
+      - name: Running bench
         run: |
           cd src
           ./${{matrix.config.target}} bench
