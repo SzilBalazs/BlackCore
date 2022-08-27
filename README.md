@@ -16,7 +16,7 @@ This project contains the following files:
 - **README.md** the file that you are reading.
 - **LICENSE** containing the license of this repository.
 - **.github** folder contains automated GitHub workflows like building this project.
-- **.src** folder contains the source code of BlackCore
+- **src** folder contains the source code of BlackCore
 
 ## Features
 

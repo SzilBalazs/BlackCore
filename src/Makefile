@@ -39,7 +39,7 @@ ifeq ($(ARCH), popcnt)
     ARCH_FLAGS = -march=x86-64 -mpopcnt
 endif
 
-CXXFLAGS = -std=c++20 -Ofast -flto -pthread -Wall $(DEFINE_FLAGS) $(ARCH_FLAGS)
+CXXFLAGS = -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess $(DEFINE_FLAGS) $(ARCH_FLAGS)
 EXE = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
