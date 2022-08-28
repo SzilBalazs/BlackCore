@@ -22,6 +22,7 @@
 #include "search.h"
 #include "timeman.h"
 #include "position.h"
+#include "eval.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -79,13 +80,14 @@ void uciLoop() {
     // If tuning is defined we expose search parameters to the tuner
 #ifdef TUNE
 
-    tuneOut("RFP_DEPTH", 5, 3, 6);
-    tuneOut("RFP_DEPTH_MULTIPLIER", 80, 50, 140);
-    tuneOut("RFP_IMPROVING_MULTIPLIER", 90, 50, 140);
-
-    tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
-    tuneOut("NULL_MOVE_BASE_R", 4, 1, 6);
-    tuneOut("NULL_MOVE_R_SCALE", 4, 1, 10);
+    tuneOut("PAWN_VALUE_MG", 80, 50, 200);
+    tuneOut("PAWN_VALUE_EG", 140, 100, 300);
+    tuneOut("PAWN_PASSED_BONUS_MG", 40, 0, 100);
+    tuneOut("PAWN_PASSED_BONUS_EG", 60, 0, 100);
+    tuneOut("PAWN_DOUBLE_PENALTY_MG", -15, -100, 0);
+    tuneOut("PAWN_DOUBLE_PENALTY_EG", -25, -100, 0);
+    tuneOut("PAWN_ISOLATED_PENALTY_MG", -10, -100, 0);
+    tuneOut("PAWN_ISOLATED_PENALTY_EG", -30, -100, 0);
 
 #endif
 
@@ -129,23 +131,29 @@ void uciLoop() {
                     ttResize(std::stoi(tokens[3]));
                 } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
                     MOVE_OVERHEAD = std::stoi(tokens[4]);
+                } else if (tokens[1] == "Ponder") {
+
                 } else {
 #ifdef TUNE
                     const std::string name = tokens[1];
                     const int value = std::stoi(tokens[3]);
 
-                    if (name == "RFP_DEPTH") {
-                        RFP_DEPTH = value;
-                    } else if (name == "RFP_DEPTH_MULTIPLIER") {
-                        RFP_DEPTH_MULTIPLIER = value;
-                    } else if (name == "RFP_IMPROVING_MULTIPLIER") {
-                        RFP_IMPROVING_MULTIPLIER = value;
-                    } else if (name == "NULL_MOVE_DEPTH") {
-                        NULL_MOVE_DEPTH = value;
-                    } else if (name == "NULL_MOVE_BASE_R") {
-                        NULL_MOVE_BASE_R = value;
-                    } else if (name == "NULL_MOVE_R_SCALE") {
-                        NULL_MOVE_R_SCALE = value;
+                    if (name == "PAWN_VALUE_MG") {
+                        PIECE_VALUES[PAWN].mg = value;
+                    } else if (name == "PAWN_VALUE_EG") {
+                        PIECE_VALUES[PAWN].eg = value;
+                    } else if (name == "PAWN_PASSED_BONUS_MG") {
+                        PAWN_PASSED_BONUS.mg = value;
+                    } else if (name == "PAWN_PASSED_BONUS_EG") {
+                        PAWN_PASSED_BONUS.eg = value;
+                    } else if (name == "PAWN_DOUBLE_PENALTY_MG") {
+                        PAWN_DOUBLE_PENALTY.mg = value;
+                    } else if (name == "PAWN_DOUBLE_PENALTY_EG") {
+                        PAWN_DOUBLE_PENALTY.eg = value;
+                    } else if (name == "PAWN_ISOLATED_PENALTY_MG") {
+                        PAWN_ISOLATED_PENALTY.mg = value;
+                    } else if (name == "PAWN_ISOLATED_PENALTY_EG") {
+                        PAWN_ISOLATED_PENALTY.eg = value;
                     }
 #endif
                 }

@@ -16,6 +16,37 @@
 
 #include "eval.h"
 
+#ifdef TUNE
+
+Value PIECE_VALUES[6] = {{0,    0},
+                         {86,   127},
+                         {400,  420},
+                         {450,  530},
+                         {650,  850},
+                         {1300, 1700}};
+
+
+Score TEMPO_SCORE = 10;
+
+Value PAWN_PASSED_BONUS = {33, 56};
+Value PAWN_DOUBLE_PENALTY = {-15, -28};
+Value PAWN_ISOLATED_PENALTY = {-13, -33};
+
+Value KNIGHT_MOBILITY = {10, 10};
+
+Value BISHOP_ATTACK_BONUS = {15, 5};
+
+Value ROOK_MOBILITY = {3, 0};
+Value ROOK_TRAPPED = {-60, -20};
+Value ROOK_OPEN_BONUS = {30, 20};
+Value ROOK_HALF_BONUS = {10, 10};
+
+Value KING_UNSAFE = {-70, 0};
+Value KING_SHIELD_1 = {25, 0};
+Value KING_SHIELD_2 = {15, 0};
+
+#endif
+
 constexpr Bitboard WK_AREA = 0xe0e0e0ULL;
 constexpr Bitboard WK_SHIELD_1 = 0xe000ULL;
 constexpr Bitboard WK_SHIELD_2 = 0xe00000ULL;
@@ -132,7 +163,7 @@ Value evalBishops(const Position &pos) {
 }
 
 template<Color color>
-Value evalRooks(const Position& pos) {
+Value evalRooks(const Position &pos) {
 
     Bitboard pawns = pos.pieces<PAWN>();
     Bitboard rooks = pos.pieces<color, ROOK>();
@@ -156,7 +187,7 @@ Value evalRooks(const Position& pos) {
 }
 
 template<Color color>
-Value evalQueens(const Position& pos) {
+Value evalQueens(const Position &pos) {
 
     Bitboard queens = pos.pieces<color, QUEEN>();
 
@@ -166,7 +197,7 @@ Value evalQueens(const Position& pos) {
 }
 
 template<Color color>
-Value evalKings(const Position& pos) {
+Value evalKings(const Position &pos) {
 
     Bitboard pawns = pos.pieces<color, PAWN>();
     Bitboard rooks = pos.pieces<color, ROOK>();
@@ -188,7 +219,7 @@ Value evalKings(const Position& pos) {
                 value += ROOK_TRAPPED;
 
         }
-        // We castled queen side
+            // We castled queen side
         else if (WQ_AREA.get(king)) {
 
             // King shield
@@ -220,7 +251,7 @@ Value evalKings(const Position& pos) {
                 value += ROOK_TRAPPED;
 
         }
-        // We castled queen side
+            // We castled queen side
         else if (BQ_AREA.get(king)) {
 
             // King shield
@@ -271,5 +302,5 @@ Score eval(const Position &pos) {
     Score score = ((value.eg * (24 - phase)) + (value.mg * phase)) / 24;
 
 
-    return TEMPO_SCORE + (pos.getSideToMove()==WHITE?score:-score);
+    return TEMPO_SCORE + (pos.getSideToMove() == WHITE ? score : -score);
 }

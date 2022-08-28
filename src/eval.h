@@ -23,30 +23,55 @@
 Score eval(const Position &pos);
 
 struct Value {
-    Score mg=0;
-    Score eg=0;
+    Score mg = 0;
+    Score eg = 0;
 
-    inline Value operator+(Value a) const { return {mg+a.mg, eg+a.eg}; }
+    inline Value operator+(Value a) const { return {mg + a.mg, eg + a.eg}; }
 
-    inline Value operator-(Value a) const { return {mg-a.mg, eg-a.eg}; }
+    inline Value operator-(Value a) const { return {mg - a.mg, eg - a.eg}; }
 
-    inline Value operator*(int a) const { return {mg*a, eg*a}; }
+    inline Value operator*(int a) const { return {mg * a, eg * a}; }
 
-    inline Value& operator+=(Value a) {
+    inline Value &operator+=(Value a) {
         mg += a.mg;
         eg += a.eg;
         return *this;
     }
 
-    inline Value& operator+=(Score a) {
+    inline Value &operator+=(Score a) {
         mg += a;
         eg += a;
         return *this;
     }
 };
 
+#ifdef TUNE
+
+extern Value PIECE_VALUES[6];
+
+extern Score TEMPO_SCORE;
+
+extern Value PAWN_PASSED_BONUS;
+extern Value PAWN_DOUBLE_PENALTY;
+extern Value PAWN_ISOLATED_PENALTY;
+
+extern Value KNIGHT_MOBILITY;
+
+extern Value BISHOP_ATTACK_BONUS;
+
+extern Value ROOK_MOBILITY;
+extern Value ROOK_TRAPPED;
+extern Value ROOK_OPEN_BONUS;
+extern Value ROOK_HALF_BONUS;
+
+extern Value KING_UNSAFE;
+extern Value KING_SHIELD_1;
+extern Value KING_SHIELD_2;
+
+#else
+
 constexpr Value PIECE_VALUES[6] = {{0,    0},
-                                   {80,   140},
+                                   {86,   127},
                                    {400,  420},
                                    {450,  530},
                                    {650,  850},
@@ -55,9 +80,9 @@ constexpr Value PIECE_VALUES[6] = {{0,    0},
 
 constexpr Score TEMPO_SCORE = 10;
 
-constexpr Value PAWN_PASSED_BONUS = {40, 60};
-constexpr Value PAWN_DOUBLE_PENALTY = {-15, -25};
-constexpr Value PAWN_ISOLATED_PENALTY = {-10, -30};
+constexpr Value PAWN_PASSED_BONUS = {33, 56};
+constexpr Value PAWN_DOUBLE_PENALTY = {-15, -28};
+constexpr Value PAWN_ISOLATED_PENALTY = {-13, -33};
 
 constexpr Value KNIGHT_MOBILITY = {10, 10};
 
@@ -72,33 +97,147 @@ constexpr Value KING_UNSAFE = {-70, 0};
 constexpr Value KING_SHIELD_1 = {25, 0};
 constexpr Value KING_SHIELD_2 = {15, 0};
 
+#endif
+
 constexpr Value bPawnTable[64] = {
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0},
-        { 20,  50}, { 30,  55}, { 30,  60}, { 30,  60}, { 30,  60}, { 30,  60}, { 30,  55}, { 20,  50},
-        {  5,  20}, { 10,  25}, { 10,  30}, { 10,  30}, { 10,  30}, { 10,  30}, { 10,  25}, {  5,  20},
-        {  0,  15}, {  0,  20}, {  0,  20}, { 20,  20}, { 20,  20}, {  0,  20}, {  0,  20}, {  0,  15},
-        {  0,   5}, {  0,  10}, {  0,  10}, { 30,  10}, { 30,  10}, {  0,  10}, {  0,  10}, {  0,   5},
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,  0},  {  0,   0}, {  0,   0},
-        {  0,   0}, {  0,   0}, {  0,   0}, {-20,   0}, {-20,   0}, {  0,  0},  {  0,   0}, {  0,   0},
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,  0},  {  0,   0}, {  0,   0}};
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {20,  50},
+        {30,  55},
+        {30,  60},
+        {30,  60},
+        {30,  60},
+        {30,  60},
+        {30,  55},
+        {20,  50},
+        {5,   20},
+        {10,  25},
+        {10,  30},
+        {10,  30},
+        {10,  30},
+        {10,  30},
+        {10,  25},
+        {5,   20},
+        {0,   15},
+        {0,   20},
+        {0,   20},
+        {20,  20},
+        {20,  20},
+        {0,   20},
+        {0,   20},
+        {0,   15},
+        {0,   5},
+        {0,   10},
+        {0,   10},
+        {30,  10},
+        {30,  10},
+        {0,   10},
+        {0,   10},
+        {0,   5},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {-20, 0},
+        {-20, 0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0}};
 
 constexpr Value wPawnTable[64] = {
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0},
-        {  0,   0}, {  0,   0}, {  0,   0}, {-20,   0}, {-20,   0}, {  0,  0},  {  0,   0}, {  0,   0},
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,  0},  {  0,   0}, {  0,   0},
-        {  0,   5}, {  0,  10}, {  0,  10}, { 30,  10}, { 30,  10}, {  0,  10}, {  0,  10}, {  0,   5},
-        {  0,  15}, {  0,  20}, {  0,  20}, { 20,  20}, { 20,  20}, {  0,  20}, {  0,  20}, {  0,  15},
-        {  5,  20}, { 10,  25}, { 10,  30}, { 10,  30}, { 10,  30}, { 10,  30}, { 10,  25}, {  5,  20},
-        { 20,  50}, { 30,  55}, { 30,  60}, { 30,  60}, { 30,  60}, { 30,  60}, { 30,  55}, { 20,  50},
-        {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,   0}, {  0,  0},  {  0,   0}, {  0,   0}};
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {-20, 0},
+        {-20, 0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   5},
+        {0,   10},
+        {0,   10},
+        {30,  10},
+        {30,  10},
+        {0,   10},
+        {0,   10},
+        {0,   5},
+        {0,   15},
+        {0,   20},
+        {0,   20},
+        {20,  20},
+        {20,  20},
+        {0,   20},
+        {0,   20},
+        {0,   15},
+        {5,   20},
+        {10,  25},
+        {10,  30},
+        {10,  30},
+        {10,  30},
+        {10,  30},
+        {10,  25},
+        {5,   20},
+        {20,  50},
+        {30,  55},
+        {30,  60},
+        {30,  60},
+        {30,  60},
+        {30,  60},
+        {30,  55},
+        {20,  50},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0},
+        {0,   0}};
 
 constexpr Score egKingTable[64] = {-50, -40, -30, -30, -30, -30, -40, -50,
-                       -40, -20, 5, 5, 5, 5, -20, -40,
-                       -30, 5, 10, 15, 15, 10, 5, -30,
-                       -30, 5, 15, 20, 20, 15, 5, -30,
-                       -30, 5, 15, 20, 20, 15, 5, -30,
-                       -30, 5, 10, 15, 15, 10, 5, -30,
-                       -40, -20, 5, 5, 5, 5, -20, -40,
-                       -50, -40, -30, -30, -30, -30, -40, -50};
+                                   -40, -20, 5, 5, 5, 5, -20, -40,
+                                   -30, 5, 10, 15, 15, 10, 5, -30,
+                                   -30, 5, 15, 20, 20, 15, 5, -30,
+                                   -30, 5, 15, 20, 20, 15, 5, -30,
+                                   -30, 5, 10, 15, 15, 10, 5, -30,
+                                   -40, -20, 5, 5, 5, 5, -20, -40,
+                                   -50, -40, -30, -30, -30, -30, -40, -50};
 
 #endif //BLACKCORE_EVAL_H
