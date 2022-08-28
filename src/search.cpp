@@ -31,9 +31,8 @@ void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
 
-            // Fruit reloaded formula
             reductions[moveIndex][depth] = Depth(
-                    LMR_BASE + (sqrt((double) moveIndex - 1) + sqrt((double) depth - 1)) / LMR_SCALE);
+                    LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE));
 
         }
     }
@@ -265,7 +264,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() &&
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I &&
                 m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
                 score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
