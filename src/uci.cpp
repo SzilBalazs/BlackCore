@@ -76,6 +76,19 @@ void uciLoop() {
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
+    // If tuning is defined we expose search parameters to the tuner
+#ifdef TUNE
+
+    tuneOut("RFP_DEPTH", 5, 3, 6);
+    tuneOut("RFP_DEPTH_MULTIPLIER", 80, 50, 140);
+    tuneOut("RFP_IMPROVING_MULTIPLIER", 90, 50, 140);
+
+    tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
+    tuneOut("NULL_MOVE_BASE_R", 4, 1, 6);
+    tuneOut("NULL_MOVE_R_SCALE", 4, 1, 10);
+
+#endif
+
     ttResize(16);
 
     // We have sent all the parameters
@@ -116,6 +129,25 @@ void uciLoop() {
                     ttResize(std::stoi(tokens[3]));
                 } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
                     MOVE_OVERHEAD = std::stoi(tokens[4]);
+                } else {
+#ifdef TUNE
+                    const std::string name = tokens[1];
+                    const int value = std::stoi(tokens[3]);
+
+                    if (name == "RFP_DEPTH") {
+                        RFP_DEPTH = value;
+                    } else if (name == "RFP_DEPTH_MULTIPLIER") {
+                        RFP_DEPTH_MULTIPLIER = value;
+                    } else if (name == "RFP_IMPROVING_MULTIPLIER") {
+                        RFP_IMPROVING_MULTIPLIER = value;
+                    } else if (name == "NULL_MOVE_DEPTH") {
+                        NULL_MOVE_DEPTH = value;
+                    } else if (name == "NULL_MOVE_BASE_R") {
+                        NULL_MOVE_BASE_R = value;
+                    } else if (name == "NULL_MOVE_R_SCALE") {
+                        NULL_MOVE_R_SCALE = value;
+                    }
+#endif
                 }
             }
         } else if (command == "position" || command == "pos") {

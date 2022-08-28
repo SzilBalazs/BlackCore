@@ -27,6 +27,30 @@ Ply selectiveDepth = 0;
 // Move index -> depth
 Depth reductions[200][64];
 
+#ifdef TUNE
+Score DELTA_MARGIN = 400;
+
+Score RAZOR_MARGIN = 130;
+
+Depth RFP_DEPTH = 5;
+Score RFP_DEPTH_MULTIPLIER = 80;
+Score RFP_IMPROVING_MULTIPLIER = 90;
+
+Depth NULL_MOVE_DEPTH = 3;
+Depth NULL_MOVE_BASE_R = 4;
+Depth NULL_MOVE_R_SCALE = 4;
+
+Depth LMR_DEPTH = 4;
+double LMR_BASE = 1;
+double LMR_SCALE = 1.75;
+int LMR_MIN_I = 3;
+int LMR_PVNODE_I = 3;
+
+Score SEE_PRUNING_MARGIN = 150;
+
+Depth IID_DEPTH = 5;
+#endif
+
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
@@ -226,7 +250,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
 
-                Depth R = NULL_MOVE_R + depth / NULL_MOVE_DEPTH_R;
+                Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
 
                 state->move = Move();
                 pos.makeNullMove();
@@ -241,7 +265,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && depth >= IID_DEPTH) depth--;
+        // if (!ttHit && depth >= IID_DEPTH) depth--;
     }
 
     if (inCheck)
