@@ -31,7 +31,7 @@ struct TestPosition {
 
 const unsigned int posCount = 10;
 
-const unsigned int searchTestHashSize = 8;
+const unsigned int searchTestHashSize = 16;
 
 const Depth SEARCH_DEPTH = 13;
 

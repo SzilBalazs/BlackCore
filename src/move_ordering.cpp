@@ -22,7 +22,7 @@
 
 constexpr Score winningCapture[6][6] = {
         //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
-        {0, 0,    0,    0,    0,    0},     // KING
+        {0, 0,      0,      0,      0,      0},     // KING
         {0, 800004, 800104, 800204, 800304, 800404},  // PAWN
         {0, 800003, 800103, 800203, 800303, 800403},  // KNIGHT
         {0, 800002, 800102, 800202, 800302, 800402},  // BISHOP
@@ -32,7 +32,7 @@ constexpr Score winningCapture[6][6] = {
 
 constexpr Score losingCapture[6][6] = {
         //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
-        {0, 0,    0,    0,    0,    0},     // KING
+        {0, 0,      0,      0,      0,      0},     // KING
         {0, 100004, 100104, 100204, 100304, 100404},  // PAWN
         {0, 100003, 100103, 100203, 100303, 100403},  // KNIGHT
         {0, 100002, 100102, 100202, 100302, 100402},  // BISHOP
@@ -57,6 +57,22 @@ void recordKillerMove(Move m, Ply ply) {
 
 void recordHHMove(Move move, Color color, Depth depth) {
     historyTable[color][move.getFrom()][move.getTo()] += depth * depth;
+}
+
+Score scoreQMove(const Position &pos, Move m) {
+    Square from = m.getFrom();
+    Square to = m.getTo();
+    if (m == getHashMove(pos.getHash())) {
+        return 1000000;
+    } else if (m.isPromo()) {
+        if (m.isSpecial1() && m.isSpecial2()) { // Queen promo
+            return 900000;
+        } else { // Anything else, under promotions should only be played in really few cases
+            return -100000;
+        }
+    } else {
+        return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+    }
 }
 
 Score scoreMove(const Position &pos, Move m, Ply ply) {

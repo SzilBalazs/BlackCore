@@ -66,7 +66,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCoreV0");
+    out("id", "name", "BlackCore_v1-1");
 
     out("id", "author", "SzilBalazs");
 

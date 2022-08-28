@@ -41,7 +41,6 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
 
 Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly);
 
-
 struct MoveList {
     Move moves[200];
     Move *movesEnd;
@@ -57,8 +56,14 @@ struct MoveList {
         count = movesEnd - moves;
 
         // Scoring moves
-        for (unsigned int i = 0; i < count; i++) {
-            scores[i] = scoreMove(pos, moves[i], ply);
+        if (capturesOnly) {
+            for (unsigned int i = 0; i < count; i++) {
+                scores[i] = scoreQMove(pos, moves[i]);
+            }
+        } else {
+            for (unsigned int i = 0; i < count; i++) {
+                scores[i] = scoreMove(pos, moves[i], ply);
+            }
         }
     }
 

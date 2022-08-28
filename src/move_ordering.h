@@ -24,6 +24,8 @@ extern Move killerMoves[101][2];
 
 Score scoreMove(const Position &pos, Move m, Ply ply);
 
+Score scoreQMove(const Position &pos, Move m);
+
 void clearTables();
 
 void recordKillerMove(Move m, Ply ply);
