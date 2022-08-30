@@ -183,10 +183,11 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
+    bool pvNode = beta - alpha > 1;
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
+    if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;
 
     // Mate distance pruning
     if (ply > 0) {
@@ -209,8 +210,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             return DRAW_VALUE;
         }
     }
-
-    bool pvNode = beta - alpha > 1;
 
     Score staticEval = state->eval = eval(pos);
 
@@ -250,7 +249,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        // if (!ttHit && depth >= IID_DEPTH) depth--;
+        if (!ttHit && depth >= IID_DEPTH) depth--;
     }
 
     if (inCheck)
