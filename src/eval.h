@@ -72,9 +72,9 @@ extern Value KING_SHIELD_2;
 
 constexpr Value PIECE_VALUES[6] = {{0,    0},
                                    {86,   127},
-                                   {400,  420},
+                                   {394,  378},
                                    {450,  530},
-                                   {650,  850},
+                                   {647,  821},
                                    {1300, 1700}};
 
 
@@ -84,14 +84,14 @@ constexpr Value PAWN_PASSED_BONUS = {33, 56};
 constexpr Value PAWN_DOUBLE_PENALTY = {-15, -28};
 constexpr Value PAWN_ISOLATED_PENALTY = {-13, -33};
 
-constexpr Value KNIGHT_MOBILITY = {10, 10};
+constexpr Value KNIGHT_MOBILITY = {11, 10};
 
 constexpr Value BISHOP_ATTACK_BONUS = {15, 5};
 
-constexpr Value ROOK_MOBILITY = {3, 0};
-constexpr Value ROOK_TRAPPED = {-60, -20};
-constexpr Value ROOK_OPEN_BONUS = {30, 20};
-constexpr Value ROOK_HALF_BONUS = {10, 10};
+constexpr Value ROOK_MOBILITY = {7, 2};
+constexpr Value ROOK_TRAPPED = {-70, -25};
+constexpr Value ROOK_OPEN_BONUS = {34, 19};
+constexpr Value ROOK_HALF_BONUS = {17, 21};
 
 constexpr Value KING_UNSAFE = {-70, 0};
 constexpr Value KING_SHIELD_1 = {25, 0};

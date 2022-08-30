@@ -80,14 +80,16 @@ void uciLoop() {
     // If tuning is defined we expose search parameters to the tuner
 #ifdef TUNE
 
-    tuneOut("PAWN_VALUE_MG", 80, 50, 200);
-    tuneOut("PAWN_VALUE_EG", 140, 100, 300);
-    tuneOut("PAWN_PASSED_BONUS_MG", 40, 0, 100);
-    tuneOut("PAWN_PASSED_BONUS_EG", 60, 0, 100);
-    tuneOut("PAWN_DOUBLE_PENALTY_MG", -15, -100, 0);
-    tuneOut("PAWN_DOUBLE_PENALTY_EG", -25, -100, 0);
-    tuneOut("PAWN_ISOLATED_PENALTY_MG", -10, -100, 0);
-    tuneOut("PAWN_ISOLATED_PENALTY_EG", -30, -100, 0);
+    tuneOut("ROOK_VALUE_MG", 650, 500, 700);
+    tuneOut("ROOK_VALUE_EG", 850, 700, 1000);
+    tuneOut("ROOK_MOBILITY_MG", 3, 0, 20);
+    tuneOut("ROOK_MOBILITY_EG", 0, 0, 20);
+    tuneOut("ROOK_TRAPPED_MG", -60, -100, 0);
+    tuneOut("ROOK_TRAPPED_EG", -20, -100, 0);
+    tuneOut("ROOK_OPEN_BONUS_MG", 30, 0, 60);
+    tuneOut("ROOK_OPEN_BONUS_EG", 20, 0, 60);
+    tuneOut("ROOK_HALF_BONUS_MG", 10, 0, 60);
+    tuneOut("ROOK_HALF_BONUS_EG", 10, 0, 60);
 
 #endif
 
@@ -138,22 +140,26 @@ void uciLoop() {
                     const std::string name = tokens[1];
                     const int value = std::stoi(tokens[3]);
 
-                    if (name == "PAWN_VALUE_MG") {
-                        PIECE_VALUES[PAWN].mg = value;
-                    } else if (name == "PAWN_VALUE_EG") {
-                        PIECE_VALUES[PAWN].eg = value;
-                    } else if (name == "PAWN_PASSED_BONUS_MG") {
-                        PAWN_PASSED_BONUS.mg = value;
-                    } else if (name == "PAWN_PASSED_BONUS_EG") {
-                        PAWN_PASSED_BONUS.eg = value;
-                    } else if (name == "PAWN_DOUBLE_PENALTY_MG") {
-                        PAWN_DOUBLE_PENALTY.mg = value;
-                    } else if (name == "PAWN_DOUBLE_PENALTY_EG") {
-                        PAWN_DOUBLE_PENALTY.eg = value;
-                    } else if (name == "PAWN_ISOLATED_PENALTY_MG") {
-                        PAWN_ISOLATED_PENALTY.mg = value;
-                    } else if (name == "PAWN_ISOLATED_PENALTY_EG") {
-                        PAWN_ISOLATED_PENALTY.eg = value;
+                    if (name == "ROOK_VALUE_MG") {
+                        PIECE_VALUES[ROOK].mg = value;
+                    } else if (name == "ROOK_VALUE_EG") {
+                        PIECE_VALUES[ROOK].eg = value;
+                    } else if (name == "ROOK_MOBILITY_MG") {
+                        ROOK_MOBILITY.mg = value;
+                    } else if (name == "ROOK_MOBILITY_EG") {
+                        ROOK_MOBILITY.eg = value;
+                    } else if (name == "ROOK_TRAPPED_MG") {
+                        ROOK_TRAPPED.mg = value;
+                    } else if (name == "ROOK_TRAPPED_EG") {
+                        ROOK_TRAPPED.eg = value;
+                    } else if (name == "ROOK_OPEN_BONUS_MG") {
+                        ROOK_OPEN_BONUS.mg = value;
+                    } else if (name == "ROOK_OPEN_BONUS_EG") {
+                        ROOK_OPEN_BONUS.eg = value;
+                    } else if (name == "ROOK_HALF_BONUS_MG") {
+                        ROOK_HALF_BONUS.mg = value;
+                    } else if (name == "ROOK_HALF_BONUS_EG") {
+                        ROOK_HALF_BONUS.eg = value;
                     }
 #endif
                 }

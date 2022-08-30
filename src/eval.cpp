@@ -20,9 +20,9 @@
 
 Value PIECE_VALUES[6] = {{0,    0},
                          {86,   127},
-                         {400,  420},
+                         {394,  378},
                          {450,  530},
-                         {650,  850},
+                         {647,  821},
                          {1300, 1700}};
 
 
@@ -32,14 +32,14 @@ Value PAWN_PASSED_BONUS = {33, 56};
 Value PAWN_DOUBLE_PENALTY = {-15, -28};
 Value PAWN_ISOLATED_PENALTY = {-13, -33};
 
-Value KNIGHT_MOBILITY = {10, 10};
+Value KNIGHT_MOBILITY = {11, 10};
 
 Value BISHOP_ATTACK_BONUS = {15, 5};
 
-Value ROOK_MOBILITY = {3, 0};
-Value ROOK_TRAPPED = {-60, -20};
-Value ROOK_OPEN_BONUS = {30, 20};
-Value ROOK_HALF_BONUS = {10, 10};
+Value ROOK_MOBILITY = {7, 2};
+Value ROOK_TRAPPED = {-70, -25};
+Value ROOK_OPEN_BONUS = {34, 19};
+Value ROOK_HALF_BONUS = {17, 21};
 
 Value KING_UNSAFE = {-70, 0};
 Value KING_SHIELD_1 = {25, 0};
