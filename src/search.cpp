@@ -131,10 +131,6 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     if (ply > selectiveDepth)
         selectiveDepth = ply;
 
-    bool ttHit;
-    Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
-
     Score staticEval = eval(pos);
 
     if (staticEval >= beta) {
@@ -146,9 +142,6 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     }
 
     MoveList moves = {pos, ply, true};
-    Score bestScore = staticEval;
-    Move bestMove;
-    EntryFlag ttFlag = ALPHA;
 
     while (!moves.empty()) {
 
@@ -160,7 +153,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             continue;
 
         // SEE pruning
-        if (bestScore > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
+        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
             continue;
 
         pos.makeMove(m);
@@ -171,26 +164,17 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         if (shouldEnd()) return UNKNOWN_SCORE;
 
-        if (score > bestScore) {
-            bestScore = score;
-            bestMove = m;
+        if (score >= beta) {
+            return beta;
+        }
 
-            if (score >= beta) {
-                ttSave(pos.getHash(), 0, bestScore, BETA, bestMove);
-                return beta;
-            }
-
-            if (score > alpha) {
-                ttFlag = EXACT;
-                alpha = score;
-            }
+        if (score > alpha) {
+            alpha = score;
         }
 
     }
 
-    ttSave(pos.getHash(), 0, bestScore, ttFlag, bestMove);
-
-    return bestScore;
+    return alpha;
 }
 
 Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
