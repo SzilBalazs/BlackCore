@@ -23,6 +23,7 @@
 #include <cmath>
 
 Ply selectiveDepth = 0;
+Move bestPV;
 
 // Move index -> depth
 Depth reductions[200][64];
@@ -337,7 +338,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
 std::string getPvLine(Position &pos) {
     Move m = getHashMove(pos.getHash());
-    if (!pos.isRepetition() && m) {
+    if (!pos.isRepetition() && !m.isNull()) {
         pos.makeMove(m);
         std::string str = m.str() + " " + getPvLine(pos);
         pos.undoMove(m);
@@ -356,6 +357,8 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
     Score score = search(pos, stateStack + 1, depth, -INF_SCORE, INF_SCORE, 0);
 
     if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
+
+    bestPV = getHashMove(pos.getHash());
 
     std::string pvLine = getPvLine(pos);
     if (uci) {
@@ -384,16 +387,15 @@ Score searchRoot(Position &pos, Depth depth, bool uci) {
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
-    Move bestMove;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         Score score = searchRoot(pos, currDepth, uci);
         if (score == UNKNOWN_SCORE) break;
-        bestMove = getHashMove(pos.getHash());
     }
 
     globalAge++;
 
-    if (uci)
-        out("bestmove", bestMove);
+    if (uci) {
+        out("bestmove", bestPV);
+    }
 }
