@@ -98,7 +98,6 @@ constexpr Value ROOK_TRAPPED = {-70, -25};
 constexpr Value ROOK_OPEN_BONUS = {34, 19};
 constexpr Value ROOK_HALF_BONUS = {17, 21};
 
-constexpr Value KING_UNSAFE = {-70, 0};
 constexpr Value KING_SHIELD_1 = {25, 0};
 constexpr Value KING_SHIELD_2 = {15, 0};
 

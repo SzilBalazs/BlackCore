@@ -244,8 +244,6 @@ Value evalKings(const Position &pos) {
             if (rooks.get(A1))
                 value += ROOK_TRAPPED;
 
-        } else {
-            value += KING_UNSAFE;
         }
 
         value += PSQT[WHITE][KING][king];
@@ -276,8 +274,6 @@ Value evalKings(const Position &pos) {
             if (rooks.get(A8))
                 value += ROOK_TRAPPED;
 
-        } else {
-            value += KING_UNSAFE;
         }
 
         value += PSQT[BLACK][KING][king];
