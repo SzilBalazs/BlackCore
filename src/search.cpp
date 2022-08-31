@@ -183,8 +183,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
-    bool pvNode = beta - alpha > 1;
-    bool ttHit = false;
+    bool ttHit = false, pvNode = beta - alpha > 1;;
     Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;

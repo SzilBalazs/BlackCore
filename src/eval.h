@@ -71,7 +71,7 @@ extern Value KING_SHIELD_2;
 #else
 
 constexpr Value PIECE_VALUES[6] = {{0,    0},
-                                   {86,   127},
+                                   {98,   136},
                                    {394,  378},
                                    {450,  530},
                                    {647,  821},
@@ -80,9 +80,9 @@ constexpr Value PIECE_VALUES[6] = {{0,    0},
 
 constexpr Score TEMPO_SCORE = 10;
 
-constexpr Value PAWN_PASSED_BONUS = {33, 56};
-constexpr Value PAWN_DOUBLE_PENALTY = {-15, -28};
-constexpr Value PAWN_ISOLATED_PENALTY = {-13, -33};
+constexpr Value PAWN_PASSED_BONUS = {28, 58};
+constexpr Value PAWN_DOUBLE_PENALTY = {-4, -21};
+constexpr Value PAWN_ISOLATED_PENALTY = {-13, -28};
 
 constexpr Value KNIGHT_MOBILITY = {11, 10};
 

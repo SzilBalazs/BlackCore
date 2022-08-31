@@ -19,7 +19,7 @@
 #ifdef TUNE
 
 Value PIECE_VALUES[6] = {{0,    0},
-                         {86,   127},
+                         {96,   136},
                          {394,  378},
                          {450,  530},
                          {647,  821},
@@ -28,9 +28,9 @@ Value PIECE_VALUES[6] = {{0,    0},
 
 Score TEMPO_SCORE = 10;
 
-Value PAWN_PASSED_BONUS = {33, 56};
-Value PAWN_DOUBLE_PENALTY = {-15, -28};
-Value PAWN_ISOLATED_PENALTY = {-13, -33};
+Value PAWN_PASSED_BONUS = {28, 58};
+Value PAWN_DOUBLE_PENALTY = {-4, -21};
+Value PAWN_ISOLATED_PENALTY = {-13, -28};
 
 Value KNIGHT_MOBILITY = {11, 10};
 
