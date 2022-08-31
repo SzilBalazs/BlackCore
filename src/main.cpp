@@ -19,12 +19,13 @@
 #include "bench.h"
 #include "uci.h"
 #include "search.h"
+#include "eval.h"
 
 int main(int argc, char **argv) {
     srand(RANDOM_SEED);
     initBitboard();
     initLmr();
-
+    initEval();
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);
