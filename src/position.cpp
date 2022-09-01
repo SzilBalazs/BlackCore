@@ -76,14 +76,13 @@ void Position::clearPosition() {
     allPieceBB[BLACK] = 0;
 
     states.clear();
-    states.push({});
     state->lastIrreversibleMove = state;
 }
 
 void Position::makeNullMove() {
     BoardState newState;
 
-    newState.stm = state->stm==WHITE?BLACK:WHITE;
+    newState.stm = state->stm == WHITE ? BLACK : WHITE;
     newState.castlingRights = state->castlingRights;
     newState.hash = state->hash ^ *blackRand;
     newState.lastIrreversibleMove = state->lastIrreversibleMove;
@@ -162,7 +161,7 @@ void Position::displayEval() {
             if (!piece.isNull() && piece.type != KING) {
                 clearSquare(square);
                 Score newScore = eval(*this);
-                Score scoreDiff = score-newScore;
+                Score scoreDiff = score - newScore;
                 evalStr = std::to_string(scoreDiff);
                 setSquare(square, piece);
             }

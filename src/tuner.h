@@ -14,43 +14,19 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#ifndef BLACKCORE_TUNER_H
+#define BLACKCORE_TUNER_H
+
+#include <string>
+#include <vector>
+#include <fstream>
 #include <iostream>
-#include "bitboard.h"
-#include "bench.h"
-#include "uci.h"
-#include "search.h"
-#include "eval.h"
-#include "tuner.h"
 
-int main(int argc, char **argv) {
-    srand(RANDOM_SEED);
-    initBitboard();
-    initLmr();
-    initEval();
-    std::string mode;
-    if (argc >= 2) {
-        mode = std::string(argv[1]);
-    }
+struct DataEntry {
+    const std::string fen;
+    double result;
+};
 
-    if (mode.empty()) {
-        std::cin >> mode;
-    }
+void tune(const std::string &inputFile);
 
-    if (mode == "bench") {
-        testSearch();
-    } else if (mode == "perft") {
-        testPerft();
-    } else if (mode == "uci") {
-        uciLoop();
-    } else if (mode == "tune") {
-#ifdef TUNE
-        tune("out.fen");
-#else
-        std::cout << "This build doesn't support tuning!" << std::endl;
-#endif
-    } else {
-        std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
-    }
-
-    return 0;
-}
+#endif //BLACKCORE_TUNER_H

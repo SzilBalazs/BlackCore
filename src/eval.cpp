@@ -19,7 +19,7 @@
 #ifdef TUNE
 
 Value PIECE_VALUES[6] = {{0,    0},
-                         {96,   136},
+                         {98,   139},
                          {394,  378},
                          {450,  530},
                          {647,  821},
@@ -27,21 +27,21 @@ Value PIECE_VALUES[6] = {{0,    0},
 
 
 Score TEMPO_SCORE = 10;
+Score SPACE_SCORE = 3;
 
-Value PAWN_PASSED_BONUS = {28, 58};
+Value PAWN_PASSED_BONUS = {29, 58};
 Value PAWN_DOUBLE_PENALTY = {-4, -21};
 Value PAWN_ISOLATED_PENALTY = {-13, -28};
 
 Value KNIGHT_MOBILITY = {11, 10};
 
-Value BISHOP_ATTACK_BONUS = {15, 5};
+Value BISHOP_MOBILITY = {10, 10};
 
 Value ROOK_MOBILITY = {7, 2};
 Value ROOK_TRAPPED = {-70, -25};
 Value ROOK_OPEN_BONUS = {34, 19};
 Value ROOK_HALF_BONUS = {17, 21};
 
-Value KING_UNSAFE = {-70, 0};
 Value KING_SHIELD_1 = {25, 0};
 Value KING_SHIELD_2 = {15, 0};
 
@@ -170,7 +170,6 @@ Value evalBishops(const Position &pos) {
 
         value += PSQT[color][BISHOP][square];
     }
-
     return value;
 }
 

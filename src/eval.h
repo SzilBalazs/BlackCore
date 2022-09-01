@@ -61,14 +61,13 @@ extern Value PAWN_ISOLATED_PENALTY;
 
 extern Value KNIGHT_MOBILITY;
 
-extern Value BISHOP_ATTACK_BONUS;
+extern Value BISHOP_MOBILITY;
 
 extern Value ROOK_MOBILITY;
 extern Value ROOK_TRAPPED;
 extern Value ROOK_OPEN_BONUS;
 extern Value ROOK_HALF_BONUS;
 
-extern Value KING_UNSAFE;
 extern Value KING_SHIELD_1;
 extern Value KING_SHIELD_2;
 
