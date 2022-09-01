@@ -51,12 +51,12 @@ Value PSQT[2][6][64];
 
 void initEval() {
     for (Square sq = A1; sq < 64; sq += 1) {
-        PSQT[BLACK][KING][sq] = {kingPSQT_mg[sq], kingPSQT_eg[sq]};
-        PSQT[BLACK][PAWN][sq] = {pawnPSQT[sq], pawnPSQT[sq]};
-        PSQT[BLACK][KNIGHT][sq] = {knightPSQT[sq], knightPSQT[sq]};
-        PSQT[BLACK][BISHOP][sq] = {bishopPSQT[sq], bishopPSQT[sq]};
-        PSQT[BLACK][ROOK][sq] = {rookPSQT[sq], rookPSQT[sq]};
-        PSQT[BLACK][QUEEN][sq] = {queenPSQT[sq], queenPSQT[sq]};
+        PSQT[BLACK][KING][sq] = {kingMgPSQT[sq], kingEgPSQT[sq]};
+        PSQT[BLACK][PAWN][sq] = {pawnMgPSQT[sq], pawnEgPSQT[sq]};
+        PSQT[BLACK][KNIGHT][sq] = {knightMgPSQT[sq], knightEgPSQT[sq]};
+        PSQT[BLACK][BISHOP][sq] = {bishopMgPSQT[sq], bishopEgPSQT[sq]};
+        PSQT[BLACK][ROOK][sq] = {rookMgPSQT[sq], rookEgPSQT[sq]};
+        PSQT[BLACK][QUEEN][sq] = {queenMgPSQT[sq], queenEgPSQT[sq]};
     }
 
     for (Square sq = A1; sq < 64; sq += 1) {

@@ -37,7 +37,16 @@ struct BoardState {
     constexpr BoardState() = default;
 };
 
+struct RawState {
+    Piece board[64];
+    Bitboard pieceBB[6] = {0}, allPieceBB[2] = {0};
+    Color stm = COLOR_EMPTY;
+    Square epSquare = NULL_SQUARE;
+    unsigned char castlingRights = 0;
+};
+
 struct StateStack {
+
     BoardState stateStart[1000];
     BoardState *currState;
 
@@ -64,6 +73,7 @@ struct StateStack {
     }
 
     inline Ply getMove50() const { return currState - currState->lastIrreversibleMove; }
+
 };
 
 #define state states.top()
@@ -135,6 +145,10 @@ public:
     void displayEval();
 
     void loadPositionFromFen(const std::string &fen);
+
+    void loadPositionFromRawState(const RawState &rawState);
+
+    RawState getRawState();
 
     Position();
 

@@ -235,6 +235,42 @@ void Position::loadPositionFromFen(const string &fen) {
     state->hash ^= epRandTable[squareToFile(state->epSquare)];
 }
 
+void Position::loadPositionFromRawState(const RawState &rawState) {
+    clearPosition();
+    state->stm = rawState.stm;
+    state->epSquare = rawState.epSquare;
+    state->castlingRights = rawState.castlingRights;
+    allPieceBB[WHITE] = rawState.allPieceBB[WHITE];
+    allPieceBB[BLACK] = rawState.allPieceBB[BLACK];
+
+    for (int i = 0; i < 6; i++) {
+        pieceBB[i] = rawState.pieceBB[i];
+    }
+
+    for (Square sq = A1; sq < 64; sq += 1) {
+        board[sq] = rawState.board[sq];
+    }
+}
+
+RawState Position::getRawState() {
+    RawState rawState;
+    rawState.stm = getSideToMove();
+    rawState.epSquare = getEpSquare();
+    rawState.castlingRights = getCastlingRights();
+    rawState.allPieceBB[WHITE] = allPieceBB[WHITE];
+    rawState.allPieceBB[BLACK] = allPieceBB[BLACK];
+
+    for (int i = 0; i < 6; i++) {
+        rawState.pieceBB[i] = pieceBB[i];
+    }
+
+    for (Square sq = A1; sq < 64; sq += 1) {
+        rawState.board[sq] = board[sq];
+    }
+
+    return rawState;
+}
+
 Position::Position() {
     clearPosition();
 }

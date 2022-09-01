@@ -15,11 +15,12 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <sstream>
+#include <iomanip>
 #include <valarray>
 #include "tuner.h"
 #include "eval.h"
 
-constexpr double K = 5;
+constexpr double K = 1.5;
 
 double E(const std::vector<DataEntry> &data) {
 
@@ -29,7 +30,7 @@ double E(const std::vector<DataEntry> &data) {
 
     for (const DataEntry &entry : data) {
 
-        pos.loadPositionFromFen(entry.fen);
+        pos.loadPositionFromRawState(entry.pos);
 
         auto score = double(eval(pos));
 
@@ -50,14 +51,15 @@ void tune(const std::string &inputFile) {
     std::cout << "Loading training data..." << std::endl;
     std::ifstream f(inputFile);
     std::string line;
+    Position position;
     while (std::getline(f, line)) {
         std::stringstream ss(line);
         std::string fen;
         int result;
         std::getline(ss, fen, ';');
         ss >> result;
-
-        DataEntry entry = {fen, result == 0 ? 0 : (result == 1 ? 1 : 0.5)};
+        position.loadPositionFromFen(fen);
+        DataEntry entry = {position.getRawState(), result == 0 ? 0 : (result == 1 ? 1 : 0.5)};
 
         trainingData.emplace_back(entry);
     }
@@ -68,25 +70,34 @@ void tune(const std::string &inputFile) {
     double bestE = E(trainingData);
     unsigned int iterationCount = 0;
 
-    const unsigned int paramCnt = 10;
-    Score *params[paramCnt] = {&PIECE_VALUES[PAWN].mg, &PIECE_VALUES[PAWN].eg,
-                               &PIECE_VALUES[KNIGHT].mg, &PIECE_VALUES[KNIGHT].eg,
-                               &PIECE_VALUES[BISHOP].mg, &PIECE_VALUES[BISHOP].eg,
-                               &PIECE_VALUES[ROOK].mg, &PIECE_VALUES[ROOK].eg,
-                               &PIECE_VALUES[QUEEN].mg, &PIECE_VALUES[QUEEN].eg,};
+    const unsigned int paramCnt = 768;
 
     while (improved) {
         improved = false;
-        for (auto &param : params) {
+        for (unsigned int idx = 0; idx < paramCnt; idx++) {
             iterationCount++;
 
-            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - params = ";
-            for (auto &p : params) {
-                std::cout << (*p) << " ";
-            }
-            std::cout << std::endl;
+            unsigned int index = idx;
 
-            (*param)++;
+            auto pieceType = static_cast<PieceType>(int(index / 128));
+            index %= 128;
+
+            bool isMgScore = 1 - int(index / 64);
+            index %= 64;
+
+            auto whiteSquare = static_cast<Square>(index);
+
+            unsigned int rank = squareToRank(whiteSquare), file = squareToFile(whiteSquare);
+            auto blackSquare = Square((7 - rank) * 8 + file);
+
+
+            if (isMgScore) {
+                PSQT[WHITE][pieceType][whiteSquare].mg += 1;
+                PSQT[BLACK][pieceType][blackSquare].mg += 1;
+            } else {
+                PSQT[WHITE][pieceType][whiteSquare].eg += 1;
+                PSQT[BLACK][pieceType][blackSquare].eg += 1;
+            }
 
             double newE = E(trainingData);
 
@@ -94,7 +105,16 @@ void tune(const std::string &inputFile) {
                 bestE = newE;
                 improved = true;
             } else {
-                (*param) -= 2;
+
+                if (isMgScore) {
+                    PSQT[WHITE][pieceType][whiteSquare].mg -= 2;
+                    PSQT[BLACK][pieceType][blackSquare].mg += 2;
+                } else {
+                    PSQT[WHITE][pieceType][whiteSquare].eg -= 2;
+                    PSQT[BLACK][pieceType][blackSquare].eg -= 2;
+                }
+
+
                 newE = E(trainingData);
                 if (newE < bestE) {
                     bestE = newE;
@@ -102,6 +122,46 @@ void tune(const std::string &inputFile) {
                 }
             }
 
+            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - last param = "
+                      << (int) pieceType << "(type) " << formatSquare(whiteSquare) << " "
+                      << (isMgScore ? "midgame" : "endgame")
+                      << std::endl;
+
+            if (iterationCount % 20 == 0) {
+                std::ofstream params("params.txt");
+                params << "Iteration = " << iterationCount << "\n";
+
+                for (unsigned int type = 0; type < 6; type++) {
+                    params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
+                           << "mgPSQT = {\n\t";
+                    for (Square sq = A1; sq < 64; sq += 1) {
+                        params << std::setw(4) << PSQT[BLACK][type][sq].mg << ", ";
+                        if (squareToFile(sq) == 7) {
+                            params << "\n";
+                            if (squareToRank(sq) != 7) {
+                                params << "\t";
+                            }
+                        }
+                    }
+                    params << "};\n";
+
+                    params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
+                           << "egPSQT = {\n\t";
+                    for (Square sq = A1; sq < 64; sq += 1) {
+                        params << std::setw(4) << PSQT[BLACK][type][sq].eg << ", ";
+                        if (squareToFile(sq) == 7) {
+                            params << "\n";
+                            if (squareToRank(sq) != 7) {
+                                params << "\t";
+                            }
+                        }
+
+                    }
+                    params << "};\n";
+                }
+
+                params.close();
+            }
         }
 
     }

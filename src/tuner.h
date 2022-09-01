@@ -21,9 +21,10 @@
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include "position.h"
 
 struct DataEntry {
-    const std::string fen;
+    RawState pos;
     double result;
 };
 

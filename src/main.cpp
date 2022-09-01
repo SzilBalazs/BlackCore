@@ -23,6 +23,12 @@
 #include "tuner.h"
 
 int main(int argc, char **argv) {
+
+#ifdef TUNE
+    std::cout << "This build is for tuning only, please uncomment the TUNE define in constants.h for regular use!"
+              << std::endl;
+#endif
+
     srand(RANDOM_SEED);
     initBitboard();
     initLmr();
