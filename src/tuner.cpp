@@ -133,7 +133,7 @@ void tune(const std::string &inputFile) {
 
                 for (unsigned int type = 0; type < 6; type++) {
                     params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
-                           << "mgPSQT = {\n\t";
+                           << "MgPSQT = {\n\t";
                     for (Square sq = A1; sq < 64; sq += 1) {
                         params << std::setw(4) << PSQT[BLACK][type][sq].mg << ", ";
                         if (squareToFile(sq) == 7) {
@@ -146,7 +146,7 @@ void tune(const std::string &inputFile) {
                     params << "};\n";
 
                     params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
-                           << "egPSQT = {\n\t";
+                           << "EgPSQT = {\n\t";
                     for (Square sq = A1; sq < 64; sq += 1) {
                         params << std::setw(4) << PSQT[BLACK][type][sq].eg << ", ";
                         if (squareToFile(sq) == 7) {
