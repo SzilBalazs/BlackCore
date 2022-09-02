@@ -19,31 +19,30 @@
 #ifdef TUNE
 
 Value PIECE_VALUES[6] = {{0,    0},
-                         {98,   139},
-                         {394,  378},
-                         {450,  530},
-                         {647,  821},
-                         {1300, 1700}};
+                         {92,   133},
+                         {398,  382},
+                         {444,  522},
+                         {641,  815},
+                         {1294, 1694}};
 
 
 Score TEMPO_SCORE = 10;
-Score SPACE_SCORE = 3;
 
-Value PAWN_PASSED_BONUS = {29, 58};
-Value PAWN_DOUBLE_PENALTY = {-4, -21};
-Value PAWN_ISOLATED_PENALTY = {-13, -28};
+Value PAWN_PASSED_BONUS = {23, 52};
+Value PAWN_DOUBLE_PENALTY = {-10, -27};
+Value PAWN_ISOLATED_PENALTY = {-7, -32};
 
-Value KNIGHT_MOBILITY = {11, 10};
+Value KNIGHT_MOBILITY = {5, 13};
 
-Value BISHOP_MOBILITY = {10, 10};
+Value BISHOP_MOBILITY = {4, 4};
 
-Value ROOK_MOBILITY = {7, 2};
-Value ROOK_TRAPPED = {-70, -25};
-Value ROOK_OPEN_BONUS = {34, 19};
-Value ROOK_HALF_BONUS = {17, 21};
+Value ROOK_MOBILITY = {1, -4};
+Value ROOK_TRAPPED = {-64, -19};
+Value ROOK_OPEN_BONUS = {28, 13};
+Value ROOK_HALF_BONUS = {11, 17};
 
-Value KING_SHIELD_1 = {25, 0};
-Value KING_SHIELD_2 = {15, 0};
+Value KING_SHIELD_1 = {19, -6};
+Value KING_SHIELD_2 = {13, -6};
 
 #endif
 

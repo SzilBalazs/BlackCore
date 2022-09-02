@@ -28,6 +28,12 @@ struct DataEntry {
     double result;
 };
 
+struct EvalParameter {
+    const std::string name;
+    Score &mgScore;
+    Score &egScore;
+};
+
 void tune(const std::string &inputFile);
 
 #endif //BLACKCORE_TUNER_H

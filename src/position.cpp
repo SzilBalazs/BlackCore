@@ -246,10 +246,11 @@ void Position::loadPositionFromRawState(const RawState &rawState) {
     for (int i = 0; i < 6; i++) {
         pieceBB[i] = rawState.pieceBB[i];
     }
-
+#ifndef TUNE
     for (Square sq = A1; sq < 64; sq += 1) {
         board[sq] = rawState.board[sq];
     }
+#endif
 }
 
 RawState Position::getRawState() {

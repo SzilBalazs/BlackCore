@@ -20,7 +20,7 @@
 #include "tuner.h"
 #include "eval.h"
 
-constexpr double K = 1.5;
+double K = 0.2;
 
 double E(const std::vector<DataEntry> &data) {
 
@@ -36,7 +36,7 @@ double E(const std::vector<DataEntry> &data) {
 
         double predicted = 1 / double(1 + pow(10, -K * score / 400));
 
-        error += pow(entry.result - predicted, 2);
+        error += (entry.result - predicted) * (entry.result - predicted);
 
     }
 
@@ -46,7 +46,54 @@ double E(const std::vector<DataEntry> &data) {
 
 }
 
+void saveResults(const unsigned int paramCnt, EvalParameter *evalParameters) {
+#ifdef TUNE
+    std::ofstream params("params.txt");
+
+    for (unsigned int i = 0; i < paramCnt; i++) {
+        params << "\nconstexpr Value "
+               << evalParameters[i].name << " = {"
+               << evalParameters[i].mgScore << ", "
+               << evalParameters[i].egScore << "};\n";
+    }
+
+    params << "\n";
+
+    for (unsigned int type = 0; type < 6; type++) {
+        params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
+               << "MgPSQT[64] = {\n\t";
+        for (Square sq = A1; sq < 64; sq += 1) {
+            params << std::setw(4) << PSQT[BLACK][type][sq].mg << ", ";
+            if (squareToFile(sq) == 7) {
+                params << "\n";
+                if (squareToRank(sq) != 7) {
+                    params << "\t";
+                }
+            }
+        }
+        params << "};\n";
+
+        params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
+               << "EgPSQT[64] = {\n\t";
+        for (Square sq = A1; sq < 64; sq += 1) {
+            params << std::setw(4) << PSQT[BLACK][type][sq].eg << ", ";
+            if (squareToFile(sq) == 7) {
+                params << "\n";
+                if (squareToRank(sq) != 7) {
+                    params << "\t";
+                }
+            }
+
+        }
+        params << "};\n";
+    }
+
+    params.close();
+#endif
+}
+
 void tune(const std::string &inputFile) {
+#ifdef TUNE
     std::vector<DataEntry> trainingData;
     std::cout << "Loading training data..." << std::endl;
     std::ifstream f(inputFile);
@@ -63,18 +110,57 @@ void tune(const std::string &inputFile) {
 
         trainingData.emplace_back(entry);
     }
-    std::cout << trainingData.size() << " entry was loaded successfully!" << std::endl;
+    std::cout << trainingData.size() << " entry was loaded successfully!\nOptimizing K..." << std::endl;
+
+    double bestK = 0;
+    double bestError = 2;
+    while (K <= 2) {
+        double newE = E(trainingData);
+        std::cout << "K = " << K << " E = " << newE << std::endl;
+        if (newE < bestError) {
+            bestError = newE;
+            bestK = K;
+        }
+        K += 0.1;
+    }
+
+    K = bestK;
+    std::cout << "Best K = " << K << " with an error of " << bestError << std::endl;
 
     // Local optimize algorithms
     bool improved = true;
     double bestE = E(trainingData);
     unsigned int iterationCount = 0;
 
-    const unsigned int paramCnt = 768;
+    const unsigned int PSQTparamCnt = 768;
+    const unsigned int paramCnt = 16;
+
+    EvalParameter params[paramCnt] = {
+            {"PAWN_VALUE",            PIECE_VALUES[PAWN].mg,    PIECE_VALUES[PAWN].eg},
+            {"KNIGHT_VALUE",          PIECE_VALUES[KNIGHT].mg,  PIECE_VALUES[KNIGHT].eg},
+            {"BISHOP_VALUE",          PIECE_VALUES[BISHOP].mg,  PIECE_VALUES[BISHOP].eg},
+            {"ROOK_VALUE",            PIECE_VALUES[ROOK].mg,    PIECE_VALUES[ROOK].eg},
+            {"QUEEN_VALUE",           PIECE_VALUES[QUEEN].mg,   PIECE_VALUES[QUEEN].eg},
+            {"PAWN_PASSED_BONUS",     PAWN_PASSED_BONUS.mg,     PAWN_PASSED_BONUS.eg},
+            {"PAWN_DOUBLE_PENALTY",   PAWN_DOUBLE_PENALTY.mg,   PAWN_DOUBLE_PENALTY.eg},
+            {"PAWN_ISOLATED_PENALTY", PAWN_ISOLATED_PENALTY.mg, PAWN_ISOLATED_PENALTY.eg},
+            {"KNIGHT_MOBILITY",       KNIGHT_MOBILITY.mg,       KNIGHT_MOBILITY.eg},
+            {"BISHOP_MOBILITY",       BISHOP_MOBILITY.mg,       BISHOP_MOBILITY.eg},
+            {"ROOK_MOBILITY",         ROOK_MOBILITY.mg,         ROOK_MOBILITY.eg},
+            {"ROOK_TRAPPED",          ROOK_TRAPPED.mg,          ROOK_TRAPPED.eg},
+            {"ROOK_OPEN_BONUS",       ROOK_OPEN_BONUS.mg,       ROOK_OPEN_BONUS.eg},
+            {"ROOK_HALF_BONUS",       ROOK_HALF_BONUS.mg,       ROOK_HALF_BONUS.eg},
+            {"KING_SHIELD_1",         KING_SHIELD_1.mg,         KING_SHIELD_1.eg},
+            {"KING_SHIELD_2",         KING_SHIELD_2.mg,         KING_SHIELD_2.eg},
+    };
+
 
     while (improved) {
         improved = false;
-        for (unsigned int idx = 0; idx < paramCnt; idx++) {
+
+        // Tuning the PSQT table
+
+        for (unsigned int idx = 0; idx < PSQTparamCnt; idx++) {
             iterationCount++;
 
             unsigned int index = idx;
@@ -100,15 +186,16 @@ void tune(const std::string &inputFile) {
             }
 
             double newE = E(trainingData);
-
+            int change = 0;
             if (newE < bestE) {
                 bestE = newE;
                 improved = true;
+                change = 1;
             } else {
 
                 if (isMgScore) {
                     PSQT[WHITE][pieceType][whiteSquare].mg -= 2;
-                    PSQT[BLACK][pieceType][blackSquare].mg += 2;
+                    PSQT[BLACK][pieceType][blackSquare].mg -= 2;
                 } else {
                     PSQT[WHITE][pieceType][whiteSquare].eg -= 2;
                     PSQT[BLACK][pieceType][blackSquare].eg -= 2;
@@ -119,50 +206,88 @@ void tune(const std::string &inputFile) {
                 if (newE < bestE) {
                     bestE = newE;
                     improved = true;
+                    change = -1;
+                } else {
+                    if (isMgScore) {
+                        PSQT[WHITE][pieceType][whiteSquare].mg += 1;
+                        PSQT[BLACK][pieceType][blackSquare].mg += 1;
+                    } else {
+                        PSQT[WHITE][pieceType][whiteSquare].eg += 1;
+                        PSQT[BLACK][pieceType][blackSquare].eg += 1;
+                    }
                 }
             }
 
-            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - last param = "
-                      << (int) pieceType << "(type) " << formatSquare(whiteSquare) << " "
-                      << (isMgScore ? "midgame" : "endgame")
-                      << std::endl;
+            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - previous param = "
+                      << (int) pieceType << " " << formatSquare(whiteSquare)
+                      << (isMgScore ? " midgame (" : " endgame (") << change << ")" << std::endl;
 
-            if (iterationCount % 20 == 0) {
-                std::ofstream params("params.txt");
-                params << "Iteration = " << iterationCount << "\n";
-
-                for (unsigned int type = 0; type < 6; type++) {
-                    params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
-                           << "MgPSQT = {\n\t";
-                    for (Square sq = A1; sq < 64; sq += 1) {
-                        params << std::setw(4) << PSQT[BLACK][type][sq].mg << ", ";
-                        if (squareToFile(sq) == 7) {
-                            params << "\n";
-                            if (squareToRank(sq) != 7) {
-                                params << "\t";
-                            }
-                        }
-                    }
-                    params << "};\n";
-
-                    params << "\nconstexpr Score " << typeToString(static_cast<PieceType>(type))
-                           << "EgPSQT = {\n\t";
-                    for (Square sq = A1; sq < 64; sq += 1) {
-                        params << std::setw(4) << PSQT[BLACK][type][sq].eg << ", ";
-                        if (squareToFile(sq) == 7) {
-                            params << "\n";
-                            if (squareToRank(sq) != 7) {
-                                params << "\t";
-                            }
-                        }
-
-                    }
-                    params << "};\n";
-                }
-
-                params.close();
+            if (iterationCount % 10 == 0) {
+                saveResults(paramCnt, params);
             }
         }
 
+        // Tuning other eval params
+        for (auto &param : params) {
+            // Tuning the midgame part of the value
+            iterationCount++;
+
+            param.mgScore += 1;
+            double newE = E(trainingData);
+            int change = 0;
+
+            if (newE < bestE) {
+                bestE = newE;
+                improved = true;
+                change = 1;
+            } else {
+                param.mgScore -= 2;
+                newE = E(trainingData);
+
+                if (newE < bestE) {
+                    bestE = newE;
+                    improved = true;
+                    change = -1;
+                } else {
+                    param.mgScore += 1;
+                }
+            }
+
+            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - previous param = "
+                      << param.name << " midgame (" << change << ")" << std::endl;
+
+
+            // Tuning the endgame part of the value
+            iterationCount++;
+
+            param.egScore += 1;
+            newE = E(trainingData);
+            change = 0;
+
+            if (newE < bestE) {
+                bestE = newE;
+                improved = true;
+                change = 1;
+            } else {
+                param.egScore -= 2;
+                newE = E(trainingData);
+
+                if (newE < bestE) {
+                    bestE = newE;
+                    improved = true;
+                    change = -1;
+                } else {
+                    param.egScore += 1;
+                }
+            }
+
+            std::cout << "Iteration " << iterationCount << ":\n - error = " << bestE << "\n - previous param = "
+                      << param.name << " endgame (" << change << ")" << std::endl;
+
+            if (iterationCount % 10 == 0) {
+                saveResults(paramCnt, params);
+            }
+        }
     }
+#endif
 }
