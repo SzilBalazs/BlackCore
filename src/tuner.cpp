@@ -133,25 +133,9 @@ void tune(const std::string &inputFile) {
     unsigned int iterationCount = 0;
 
     const unsigned int PSQTparamCnt = 768;
-    const unsigned int paramCnt = 16;
+    const unsigned int paramCnt = 0;
 
     EvalParameter params[paramCnt] = {
-            {"PAWN_VALUE",            PIECE_VALUES[PAWN].mg,    PIECE_VALUES[PAWN].eg},
-            {"KNIGHT_VALUE",          PIECE_VALUES[KNIGHT].mg,  PIECE_VALUES[KNIGHT].eg},
-            {"BISHOP_VALUE",          PIECE_VALUES[BISHOP].mg,  PIECE_VALUES[BISHOP].eg},
-            {"ROOK_VALUE",            PIECE_VALUES[ROOK].mg,    PIECE_VALUES[ROOK].eg},
-            {"QUEEN_VALUE",           PIECE_VALUES[QUEEN].mg,   PIECE_VALUES[QUEEN].eg},
-            {"PAWN_PASSED_BONUS",     PAWN_PASSED_BONUS.mg,     PAWN_PASSED_BONUS.eg},
-            {"PAWN_DOUBLE_PENALTY",   PAWN_DOUBLE_PENALTY.mg,   PAWN_DOUBLE_PENALTY.eg},
-            {"PAWN_ISOLATED_PENALTY", PAWN_ISOLATED_PENALTY.mg, PAWN_ISOLATED_PENALTY.eg},
-            {"KNIGHT_MOBILITY",       KNIGHT_MOBILITY.mg,       KNIGHT_MOBILITY.eg},
-            {"BISHOP_MOBILITY",       BISHOP_MOBILITY.mg,       BISHOP_MOBILITY.eg},
-            {"ROOK_MOBILITY",         ROOK_MOBILITY.mg,         ROOK_MOBILITY.eg},
-            {"ROOK_TRAPPED",          ROOK_TRAPPED.mg,          ROOK_TRAPPED.eg},
-            {"ROOK_OPEN_BONUS",       ROOK_OPEN_BONUS.mg,       ROOK_OPEN_BONUS.eg},
-            {"ROOK_HALF_BONUS",       ROOK_HALF_BONUS.mg,       ROOK_HALF_BONUS.eg},
-            {"KING_SHIELD_1",         KING_SHIELD_1.mg,         KING_SHIELD_1.eg},
-            {"KING_SHIELD_2",         KING_SHIELD_2.mg,         KING_SHIELD_2.eg},
     };
 
 
