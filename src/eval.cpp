@@ -19,30 +19,30 @@
 #ifdef TUNE
 
 Value PIECE_VALUES[6] = {{0,    0},
-                         {92,   133},
-                         {398,  382},
-                         {444,  522},
-                         {641,  815},
-                         {1294, 1694}};
+                         {97,   135},
+                         {395,  379},
+                         {449,  529},
+                         {646,  820},
+                         {1299, 1599}};
 
 
 Score TEMPO_SCORE = 10;
 
-Value PAWN_PASSED_BONUS = {23, 52};
-Value PAWN_DOUBLE_PENALTY = {-10, -27};
-Value PAWN_ISOLATED_PENALTY = {-7, -32};
+Value PAWN_PASSED_BONUS = {27, 57};
+Value PAWN_DOUBLE_PENALTY = {-5, -22};
+Value PAWN_ISOLATED_PENALTY = {-14, -29};
 
-Value KNIGHT_MOBILITY = {5, 13};
+Value KNIGHT_MOBILITY = {10, 11};
 
-Value BISHOP_MOBILITY = {4, 4};
+Value BISHOP_MOBILITY = {14, 4};
 
-Value ROOK_MOBILITY = {1, -4};
-Value ROOK_TRAPPED = {-64, -19};
-Value ROOK_OPEN_BONUS = {28, 13};
-Value ROOK_HALF_BONUS = {11, 17};
+Value ROOK_MOBILITY = {6, 1};
+Value ROOK_TRAPPED = {-69, -24};
+Value ROOK_OPEN_BONUS = {33, 18};
+Value ROOK_HALF_BONUS = {16, 20};
 
-Value KING_SHIELD_1 = {19, -6};
-Value KING_SHIELD_2 = {13, -6};
+Value KING_SHIELD_1 = {24, -1};
+Value KING_SHIELD_2 = {14, -1};
 
 #endif
 
@@ -204,6 +204,12 @@ Value evalQueens(const Position &pos) {
     Bitboard queens = pos.pieces<color, QUEEN>();
 
     Value value = PIECE_VALUES[QUEEN] * queens.popCount();
+
+    while (queens) {
+        Square square = queens.popLsb();
+
+        value += PSQT[color][QUEEN][square];
+    }
 
     return value;
 }
