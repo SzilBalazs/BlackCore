@@ -236,6 +236,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         // Internal iterative deepening
         if (!ttHit && !pvNode) depth--;
+
+        if (depth <= 0) return quiescence(pos, alpha, beta, ply);
     }
 
     // Check extension

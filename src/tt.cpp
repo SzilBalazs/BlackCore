@@ -105,12 +105,15 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
         entry = &bucket->entryB;
     }
 
-    entry->hash = hash;
-    entry->depth = depth;
-    entry->eval = eval;
-    entry->flag = flag;
-    entry->hashMove = bestMove;
-    entry->age = globalAge;
+    if (entry->hash != hash || flag == EXACT || entry->depth * 2 / 3 <= depth) {
+        entry->hash = hash;
+        entry->depth = depth;
+        entry->eval = eval;
+        entry->flag = flag;
+        entry->hashMove = bestMove;
+        entry->age = globalAge;
+    }
+
 }
 
 Move getHashMove(U64 hash) {
