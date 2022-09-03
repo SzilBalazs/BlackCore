@@ -32,8 +32,8 @@ void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
 
-            reductions[moveIndex][depth] = Depth(
-                    LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE));
+            reductions[moveIndex][depth] = std::max(2, Depth(
+                    LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
 
         }
     }
@@ -104,8 +104,13 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    if (ply > selectiveDepth)
+    if (ply > selectiveDepth) {
         selectiveDepth = ply;
+    }
+
+    bool ttHit;
+    Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+    if (ttScore != UNKNOWN_SCORE) return ttScore;
 
     Score staticEval = eval(pos);
 
@@ -118,6 +123,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     }
 
     MoveList moves = {pos, ply, true};
+    EntryFlag ttFlag = ALPHA;
 
     while (!moves.empty()) {
 
@@ -141,15 +147,19 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         if (shouldEnd()) return UNKNOWN_SCORE;
 
         if (score >= beta) {
+            ttSave(pos.getHash(), 0, score, BETA, m);
             return beta;
         }
 
         if (score > alpha) {
             alpha = score;
+            ttFlag = EXACT;
         }
 
     }
 
+    // We only store a NULL move because we don't want to search it in the main search
+    ttSave(pos.getHash(), 0, alpha, ttFlag, {});
     return alpha;
 }
 
@@ -159,7 +169,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
-    bool ttHit = false, pvNode = beta - alpha > 1;;
+    bool ttHit = false;
+    bool pvNode = beta - alpha > 1;
     Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
     if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;
@@ -224,9 +235,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && depth >= IID_DEPTH) depth--;
+        if (!ttHit && !pvNode) depth--;
     }
 
+    // Check extension
     if (inCheck)
         depth++;
 
@@ -239,6 +251,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         Move m = moves.nextMove();
         state->move = m;
 
+        //if (ply > 0 && m.isCapture() && depth <= SEE_PRUNING_DEPTH && see(pos, m) <= -100 * depth)
+        //    continue;
+
         Score score;
 
         pos.makeMove(m);
@@ -250,7 +265,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I &&
                 m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
+                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
+                                ply + 1);
             } else score = alpha + 1;
 
 
