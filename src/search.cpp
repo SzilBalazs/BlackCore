@@ -124,6 +124,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     MoveList moves = {pos, ply, true};
     EntryFlag ttFlag = ALPHA;
+    Move bestMove;
 
     while (!moves.empty()) {
 
@@ -154,12 +155,13 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         if (score > alpha) {
             alpha = score;
             ttFlag = EXACT;
+            bestMove = m;
         }
 
     }
 
-    // We only store a NULL move because we don't want to search it in the main search
-    ttSave(pos.getHash(), 0, alpha, ttFlag, {});
+    // TODO elo test storing null move instead of bestMove
+    ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
 
@@ -253,9 +255,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         Move m = moves.nextMove();
         state->move = m;
 
-        //if (ply > 0 && m.isCapture() && depth <= SEE_PRUNING_DEPTH && see(pos, m) <= -100 * depth)
-        //    continue;
-
         Score score;
 
         pos.makeMove(m);
@@ -264,8 +263,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I &&
-                m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
+                m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
                 score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
                                 ply + 1);
