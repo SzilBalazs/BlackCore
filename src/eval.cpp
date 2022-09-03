@@ -147,9 +147,9 @@ Value evalKnights(const Position &pos, EvalData &evalData) {
         Bitboard knightAttacks = knightMask(square);
 
         if constexpr (color == WHITE)
-            evalData.bKingAttacks += (knightAttacks & evalData.bKingZone).popCount() * 3;
+            evalData.bKingAttacks += (knightAttacks & evalData.bKingZone).popCount() * 2;
         else
-            evalData.wKingAttacks += (knightAttacks & evalData.wKingZone).popCount() * 3;
+            evalData.wKingAttacks += (knightAttacks & evalData.wKingZone).popCount() * 2;
 
         value += KNIGHT_MOBILITY * (knightAttacks & enemyOrEmpty & safe).popCount();
 
@@ -173,9 +173,9 @@ Value evalBishops(const Position &pos, EvalData &evalData) {
         Bitboard attacksRestrictedByPawns = bishopAttacks(square, pawns);
 
         if constexpr (color == WHITE)
-            evalData.bKingAttacks += (attacksRestrictedByPawns & evalData.bKingZone).popCount() * 3;
+            evalData.bKingAttacks += (attacksRestrictedByPawns & evalData.bKingZone).popCount() * 2;
         else
-            evalData.wKingAttacks += (attacksRestrictedByPawns & evalData.wKingZone).popCount() * 3;
+            evalData.wKingAttacks += (attacksRestrictedByPawns & evalData.wKingZone).popCount() * 2;
 
         value += BISHOP_MOBILITY * attacksRestrictedByPawns.popCount();
 
@@ -197,9 +197,9 @@ Value evalRooks(const Position &pos, EvalData &evalData) {
         Bitboard rookAttack = rookAttacks(square, pos.occupied());
 
         if constexpr (color == WHITE)
-            evalData.bKingAttacks += (rookAttack & evalData.bKingZone).popCount() * 5;
+            evalData.bKingAttacks += (rookAttack & evalData.bKingZone).popCount() * 3;
         else
-            evalData.wKingAttacks += (rookAttack & evalData.wKingZone).popCount() * 5;
+            evalData.wKingAttacks += (rookAttack & evalData.wKingZone).popCount() * 3;
 
         value += ROOK_MOBILITY * rookAttack.popCount();
 
@@ -229,9 +229,9 @@ Value evalQueens(const Position &pos, EvalData &evalData) {
         Bitboard queenAttack = queenAttacks(square, pos.occupied());
 
         if constexpr (color == WHITE)
-            evalData.bKingAttacks += (queenAttack & evalData.bKingZone).popCount() * 7;
+            evalData.bKingAttacks += (queenAttack & evalData.bKingZone).popCount() * 5;
         else
-            evalData.wKingAttacks += (queenAttack & evalData.wKingZone).popCount() * 7;
+            evalData.wKingAttacks += (queenAttack & evalData.wKingZone).popCount() * 5;
 
         value += PSQT[color][QUEEN][square];
     }
