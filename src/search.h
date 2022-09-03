@@ -40,6 +40,8 @@ constexpr int LMR_PVNODE_I = 3;
 constexpr Score SEE_PRUNING_MARGIN = 150;
 constexpr Depth SEE_PRUNING_DEPTH = 5;
 
+constexpr Depth IID_DEPTH = 5;
+
 struct SearchState {
     Move move;
     Score eval = 0;

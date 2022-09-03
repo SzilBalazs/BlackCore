@@ -233,6 +233,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
                 }
             }
         }
+
+        // Internal iterative deepening
+        if (!ttHit && !pvNode) depth--;
     }
 
     // Check extension
