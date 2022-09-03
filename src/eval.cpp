@@ -71,7 +71,7 @@ void initEval() {
 }
 
 template<Color color>
-Value evalPawns(const Position &pos) {
+Value evalPawns(const Position &pos, EvalData &evalData) {
     constexpr Color enemyColor = EnemyColor<color>();
 
     Bitboard ownPawns = pos.pieces<color, PAWN>();
@@ -129,7 +129,7 @@ Value evalPawns(const Position &pos) {
 }
 
 template<Color color>
-Value evalKnights(const Position &pos) {
+Value evalKnights(const Position &pos, EvalData &evalData) {
     constexpr Color enemyColor = EnemyColor<color>();
     constexpr Direction UP_LEFT = enemyColor == WHITE ? NORTH_WEST : -NORTH_WEST;
     constexpr Direction UP_RIGHT = enemyColor == WHITE ? NORTH_EAST : -NORTH_EAST;
@@ -144,8 +144,14 @@ Value evalKnights(const Position &pos) {
 
     while (knights) {
         Square square = knights.popLsb();
-        Bitboard knightAttacks = knightMask(square) & enemyOrEmpty;
-        value += KNIGHT_MOBILITY * (knightAttacks & safe).popCount();
+        Bitboard knightAttacks = knightMask(square);
+
+        if constexpr (color == WHITE)
+            evalData.bKingAttacks += (knightAttacks & evalData.bKingZone).popCount() * 3;
+        else
+            evalData.wKingAttacks += (knightAttacks & evalData.wKingZone).popCount() * 3;
+
+        value += KNIGHT_MOBILITY * (knightAttacks & enemyOrEmpty & safe).popCount();
 
         value += PSQT[color][KNIGHT][square];
     }
@@ -155,7 +161,7 @@ Value evalKnights(const Position &pos) {
 }
 
 template<Color color>
-Value evalBishops(const Position &pos) {
+Value evalBishops(const Position &pos, EvalData &evalData) {
 
     Bitboard pawns = pos.pieces<PAWN>();
     Bitboard bishops = pos.pieces<color, BISHOP>();
@@ -165,6 +171,12 @@ Value evalBishops(const Position &pos) {
     while (bishops) {
         Square square = bishops.popLsb();
         Bitboard attacksRestrictedByPawns = bishopAttacks(square, pawns);
+
+        if constexpr (color == WHITE)
+            evalData.bKingAttacks += (attacksRestrictedByPawns & evalData.bKingZone).popCount() * 3;
+        else
+            evalData.wKingAttacks += (attacksRestrictedByPawns & evalData.wKingZone).popCount() * 3;
+
         value += BISHOP_MOBILITY * attacksRestrictedByPawns.popCount();
 
         value += PSQT[color][BISHOP][square];
@@ -173,7 +185,7 @@ Value evalBishops(const Position &pos) {
 }
 
 template<Color color>
-Value evalRooks(const Position &pos) {
+Value evalRooks(const Position &pos, EvalData &evalData) {
 
     Bitboard pawns = pos.pieces<PAWN>();
     Bitboard rooks = pos.pieces<color, ROOK>();
@@ -182,7 +194,14 @@ Value evalRooks(const Position &pos) {
 
     while (rooks) {
         Square square = rooks.popLsb();
-        value += ROOK_MOBILITY * rookAttacks(square, pos.occupied()).popCount();
+        Bitboard rookAttack = rookAttacks(square, pos.occupied());
+
+        if constexpr (color == WHITE)
+            evalData.bKingAttacks += (rookAttack & evalData.bKingZone).popCount() * 5;
+        else
+            evalData.wKingAttacks += (rookAttack & evalData.wKingZone).popCount() * 5;
+
+        value += ROOK_MOBILITY * rookAttack.popCount();
 
         int pawnsOnFile = (fileMask(square) & pawns).popCount();
 
@@ -199,7 +218,7 @@ Value evalRooks(const Position &pos) {
 }
 
 template<Color color>
-Value evalQueens(const Position &pos) {
+Value evalQueens(const Position &pos, EvalData &evalData) {
 
     Bitboard queens = pos.pieces<color, QUEEN>();
 
@@ -207,6 +226,12 @@ Value evalQueens(const Position &pos) {
 
     while (queens) {
         Square square = queens.popLsb();
+        Bitboard queenAttack = queenAttacks(square, pos.occupied());
+
+        if constexpr (color == WHITE)
+            evalData.bKingAttacks += (queenAttack & evalData.bKingZone).popCount() * 7;
+        else
+            evalData.wKingAttacks += (queenAttack & evalData.wKingZone).popCount() * 7;
 
         value += PSQT[color][QUEEN][square];
     }
@@ -215,7 +240,7 @@ Value evalQueens(const Position &pos) {
 }
 
 template<Color color>
-Value evalKings(const Position &pos) {
+Value evalKings(const Position &pos, EvalData &evalData) {
 
     Bitboard pawns = pos.pieces<color, PAWN>();
     Bitboard rooks = pos.pieces<color, ROOK>();
@@ -251,6 +276,7 @@ Value evalKings(const Position &pos) {
         }
 
         value += PSQT[WHITE][KING][king];
+        value.mg += kingSafety[evalData.bKingAttacks];
 
     } else {
         Square king = pos.pieces<BLACK, KING>().lsb();
@@ -281,6 +307,7 @@ Value evalKings(const Position &pos) {
         }
 
         value += PSQT[BLACK][KING][king];
+        value.mg += kingSafety[evalData.wKingAttacks];
     }
 
     return value;
@@ -288,21 +315,26 @@ Value evalKings(const Position &pos) {
 
 Score eval(const Position &pos) {
 
+    Square wKing = pos.pieces<WHITE, KING>().lsb();
+    Square bKing = pos.pieces<BLACK, KING>().lsb();
+
+    EvalData evalData = {wKing, bKing};
+
     Value whiteEval, blackEval;
 
-    whiteEval += evalPawns<WHITE>(pos);
-    whiteEval += evalKnights<WHITE>(pos);
-    whiteEval += evalBishops<WHITE>(pos);
-    whiteEval += evalRooks<WHITE>(pos);
-    whiteEval += evalQueens<WHITE>(pos);
-    whiteEval += evalKings<WHITE>(pos);
+    whiteEval += evalPawns<WHITE>(pos, evalData);
+    whiteEval += evalKnights<WHITE>(pos, evalData);
+    whiteEval += evalBishops<WHITE>(pos, evalData);
+    whiteEval += evalRooks<WHITE>(pos, evalData);
+    whiteEval += evalQueens<WHITE>(pos, evalData);
+    whiteEval += evalKings<WHITE>(pos, evalData);
 
-    blackEval += evalPawns<BLACK>(pos);
-    blackEval += evalKnights<BLACK>(pos);
-    blackEval += evalBishops<BLACK>(pos);
-    blackEval += evalRooks<BLACK>(pos);
-    blackEval += evalQueens<BLACK>(pos);
-    blackEval += evalKings<BLACK>(pos);
+    blackEval += evalPawns<BLACK>(pos, evalData);
+    blackEval += evalKnights<BLACK>(pos, evalData);
+    blackEval += evalBishops<BLACK>(pos, evalData);
+    blackEval += evalRooks<BLACK>(pos, evalData);
+    blackEval += evalQueens<BLACK>(pos, evalData);
+    blackEval += evalKings<BLACK>(pos, evalData);
 
     Value value = whiteEval - blackEval;
 

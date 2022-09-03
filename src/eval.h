@@ -45,6 +45,27 @@ struct Value {
     }
 };
 
+struct EvalData {
+    // King Safety
+    Bitboard wKingZone;
+    Bitboard bKingZone;
+
+    unsigned int wKingAttacks = 0;
+    unsigned int bKingAttacks = 0;
+
+    inline EvalData(Square wKing, Square bKing) {
+        Bitboard wNextKing = step<WEST>(wKing) | Bitboard(wKing) | step<EAST>(wKing);
+        Bitboard wUpKing = step<NORTH>(wNextKing);
+        wKingZone = wNextKing | wUpKing | step<NORTH>(wUpKing);
+
+        Bitboard bNextKing = step<WEST>(bKing) | Bitboard(bKing) | step<EAST>(bKing);
+        Bitboard bDownKing = step<SOUTH>(bNextKing);
+        bKingZone = bNextKing | bDownKing | step<SOUTH>(bDownKing);
+    }
+
+};
+
+
 #ifdef TUNE
 
 extern Value PIECE_VALUES[6];
@@ -116,6 +137,19 @@ constexpr Bitboard BK_SHIELD_2 = 0xe00000000000ULL;
 constexpr Bitboard BQ_AREA = 0x707070000000000ULL;
 constexpr Bitboard BQ_SHIELD_1 = 0x7000000000000ULL;
 constexpr Bitboard BQ_SHIELD_2 = 0x70000000000ULL;
+
+constexpr Score kingSafety[100] = {
+        0, 0, 0, 1, 2, 3, 4, 5, 6,
+        8, 10, 12, 15, 18, 22, 26, 31, 36, 42,
+        48, 54, 60, 67, 74, 82, 90, 100, 110, 120,
+        130, 140, 150, 160, 170, 180, 190, 200, 210, 220,
+        230, 240, 250, 260, 270, 280, 290, 300, 310, 320,
+        330, 340, 350, 360, 370, 380, 390, 400, 410, 420,
+        430, 440, 450, 460, 470, 480, 490, 500, 510, 520,
+        530, 540, 550, 560, 570, 580, 590, 600, 600, 600,
+        600, 600, 600, 600, 600, 600, 600, 600, 600, 600,
+        600, 600, 600, 600, 600, 600, 600, 600, 600, 600,
+};
 
 constexpr Score kingMgPSQT[64] = {
         -61, -70, -78, -81, -78, -82, -71, -61,
