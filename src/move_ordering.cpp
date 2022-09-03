@@ -60,8 +60,6 @@ void recordHHMove(Move move, Color color, Depth depth) {
 }
 
 Score scoreQMove(const Position &pos, Move m) {
-    Square from = m.getFrom();
-    Square to = m.getTo();
     if (m == getHashMove(pos.getHash())) {
         return 1000000;
     } else if (m.isPromo()) {
@@ -71,13 +69,15 @@ Score scoreQMove(const Position &pos, Move m) {
             return -100000;
         }
     } else {
-        return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        Score seeScore = see(pos, m);
+        if (seeScore >= 0)
+            return 800000 + seeScore;
+        else
+            return seeScore;
     }
 }
 
 Score scoreMove(const Position &pos, Move m, Ply ply) {
-    Square from = m.getFrom();
-    Square to = m.getTo();
     if (m == getHashMove(pos.getHash())) {
         return 1000000;
     } else if (m.isPromo()) {
@@ -87,7 +87,13 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
             return -100000;
         }
     } else if (m.isCapture()) {
-        return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        Square from = m.getFrom();
+        Square to = m.getTo();
+        
+        if (see(pos, m) >= 0)
+            return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+        else
+            return losingCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
     } else if (killerMoves[ply][0] == m) {
         return 750000;
     } else if (killerMoves[ply][1] == m) {

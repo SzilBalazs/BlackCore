@@ -32,13 +32,14 @@ U64 getTime() {
 }
 
 void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime) {
+    movestogo = movestogo == 0 ? 27 : movestogo;
     nodeCount = 0;
     searchStartedAt = getTime();
     stop = false;
     if (time == 0 || movetime != 0) {
         searchShouldEnd = searchStartedAt + movetime;
     } else {
-        searchShouldEnd = searchStartedAt + inc + (time / (movestogo + 5)) - MOVE_OVERHEAD;
+        searchShouldEnd = searchStartedAt + inc + time / movestogo - MOVE_OVERHEAD;
     }
 }
 
