@@ -76,14 +76,13 @@ void Position::clearPosition() {
     allPieceBB[BLACK] = 0;
 
     states.clear();
-    states.push({});
     state->lastIrreversibleMove = state;
 }
 
 void Position::makeNullMove() {
     BoardState newState;
 
-    newState.stm = state->stm==WHITE?BLACK:WHITE;
+    newState.stm = state->stm == WHITE ? BLACK : WHITE;
     newState.castlingRights = state->castlingRights;
     newState.hash = state->hash ^ *blackRand;
     newState.lastIrreversibleMove = state->lastIrreversibleMove;
@@ -162,7 +161,7 @@ void Position::displayEval() {
             if (!piece.isNull() && piece.type != KING) {
                 clearSquare(square);
                 Score newScore = eval(*this);
-                Score scoreDiff = score-newScore;
+                Score scoreDiff = score - newScore;
                 evalStr = std::to_string(scoreDiff);
                 setSquare(square, piece);
             }
@@ -234,6 +233,43 @@ void Position::loadPositionFromFen(const string &fen) {
 
     state->hash ^= castlingRandTable[state->castlingRights];
     state->hash ^= epRandTable[squareToFile(state->epSquare)];
+}
+
+void Position::loadPositionFromRawState(const RawState &rawState) {
+    clearPosition();
+    state->stm = rawState.stm;
+    state->epSquare = rawState.epSquare;
+    state->castlingRights = rawState.castlingRights;
+    allPieceBB[WHITE] = rawState.allPieceBB[WHITE];
+    allPieceBB[BLACK] = rawState.allPieceBB[BLACK];
+
+    for (int i = 0; i < 6; i++) {
+        pieceBB[i] = rawState.pieceBB[i];
+    }
+#ifndef TUNE
+    for (Square sq = A1; sq < 64; sq += 1) {
+        board[sq] = rawState.board[sq];
+    }
+#endif
+}
+
+RawState Position::getRawState() {
+    RawState rawState;
+    rawState.stm = getSideToMove();
+    rawState.epSquare = getEpSquare();
+    rawState.castlingRights = getCastlingRights();
+    rawState.allPieceBB[WHITE] = allPieceBB[WHITE];
+    rawState.allPieceBB[BLACK] = allPieceBB[BLACK];
+
+    for (int i = 0; i < 6; i++) {
+        rawState.pieceBB[i] = pieceBB[i];
+    }
+
+    for (Square sq = A1; sq < 64; sq += 1) {
+        rawState.board[sq] = board[sq];
+    }
+
+    return rawState;
 }
 
 Position::Position() {

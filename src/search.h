@@ -19,31 +19,6 @@
 
 #include "movegen.h"
 
-#ifdef TUNE
-
-extern Score DELTA_MARGIN;
-
-extern Score RAZOR_MARGIN;
-
-extern Depth RFP_DEPTH;
-extern Score RFP_DEPTH_MULTIPLIER;
-extern Score RFP_IMPROVING_MULTIPLIER;
-
-extern Depth NULL_MOVE_DEPTH;
-extern Depth NULL_MOVE_BASE_R;
-extern Depth NULL_MOVE_R_SCALE;
-
-extern Depth LMR_DEPTH;
-extern double LMR_BASE;
-extern double LMR_SCALE;
-extern int LMR_MIN_I;
-extern int LMR_PVNODE_I;
-
-extern Score SEE_PRUNING_MARGIN;
-
-extern Depth IID_DEPTH;
-
-#else
 constexpr Score DELTA_MARGIN = 400;
 
 constexpr Score RAZOR_MARGIN = 130;
@@ -65,7 +40,6 @@ constexpr int LMR_PVNODE_I = 3;
 constexpr Score SEE_PRUNING_MARGIN = 150;
 
 constexpr Depth IID_DEPTH = 5;
-#endif
 
 struct SearchState {
     Move move;

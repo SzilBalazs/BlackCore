@@ -28,30 +28,6 @@ Move bestPV;
 // Move index -> depth
 Depth reductions[200][64];
 
-#ifdef TUNE
-Score DELTA_MARGIN = 400;
-
-Score RAZOR_MARGIN = 130;
-
-Depth RFP_DEPTH = 5;
-Score RFP_DEPTH_MULTIPLIER = 70;
-Score RFP_IMPROVING_MULTIPLIER = 80;
-
-Depth NULL_MOVE_DEPTH = 3;
-Depth NULL_MOVE_BASE_R = 4;
-Depth NULL_MOVE_R_SCALE = 4;
-
-Depth LMR_DEPTH = 4;
-double LMR_BASE = 1;
-double LMR_SCALE = 1.75;
-int LMR_MIN_I = 3;
-int LMR_PVNODE_I = 3;
-
-Score SEE_PRUNING_MARGIN = 150;
-
-Depth IID_DEPTH = 5;
-#endif
-
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {

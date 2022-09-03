@@ -77,20 +77,6 @@ void uciLoop() {
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
-    // If tuning is defined we expose search parameters to the tuner
-#ifdef TUNE
-
-    tuneOut("PAWN_VALUE_MG", 86, 50, 200);
-    tuneOut("PAWN_VALUE_EG", 127, 100, 300);
-    tuneOut("PAWN_PASSED_BONUS_MG", 33, 0, 100);
-    tuneOut("PAWN_PASSED_BONUS_EG", 56, 0, 100);
-    tuneOut("PAWN_DOUBLE_PENALTY_MG", -15, -100, 0);
-    tuneOut("PAWN_DOUBLE_PENALTY_EG", -28, -100, 0);
-    tuneOut("PAWN_ISOLATED_PENALTY_MG", -13, -100, 0);
-    tuneOut("PAWN_ISOLATED_PENALTY_EG", -33, -100, 0);
-
-#endif
-
     ttResize(16);
 
     // We have sent all the parameters
@@ -134,28 +120,7 @@ void uciLoop() {
                 } else if (tokens[1] == "Ponder") {
 
                 } else {
-#ifdef TUNE
-                    const std::string name = tokens[1];
-                    const int value = std::stoi(tokens[3]);
 
-                    if (name == "PAWN_VALUE_MG") {
-                        PIECE_VALUES[PAWN].mg = value;
-                    } else if (name == "PAWN_VALUE_EG") {
-                        PIECE_VALUES[PAWN].eg = value;
-                    } else if (name == "PAWN_PASSED_BONUS_MG") {
-                        PAWN_PASSED_BONUS.mg = value;
-                    } else if (name == "PAWN_PASSED_BONUS_EG") {
-                        PAWN_PASSED_BONUS.eg = value;
-                    } else if (name == "PAWN_DOUBLE_PENALTY_MG") {
-                        PAWN_DOUBLE_PENALTY.mg = value;
-                    } else if (name == "PAWN_DOUBLE_PENALTY_EG") {
-                        PAWN_DOUBLE_PENALTY.eg = value;
-                    } else if (name == "PAWN_ISOLATED_PENALTY_MG") {
-                        PAWN_ISOLATED_PENALTY.mg = value;
-                    } else if (name == "PAWN_ISOLATED_PENALTY_EG") {
-                        PAWN_ISOLATED_PENALTY.eg = value;
-                    }
-#endif
                 }
             }
         } else if (command == "position" || command == "pos") {
