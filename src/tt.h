@@ -59,4 +59,6 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
 
 Move getHashMove(U64 hash);
 
+void ttPrefetch(U64 hash);
+
 #endif //BLACKCORE_TT_H

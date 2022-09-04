@@ -136,7 +136,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             continue;
 
         // SEE pruning
-        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
+        if (alpha > -WORST_MATE && see(pos, m) < 0)
             continue;
 
         pos.makeMove(m);
@@ -258,6 +258,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         Score score;
 
         pos.makeMove(m);
+
+        ttPrefetch(pos.getHash());
 
         if (index == 0) {
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
