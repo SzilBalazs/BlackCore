@@ -62,7 +62,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         if (!capturesOnly) {
             Bitboard quiets = attacks & empty;
             while (quiets) {
-                *moves++ = Move(from, quiets.popLsb(), 0);
+                *moves++ = Move(from, quiets.popLsb());
             }
         }
 
@@ -90,7 +90,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         if constexpr (!capturesOnly) {
             Bitboard quiets = attacks & empty;
             while (quiets) {
-                *moves++ = Move(from, quiets.popLsb(), 0);
+                *moves++ = Move(from, quiets.popLsb());
             }
         }
 
@@ -139,7 +139,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
 
         while (singlePush) {
             Square to = singlePush.popLsb();
-            *moves++ = Move(to + DOWN, to, 0);
+            *moves++ = Move(to + DOWN, to);
         }
 
         while (doublePush) {
@@ -265,7 +265,7 @@ inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
     if constexpr (!capturesOnly) {
         Bitboard kingQuiets = kingTarget & empty;
         while (kingQuiets) {
-            *moves++ = Move(king, kingQuiets.popLsb(), 0);
+            *moves++ = Move(king, kingQuiets.popLsb());
         }
     }
 
