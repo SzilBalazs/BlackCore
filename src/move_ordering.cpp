@@ -89,7 +89,7 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
     } else if (m.isCapture()) {
         Square from = m.getFrom();
         Square to = m.getTo();
-        
+
         if (see(pos, m) >= 0)
             return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
         else

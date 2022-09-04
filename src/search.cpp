@@ -136,7 +136,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             continue;
 
         // SEE pruning
-        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
+        if (alpha > -WORST_MATE && see(pos, m) < 0)
             continue;
 
         pos.makeMove(m);
@@ -259,6 +259,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         pos.makeMove(m);
 
+        ttPrefetch(pos.getHash());
+
         if (index == 0) {
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
@@ -323,52 +325,76 @@ std::string getPvLine(Position &pos) {
     }
 }
 
-Score searchRoot(Position &pos, Depth depth, bool uci) {
+Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 
+    globalAge++;
     clearTables();
     selectiveDepth = 0;
-    SearchState stateStack[400];
+    SearchState stateStack[100];
+    Score alpha = -INF_SCORE;
+    Score beta = INF_SCORE;
 
-    Score score = search(pos, stateStack + 1, depth, -INF_SCORE, INF_SCORE, 0);
-
-    if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
-
-    bestPV = getHashMove(pos.getHash());
-
-    std::string pvLine = getPvLine(pos);
-    if (uci) {
-        Score absScore = std::abs(score);
-        int mateDepth = MATE_VALUE - absScore;
-        std::string scoreStr = "cp " + std::to_string(score);
-
-        if (mateDepth <= 64) {
-            int matePly;
-            // We are giving the mate
-            if (score > 0) {
-                matePly = mateDepth / 2 + 1;
-
-            } else {
-                matePly = -(mateDepth / 2);
-            }
-            scoreStr = "mate " + std::to_string(matePly);
-        }
-
-        out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
-            getSearchTime(), "nps", getNps(), "pv", pvLine);
+    if (depth >= ASPIRATION_DEPTH) {
+        alpha = prevScore - ASPIRATION_DELTA;
+        beta = prevScore + ASPIRATION_DELTA;
     }
 
+    int iter = 1;
+    while (true) {
+        if (shouldEnd()) return UNKNOWN_SCORE;
 
-    return score;
+        if (alpha < -ASPIRATION_BOUND) alpha = -INF_SCORE;
+        if (beta > ASPIRATION_BOUND) beta = INF_SCORE;
+
+        Score score = search(pos, stateStack + 1, depth, alpha, beta, 0);
+
+        if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
+
+        if (score <= alpha) {
+            alpha = std::max(alpha - iter * iter * ASPIRATION_DELTA, -INF_SCORE);
+        } else if (score >= beta) {
+            beta = std::min(beta + iter * iter * ASPIRATION_DELTA, INF_SCORE);
+        } else {
+            bestPV = getHashMove(pos.getHash());
+
+            std::string pvLine = getPvLine(pos);
+            if (uci) {
+                Score absScore = std::abs(score);
+                int mateDepth = MATE_VALUE - absScore;
+                std::string scoreStr = "cp " + std::to_string(score);
+
+                if (mateDepth <= 64) {
+                    int matePly;
+                    // We are giving the mate
+                    if (score > 0) {
+                        matePly = mateDepth / 2 + 1;
+
+                    } else {
+                        matePly = -(mateDepth / 2);
+                    }
+                    scoreStr = "mate " + std::to_string(matePly);
+                }
+
+                out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
+                    getSearchTime(), "nps", getNps(), "pv", pvLine);
+            }
+
+            return score;
+        }
+
+        iter++;
+    }
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
-    for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, currDepth, uci);
-        if (score == UNKNOWN_SCORE) break;
-    }
+    Score prevScore;
 
-    globalAge++;
+    for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
+        Score score = searchRoot(pos, prevScore, currDepth, uci);
+        if (score == UNKNOWN_SCORE) break;
+        prevScore = score;
+    }
 
     if (uci) {
         out("bestmove", bestPV);

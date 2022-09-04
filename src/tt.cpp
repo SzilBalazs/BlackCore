@@ -122,3 +122,7 @@ Move getHashMove(U64 hash) {
     else if (bucket->entryB.hash == hash) return bucket->entryB.hashMove;
     return {};
 }
+
+void ttPrefetch(U64 hash) {
+    __builtin_prefetch(getBucket(hash));
+}
