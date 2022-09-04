@@ -37,6 +37,9 @@ constexpr double LMR_SCALE = 1.75;
 constexpr int LMR_MIN_I = 3;
 constexpr int LMR_PVNODE_I = 2;
 
+constexpr Depth LMP_DEPTH = 4;
+constexpr unsigned int LMP_MOVES = 5;
+
 constexpr Depth ASPIRATION_DEPTH = 9;
 constexpr Score ASPIRATION_DELTA = 30;
 constexpr Score ASPIRATION_BOUND = 3000;

@@ -257,9 +257,14 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         Score score;
 
-        if (ply > 0 && alpha > -WORST_MATE && !pvNode && !inCheck && depth <= 4 && !m.isPromo() &&
-            index >= 5 + depth * depth)
-            break;
+        // We can prune the move in some cases
+        if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
+
+            // Late move/movecount pruning
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet() && !m.isPromo())
+                continue;
+
+        }
 
         pos.makeMove(m);
 
