@@ -257,6 +257,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         Score score;
 
+        if (ply > 0 && alpha > -WORST_MATE && !pvNode && !inCheck && depth <= 4 && !m.isPromo() &&
+            index >= 5 + depth * depth)
+            break;
+
         pos.makeMove(m);
 
         ttPrefetch(pos.getHash());
