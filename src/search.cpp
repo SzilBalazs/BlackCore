@@ -257,6 +257,15 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         Score score;
 
+        // We can prune the move in some cases
+        if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
+
+            // Late move/movecount pruning
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet() && !m.isPromo())
+                continue;
+
+        }
+
         pos.makeMove(m);
 
         ttPrefetch(pos.getHash());
