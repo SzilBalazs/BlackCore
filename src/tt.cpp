@@ -124,5 +124,5 @@ Move getHashMove(U64 hash) {
 }
 
 void ttPrefetch(U64 hash) {
-    __builtin_prefetch(getBucket(hash));
+    __builtin_prefetch(&tt.table[hash & tt.mask], 0, 1);
 }
