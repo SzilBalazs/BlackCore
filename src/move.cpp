@@ -21,8 +21,8 @@ std::string Move::str() const {
     std::string token;
     if (isPromo()) {
         if (!isSpecial1() && !isSpecial2()) token += "n";
-        else if (isSpecial1() && !isSpecial2()) token += "b";
-        else if (!isSpecial1() && isSpecial2()) token += "r";
+        else if (!isSpecial1() && isSpecial2()) token += "b";
+        else if (isSpecial1() && !isSpecial2()) token += "r";
         else token += "q";
     }
     return formatSquare(getFrom()) + formatSquare(getTo()) + token;

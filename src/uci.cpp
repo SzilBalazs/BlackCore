@@ -22,7 +22,7 @@
 #include "search.h"
 #include "timeman.h"
 #include "position.h"
-#include "eval.h"
+#include "bench.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -186,10 +186,18 @@ void uciLoop() {
 
             searchThread = std::thread(iterativeDeepening, pos, depth, true);
 
-        } else if (command == "d") {
+        } else if (command == "d" || command == "display") {
             pos.display();
-        } else if (command == "e") {
+        } else if (command == "e" || command == "eval") {
             pos.displayEval();
+        } else if (command == "moves") {
+            Move moves[200];
+            Move *movesEnd = generateMoves(pos, moves, false);
+            for (Move *it = moves; it != movesEnd; it++) {
+                out(*it);
+            }
+        } else if (command == "perft") {
+            out("Total nodes:", perft<true>(pos, std::stoi(tokens[0])));
         }
     }
     ttFree();

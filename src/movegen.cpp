@@ -50,7 +50,7 @@ inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     return result;
 }
 
-template<bool capturesOnly>
+template<bool capturesOnly, bool pinHV, bool pinDA>
 inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
                                      Bitboard occupied, Bitboard empty, Bitboard enemy) {
 
@@ -58,34 +58,10 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         Square from = pieces.popLsb();
         PieceType type = pos.pieceAt(from).type;
         Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
-
-        if (!capturesOnly) {
-            Bitboard quiets = attacks & empty;
-            while (quiets) {
-                *moves++ = Move(from, quiets.popLsb());
-            }
-        }
-
-        Bitboard captures = attacks & enemy;
-        while (captures) {
-            Square to = captures.popLsb();
-            *moves++ = Move(from, to, CAPTURE);
-        }
-    }
-
-    return moves;
-
-}
-
-template<bool capturesOnly>
-inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
-                                     Bitboard *specialMaskExtra,
-                                     Bitboard occupied, Bitboard empty, Bitboard enemy) {
-
-    while (pieces) {
-        Square from = pieces.popLsb();
-        PieceType type = pos.pieceAt(from).type;
-        Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask & specialMaskExtra[from];
+        if constexpr (pinHV)
+            attacks &= rookMask(from);
+        if constexpr (pinDA)
+            attacks &= bishopMask(from);
 
         if constexpr (!capturesOnly) {
             Bitboard quiets = attacks & empty;
@@ -298,23 +274,18 @@ inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard che
 template<bool capturesOnly>
 inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
                                         Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
-                                        Bitboard pinH, Bitboard pinV, Bitboard pinD, Bitboard pinA) {
-    pinH &= pieces;
-    pinV &= pieces;
-    pinD &= pieces;
-    pinA &= pieces;
-    pieces &= ~(pinH | pinV | pinD | pinA);
+                                        Bitboard pinHV, Bitboard pinDA) {
+    Bitboard pinnedHV = pinHV & pieces;
+    Bitboard pinnedDA = pinDA & pieces;
+    pieces &= ~(pinnedHV | pinnedDA);
 
-    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pieces, checkMask, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly, false, false>(pos, moves, pieces, checkMask, occupied, empty, enemy);
 
-    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinH, checkMask, fileMasks, occupied, empty, enemy);
+    moves = generateMovesFromPieces<capturesOnly, true, false>(pos, moves, pinnedHV, checkMask & pinHV, occupied, empty,
+                                                               enemy);
 
-    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinV, checkMask, rankMasks, occupied, empty, enemy);
-
-    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinD, checkMask, diagonalMasks, occupied, empty, enemy);
-
-    moves = generateMovesFromPieces<capturesOnly>(pos, moves, pinA, checkMask, antiDiagonalMasks, occupied, empty,
-                                                  enemy);
+    moves = generateMovesFromPieces<capturesOnly, false, true>(pos, moves, pinnedDA, checkMask & pinDA, occupied, empty,
+                                                               enemy);
 
 
     return moves;
@@ -357,27 +328,35 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard pinners = ((pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
                         (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
                         (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & possiblePinners;
-    Bitboard pinH, pinV, pinD, pinA, moveH, moveV, moveD, moveA; // horizontal, vertical, diagonal, antiDiagonal
+
+    Bitboard pinH, pinV, pinD, pinA, pinHV, pinDA, moveH, moveV, moveD, moveA;
 
     while (pinners) {
         Square pinner = pinners.popLsb();
-        Square pinned = (commonRay[king][pinner] & friendlyPieces).lsb();
         LineType type = lineType[king][pinner];
         switch (type) {
             case HORIZONTAL:
-                pinH.set(pinned);
+                pinH |= commonRay[king][pinner] | pinner;
                 break;
             case VERTICAL:
-                pinV.set(pinned);
+                pinV |= commonRay[king][pinner] | pinner;
                 break;
             case DIAGONAL:
-                pinD.set(pinned);
+                pinD |= commonRay[king][pinner] | pinner;
                 break;
             case ANTI_DIAGONAL:
-                pinA.set(pinned);
+                pinA |= commonRay[king][pinner] | pinner;
                 break;
         }
     }
+
+    pinHV = pinH | pinV;
+    pinDA = pinD | pinA;
+
+    pinH &= friendlyPieces;
+    pinV &= friendlyPieces;
+    pinD &= friendlyPieces;
+    pinA &= friendlyPieces;
 
     moveH = ~(pinV | pinD | pinA);
     moveV = ~(pinH | pinD | pinA);
@@ -394,8 +373,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     sliderAndJumperPieces.clear(king);
 
     moves = generateSliderAndJumpMoves<capturesOnly>(pos, moves, sliderAndJumperPieces, occupied, empty, enemy,
-                                                     checkMask,
-                                                     pinH, pinV, pinD, pinA);
+                                                     checkMask, pinHV, pinDA);
 
     // Generating castling moves
     if constexpr (!capturesOnly) {
