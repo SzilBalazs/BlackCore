@@ -22,8 +22,14 @@
 unsigned int MOVE_OVERHEAD = 10;
 
 constexpr U64 mask = (1ULL << 15) - 1;
-U64 searchStartedAt = 0;
-U64 searchShouldEnd = 0;
+
+U64 startedSearch;
+U64 shouldSearch;
+U64 searchTime;
+U64 maxSearch;
+U64 stabilityTime;
+
+
 bool stop = false;
 
 U64 getTime() {
@@ -31,31 +37,53 @@ U64 getTime() {
             std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void startSearch(U64 time, U64 inc, U64 movestogo, U64 movetime) {
-    movestogo = movestogo == 0 ? 27 : movestogo;
+void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime) {
     nodeCount = 0;
-    searchStartedAt = getTime();
+
+    movesToGo = movesToGo == 0 ? 25 : movesToGo;
+
+    startedSearch = getTime();
+    stabilityTime = 0;
     stop = false;
-    if (time == 0 || movetime != 0) {
-        searchShouldEnd = searchStartedAt + movetime;
+
+    if (time == 0) {
+        // We have infinite time
+        shouldSearch = 0;
+        maxSearch = 0;
+    } else if (moveTime != 0) {
+        // We are limited how much can we search
+        shouldSearch = moveTime - MOVE_OVERHEAD;
+        maxSearch = moveTime - MOVE_OVERHEAD;
     } else {
-        searchShouldEnd = searchStartedAt + inc + time / movestogo - MOVE_OVERHEAD;
+
+        U64 panicTime = time / (movesToGo + 5) + 2 * inc;
+        stabilityTime = time / 1000;
+
+        shouldSearch = time / movesToGo + inc * 3 / 4 - MOVE_OVERHEAD;
+        maxSearch = shouldSearch + panicTime;
     }
+
+    searchTime = shouldSearch;
 }
 
 void stopSearch() {
     stop = true;
 }
 
+void allocateTime(int stability) {
+    U64 newSearchTime = shouldSearch - stability * stabilityTime;
+    searchTime = std::min(maxSearch, newSearchTime);
+}
+
 bool shouldEnd() {
-    if ((nodeCount & mask) == 0 && !stop) {
-        stop = searchShouldEnd != searchStartedAt && searchShouldEnd <= getTime();
+    if ((nodeCount & mask) == 0 && maxSearch != 0 && !stop) {
+        stop = getSearchTime() >= searchTime;
     }
     return stop;
 }
 
 U64 getSearchTime() {
-    return getTime() - searchStartedAt;
+    return getTime() - startedSearch;
 }
 
 U64 getNps() {
