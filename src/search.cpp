@@ -409,10 +409,10 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
         // We only care about stability if we searched enough depth
         if (currDepth >= 12) {
             if (bestMove != bestPV) {
-                stability -= 10;
+                stability -= 6;
             } else {
                 if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
-                    stability -= 6;
+                    stability -= 4;
                 } else {
                     stability += 1;
                 }

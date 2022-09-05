@@ -40,7 +40,7 @@ U64 getTime() {
 void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime) {
     nodeCount = 0;
 
-    movesToGo = movesToGo == 0 ? 25 : movesToGo;
+    movesToGo = movesToGo == 0 ? 20 : movesToGo;
 
     startedSearch = getTime();
     stabilityTime = 0;
@@ -56,8 +56,8 @@ void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime) {
         maxSearch = moveTime - MOVE_OVERHEAD;
     } else {
 
-        U64 panicTime = time / (movesToGo + 5) + 2 * inc;
-        stabilityTime = time / 1000;
+        U64 panicTime = time / (movesToGo + 10) + 2 * inc;
+        stabilityTime = time / 400;
 
         shouldSearch = time / movesToGo + inc * 3 / 4 - MOVE_OVERHEAD;
         maxSearch = shouldSearch + panicTime;
