@@ -20,7 +20,6 @@
 #include "bench.h"
 #include "tt.h"
 #include "search.h"
-#include "movegen.h"
 #include "timeman.h"
 
 struct TestPosition {
@@ -51,26 +50,13 @@ const TestPosition testPositions[posCount] = {
         {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32",                              7, 13312960}
 };
 
-U64 perft(Position &position, Depth depth) {
-    Move moves[200];
-    Move *movesEnd = generateMoves(position, moves, false);
-    if (depth == 1) return movesEnd - moves;
-    U64 nodes = 0;
-    for (Move *it = moves; it != movesEnd; it++) {
-        position.makeMove(*it);
-        nodes += perft(position, depth - 1);
-        position.undoMove(*it);
-    }
-    return nodes;
-}
-
 void testPerft() {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     U64 totalNodes = 0;
     bool ok = true;
     for (const TestPosition &tPos : testPositions) {
         Position pos = {tPos.fen};
-        U64 nodes = perft(pos, tPos.perftDepth);
+        U64 nodes = perft<false>(pos, tPos.perftDepth);
         totalNodes += nodes;
         if (nodes != tPos.perftResult) {
             ok = false;

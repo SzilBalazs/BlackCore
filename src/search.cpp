@@ -398,14 +398,34 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     Score prevScore;
+    Move bestMove;
+
+    int stability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         Score score = searchRoot(pos, prevScore, currDepth, uci);
         if (score == UNKNOWN_SCORE) break;
+
+        // We only care about stability if we searched enough depth
+        if (currDepth >= 12) {
+            if (bestMove != bestPV) {
+                stability -= 6;
+            } else {
+                if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
+                    stability -= 4;
+                } else {
+                    stability += 1;
+                }
+            }
+
+            allocateTime(stability);
+        }
+
         prevScore = score;
+        bestMove = bestPV;
     }
 
     if (uci) {
-        out("bestmove", bestPV);
+        out("bestmove", bestMove);
     }
 }
