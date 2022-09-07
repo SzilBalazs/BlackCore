@@ -20,7 +20,7 @@
 #include "utils.h"
 
 Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64],
-rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64], adjacentSouthMasks[64];
+        rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64], adjacentSouthMasks[64];
 LineType lineType[64][64];
 
 void initBitboard() {
@@ -53,15 +53,18 @@ void initBitboard() {
 
         antiDiagonalMasks[sq] = slide<NORTH_WEST>(sq) | slide<SOUTH_EAST>(sq);
 
-        bishopMasks[sq] = diagonalMasks[sq] & antiDiagonalMasks[sq];
+        bishopMasks[sq] = diagonalMasks[sq] | antiDiagonalMasks[sq];
     }
 
     for (Square sq = A1; sq < 64; sq += 1) {
         unsigned int file = squareToFile(sq);
 
-        adjacentNorthMasks[sq] = slide<NORTH>(sq) | (file != 0 ? slide<NORTH>(sq + WEST) : 0) | (file != 7 ? slide<NORTH>(sq + EAST) : 0);
-        adjacentSouthMasks[sq] = slide<SOUTH>(sq) | (file != 0 ? slide<SOUTH>(sq + WEST) : 0) | (file != 7 ? slide<SOUTH>(sq + EAST) : 0);
-        adjacentFileMasks[sq] = ~fileMask(sq) & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
+        adjacentNorthMasks[sq] = slide<NORTH>(sq) | (file != 0 ? slide<NORTH>(sq + WEST) : 0) |
+                                 (file != 7 ? slide<NORTH>(sq + EAST) : 0);
+        adjacentSouthMasks[sq] = slide<SOUTH>(sq) | (file != 0 ? slide<SOUTH>(sq + WEST) : 0) |
+                                 (file != 7 ? slide<SOUTH>(sq + EAST) : 0);
+        adjacentFileMasks[sq] =
+                ~fileMask(sq) & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
 
         for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
             if (sq == sq2) continue;
@@ -70,7 +73,7 @@ void initBitboard() {
 
                 if (value) {
                     commonRay[sq][sq2] = value;
-                    LineType type=HORIZONTAL;
+                    LineType type = HORIZONTAL;
                     switch (dir) {
                         case NORTH:
                         case SOUTH:

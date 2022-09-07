@@ -22,6 +22,7 @@
 #include "search.h"
 #include "timeman.h"
 #include "position.h"
+#include "bench.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -51,7 +52,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
     if (piece.type == PAWN && pos.getEpSquare() == to) {
         flags = EP_CAPTURE;
-    } else if (piece.type == PAWN && std::abs((long)squareToRank(from) - (long)squareToRank(to)) == 2) {
+    } else if (piece.type == PAWN && std::abs((long) squareToRank(from) - (long) squareToRank(to)) == 2) {
         flags = DOUBLE_PAWN_PUSH;
     } else if (piece.type == KING && squareToFile(from) == 4) {
         if (squareToFile(to) == 6) {
@@ -66,7 +67,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCoreV0");
+    out("id", "name", "BlackCore_v1-1");
 
     out("id", "author", "SzilBalazs");
 
@@ -100,6 +101,7 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
+            stopSearch();
             if (searchThread.joinable())
                 searchThread.join();
             break;
@@ -115,6 +117,10 @@ void uciLoop() {
                     ttResize(std::stoi(tokens[3]));
                 } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
                     MOVE_OVERHEAD = std::stoi(tokens[4]);
+                } else if (tokens[1] == "Ponder") {
+
+                } else {
+
                 }
             }
         } else if (command == "position" || command == "pos") {
@@ -146,7 +152,7 @@ void uciLoop() {
             if (searchThread.joinable())
                 searchThread.join();
 
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 25, depth = 64, movetime = 0;
+            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, depth = 64, movetime = 0;
 
             for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {
@@ -180,10 +186,19 @@ void uciLoop() {
 
             searchThread = std::thread(iterativeDeepening, pos, depth, true);
 
-        } else if (command == "d") {
+        } else if (command == "d" || command == "display") {
             pos.display();
-        } else if (command == "e") {
+        } else if (command == "e" || command == "eval") {
             pos.displayEval();
+        } else if (command == "moves") {
+            Move moves[200];
+            Move *movesEnd = generateMoves(pos, moves, false);
+            for (Move *it = moves; it != movesEnd; it++) {
+                out(*it);
+            }
+        } else if (command == "perft") {
+            out("Total nodes:", perft<true>(pos, std::stoi(tokens[0])));
         }
     }
+    ttFree();
 }

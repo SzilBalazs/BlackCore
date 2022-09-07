@@ -30,7 +30,7 @@ constexpr Color EnemyColor() {
     else return WHITE;
 }
 
-inline Color EnemyColor(Color color) { return color==WHITE?BLACK:WHITE; }
+inline Color EnemyColor(Color color) { return color == WHITE ? BLACK : WHITE; }
 
 constexpr unsigned int squareToRank(Square square) { return square >> 3; }
 
@@ -49,6 +49,8 @@ constexpr Piece decodePiece(unsigned char encodedPiece) {
 std::string formatSquare(Square square);
 
 char pieceToChar(Piece piece);
+
+std::string typeToString(PieceType type);
 
 Piece charToPiece(char c);
 

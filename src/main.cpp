@@ -19,12 +19,20 @@
 #include "bench.h"
 #include "uci.h"
 #include "search.h"
+#include "eval.h"
+#include "tuner.h"
 
 int main(int argc, char **argv) {
+
+#ifdef TUNE
+    std::cout << "This build is for tuning only, please uncomment the TUNE define in constants.h for regular use!"
+              << std::endl;
+#endif
+
     srand(RANDOM_SEED);
     initBitboard();
     initLmr();
-
+    initEval();
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);
@@ -40,6 +48,12 @@ int main(int argc, char **argv) {
         testPerft();
     } else if (mode == "uci") {
         uciLoop();
+    } else if (mode == "tune") {
+#ifdef TUNE
+        tune("out.fen");
+#else
+        std::cout << "This build doesn't support tuning!" << std::endl;
+#endif
     } else {
         std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
     }

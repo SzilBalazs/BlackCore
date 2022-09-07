@@ -25,19 +25,28 @@
 extern U64 nodeCount;
 
 struct BoardState {
-    Color stm=COLOR_EMPTY;
-    Square epSquare=NULL_SQUARE;
-    unsigned char castlingRights=0;
-    U64 hash=0;
+    Color stm = COLOR_EMPTY;
+    Square epSquare = NULL_SQUARE;
+    unsigned char castlingRights = 0;
+    U64 hash = 0;
 
-    Piece capturedPiece={};
+    Piece capturedPiece = {};
 
-    BoardState *lastIrreversibleMove= nullptr;
+    BoardState *lastIrreversibleMove = nullptr;
 
     constexpr BoardState() = default;
 };
 
+struct RawState {
+    Piece board[64];
+    Bitboard pieceBB[6] = {0}, allPieceBB[2] = {0};
+    Color stm = COLOR_EMPTY;
+    Square epSquare = NULL_SQUARE;
+    unsigned char castlingRights = 0;
+};
+
 struct StateStack {
+
     BoardState stateStart[1000];
     BoardState *currState;
 
@@ -58,9 +67,13 @@ struct StateStack {
 
     inline BoardState *top() const { return currState; }
 
-    inline void clear() { currState = stateStart; }
+    inline void clear() {
+        currState = stateStart;
+        *currState = {};
+    }
 
     inline Ply getMove50() const { return currState - currState->lastIrreversibleMove; }
+
 };
 
 #define state states.top()
@@ -132,6 +145,10 @@ public:
     void displayEval();
 
     void loadPositionFromFen(const std::string &fen);
+
+    void loadPositionFromRawState(const RawState &rawState);
+
+    RawState getRawState();
 
     Position();
 

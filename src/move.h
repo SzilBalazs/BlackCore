@@ -52,6 +52,10 @@ public:
         data = (flags << 12) | (from << 6) | (to);
     }
 
+    constexpr Move(Square from, Square to) {
+        data = (from << 6) | (to);
+    }
+
     constexpr Move() = default;
 
     constexpr Square getTo() const { return Square(data & 0x3f); }
@@ -83,7 +87,7 @@ public:
     std::string str() const;
 
 private:
-    uint16_t data=0;
+    uint16_t data = 0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Move &move);

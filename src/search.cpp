@@ -23,6 +23,7 @@
 #include <cmath>
 
 Ply selectiveDepth = 0;
+Move bestPV;
 
 // Move index -> depth
 Depth reductions[200][64];
@@ -31,9 +32,8 @@ void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < 64; depth++) {
 
-            // Fruit reloaded formula
-            reductions[moveIndex][depth] = Depth(
-                    LMR_BASE + (sqrt((double) moveIndex - 1) + sqrt((double) depth - 1)) / LMR_SCALE);
+            reductions[moveIndex][depth] = std::max(2, Depth(
+                    LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
 
         }
     }
@@ -104,8 +104,13 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    if (ply > selectiveDepth)
+    if (ply > selectiveDepth) {
         selectiveDepth = ply;
+    }
+
+    bool ttHit;
+    Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+    if (ttScore != UNKNOWN_SCORE) return ttScore;
 
     Score staticEval = eval(pos);
 
@@ -118,6 +123,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     }
 
     MoveList moves = {pos, ply, true};
+    EntryFlag ttFlag = ALPHA;
+    Move bestMove;
 
     while (!moves.empty()) {
 
@@ -129,7 +136,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             continue;
 
         // SEE pruning
-        if (alpha > -WORST_MATE && see(pos, m) < -SEE_PRUNING_MARGIN)
+        if (alpha > -WORST_MATE && see(pos, m) < 0)
             continue;
 
         pos.makeMove(m);
@@ -141,14 +148,20 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         if (shouldEnd()) return UNKNOWN_SCORE;
 
         if (score >= beta) {
+            ttSave(pos.getHash(), 0, score, BETA, m);
             return beta;
         }
 
         if (score > alpha) {
             alpha = score;
+            ttFlag = EXACT;
+            bestMove = m;
         }
+
     }
 
+    // TODO elo test storing null move instead of bestMove
+    ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
 
@@ -159,9 +172,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
 
     bool ttHit = false;
+    bool pvNode = beta - alpha > 1;
     Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
+    if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;
 
     // Mate distance pruning
     if (ply > 0) {
@@ -184,8 +198,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             return DRAW_VALUE;
         }
     }
-
-    bool pvNode = beta - alpha > 1;
 
     Score staticEval = state->eval = eval(pos);
 
@@ -210,7 +222,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
 
-                Depth R = NULL_MOVE_R + depth / NULL_MOVE_DEPTH_R;
+                Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
 
                 state->move = Move();
                 pos.makeNullMove();
@@ -225,9 +237,12 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && depth >= IID_DEPTH) depth--;
+        if (!ttHit && !pvNode) depth--;
+
+        if (depth <= 0) return quiescence(pos, alpha, beta, ply);
     }
 
+    // Check extension
     if (inCheck)
         depth++;
 
@@ -242,16 +257,28 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         Score score;
 
+        // We can prune the move in some cases
+        if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
+
+            // Late move/movecount pruning
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet() && !m.isPromo())
+                continue;
+
+        }
+
         pos.makeMove(m);
+
+        ttPrefetch(pos.getHash());
 
         if (index == 0) {
             score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && m.isQuiet() &&
-                m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
+                m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha, ply + 1);
+                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
+                                ply + 1);
             } else score = alpha + 1;
 
 
@@ -297,7 +324,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
 std::string getPvLine(Position &pos) {
     Move m = getHashMove(pos.getHash());
-    if (!pos.isRepetition() && m) {
+    if (!pos.isRepetition() && !m.isNull()) {
         pos.makeMove(m);
         std::string str = m.str() + " " + getPvLine(pos);
         pos.undoMove(m);
@@ -307,53 +334,98 @@ std::string getPvLine(Position &pos) {
     }
 }
 
-Score searchRoot(Position &pos, Depth depth, bool uci) {
+Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 
+    globalAge++;
     clearTables();
     selectiveDepth = 0;
-    SearchState stateStack[400];
+    SearchState stateStack[100];
+    Score alpha = -INF_SCORE;
+    Score beta = INF_SCORE;
 
-    Score score = search(pos, stateStack + 1, depth, -INF_SCORE, INF_SCORE, 0);
-
-    if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
-
-    std::string pvLine = getPvLine(pos);
-    if (uci) {
-        Score absScore = std::abs(score);
-        int mateDepth = MATE_VALUE - absScore;
-        std::string scoreStr = "cp " + std::to_string(score);
-
-        if (mateDepth <= 64) {
-            int matePly;
-            // We are giving the mate
-            if (score > 0) {
-                matePly = mateDepth / 2 + 1;
-
-            } else {
-                matePly = -(mateDepth / 2);
-            }
-            scoreStr = "mate " + std::to_string(matePly);
-        }
-
-        out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
-            getSearchTime(), "nps", getNps(), "pv", pvLine);
+    if (depth >= ASPIRATION_DEPTH) {
+        alpha = prevScore - ASPIRATION_DELTA;
+        beta = prevScore + ASPIRATION_DELTA;
     }
 
+    int iter = 1;
+    while (true) {
+        if (shouldEnd()) return UNKNOWN_SCORE;
 
-    return score;
+        if (alpha < -ASPIRATION_BOUND) alpha = -INF_SCORE;
+        if (beta > ASPIRATION_BOUND) beta = INF_SCORE;
+
+        Score score = search(pos, stateStack + 1, depth, alpha, beta, 0);
+
+        if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
+
+        if (score <= alpha) {
+            alpha = std::max(alpha - iter * iter * ASPIRATION_DELTA, -INF_SCORE);
+        } else if (score >= beta) {
+            beta = std::min(beta + iter * iter * ASPIRATION_DELTA, INF_SCORE);
+        } else {
+            bestPV = getHashMove(pos.getHash());
+
+            std::string pvLine = getPvLine(pos);
+            if (uci) {
+                Score absScore = std::abs(score);
+                int mateDepth = MATE_VALUE - absScore;
+                std::string scoreStr = "cp " + std::to_string(score);
+
+                if (mateDepth <= 64) {
+                    int matePly;
+                    // We are giving the mate
+                    if (score > 0) {
+                        matePly = mateDepth / 2 + 1;
+
+                    } else {
+                        matePly = -(mateDepth / 2);
+                    }
+                    scoreStr = "mate " + std::to_string(matePly);
+                }
+
+                out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
+                    getSearchTime(), "nps", getNps(), "pv", pvLine);
+            }
+
+            return score;
+        }
+
+        iter++;
+    }
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
+
+    Score prevScore;
     Move bestMove;
 
+    int stability = 0;
+
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, currDepth, uci);
+        Score score = searchRoot(pos, prevScore, currDepth, uci);
         if (score == UNKNOWN_SCORE) break;
-        bestMove = getHashMove(pos.getHash());
+
+        // We only care about stability if we searched enough depth
+        if (currDepth >= 12) {
+            if (bestMove != bestPV) {
+                stability -= 6;
+            } else {
+                if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
+                    stability -= 4;
+                } else {
+                    stability += 1;
+                }
+            }
+
+            allocateTime(stability);
+        }
+
+        prevScore = score;
+        bestMove = bestPV;
     }
 
-    globalAge++;
-
-    if (uci)
+    if (uci) {
         out("bestmove", bestMove);
+    }
 }

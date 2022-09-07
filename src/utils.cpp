@@ -50,6 +50,25 @@ char pieceToChar(Piece piece) {
     return base;
 }
 
+std::string typeToString(PieceType type) {
+    switch (type) {
+        case KING:
+            return "king";
+        case PAWN:
+            return "pawn";
+        case KNIGHT:
+            return "knight";
+        case BISHOP:
+            return "bishop";
+        case ROOK:
+            return "rook";
+        case QUEEN:
+            return "queen";
+        default:
+            return "empty";
+    }
+}
+
 Piece charToPiece(char c) {
     Piece piece;
 

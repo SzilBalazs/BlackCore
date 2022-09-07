@@ -19,6 +19,8 @@
 
 #include <string>
 
+// #define TUNE
+
 typedef uint64_t U64;
 typedef int32_t Score;
 typedef int32_t Depth;
@@ -105,8 +107,8 @@ enum Color {
 constexpr PieceType PIECE_TYPES_BY_VALUE[6] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
 
 struct Piece {
-    PieceType type=PIECE_EMPTY;
-    Color color=COLOR_EMPTY;
+    PieceType type = PIECE_EMPTY;
+    Color color = COLOR_EMPTY;
 
     constexpr Piece() = default;
 

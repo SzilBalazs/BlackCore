@@ -24,22 +24,25 @@ constexpr Score DELTA_MARGIN = 400;
 constexpr Score RAZOR_MARGIN = 130;
 
 constexpr Depth RFP_DEPTH = 5;
-constexpr Score RFP_DEPTH_MULTIPLIER = 80;
-constexpr Score RFP_IMPROVING_MULTIPLIER = 90;
+constexpr Score RFP_DEPTH_MULTIPLIER = 70;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 80;
 
 constexpr Depth NULL_MOVE_DEPTH = 3;
-constexpr Depth NULL_MOVE_R = 4;
-constexpr Depth NULL_MOVE_DEPTH_R = 5;
+constexpr Depth NULL_MOVE_BASE_R = 4;
+constexpr Depth NULL_MOVE_R_SCALE = 5;
 
 constexpr Depth LMR_DEPTH = 4;
-constexpr double LMR_BASE = 0.6;
-constexpr double LMR_SCALE = 1.8;
+constexpr double LMR_BASE = 1;
+constexpr double LMR_SCALE = 1.75;
 constexpr int LMR_MIN_I = 3;
-constexpr int LMR_PVNODE_I = 3;
+constexpr int LMR_PVNODE_I = 2;
 
-constexpr Score SEE_PRUNING_MARGIN = 150;
+constexpr Depth LMP_DEPTH = 4;
+constexpr int LMP_MOVES = 5;
 
-constexpr Depth IID_DEPTH = 5;
+constexpr Depth ASPIRATION_DEPTH = 9;
+constexpr Score ASPIRATION_DELTA = 30;
+constexpr Score ASPIRATION_BOUND = 3000;
 
 struct SearchState {
     Move move;

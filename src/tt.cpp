@@ -18,7 +18,9 @@
 #include "tt.h"
 
 #ifdef __linux__
+
 #include <sys/mman.h>
+
 #endif
 
 TTable tt;
@@ -33,17 +35,20 @@ void ttClear() {
     globalAge = 0;
 }
 
+void ttFree() {
+    free(tt.table);
+}
+
 void ttResize(unsigned int MBSize) {
 
     if (tt.bucketCount)
-        free(tt.table);
+        ttFree();
 
     unsigned int i = 10;
     while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket)) i++;
 
     tt.bucketCount = (1ULL << (i - 1));
     tt.mask = tt.bucketCount - 1ULL;
-    globalAge = 0;
 
 
 #ifdef __linux__
@@ -55,6 +60,8 @@ void ttResize(unsigned int MBSize) {
 #else
     tt.table = (TTBucket*)malloc(tt.bucketCount * sizeof(TTBucket));
 #endif
+
+    ttClear();
 
 }
 
@@ -98,12 +105,15 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
         entry = &bucket->entryB;
     }
 
-    entry->hash = hash;
-    entry->depth = depth;
-    entry->eval = eval;
-    entry->flag = flag;
-    entry->hashMove = bestMove;
-    entry->age = globalAge;
+    if (entry->hash != hash || flag == EXACT || entry->depth * 2 / 3 <= depth) {
+        entry->hash = hash;
+        entry->depth = depth;
+        entry->eval = eval;
+        entry->flag = flag;
+        entry->hashMove = bestMove;
+        entry->age = globalAge;
+    }
+
 }
 
 Move getHashMove(U64 hash) {
@@ -111,4 +121,8 @@ Move getHashMove(U64 hash) {
     if (bucket->entryA.hash == hash) return bucket->entryA.hashMove;
     else if (bucket->entryB.hash == hash) return bucket->entryB.hashMove;
     return {};
+}
+
+void ttPrefetch(U64 hash) {
+    __builtin_prefetch(&tt.table[hash & tt.mask], 0, 1);
 }
