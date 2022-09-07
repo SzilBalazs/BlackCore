@@ -17,6 +17,7 @@
 #ifndef BLACKCORE_SEARCH_H
 #define BLACKCORE_SEARCH_H
 
+#include <atomic>
 #include "movegen.h"
 
 constexpr Score DELTA_MARGIN = 400;
@@ -53,6 +54,6 @@ void initLmr();
 
 Score see(const Position &pos, Move move);
 
-void iterativeDeepening(Position pos, Depth depth, bool uci);
+void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning);
 
 #endif //BLACKCORE_SEARCH_H

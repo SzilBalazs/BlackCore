@@ -395,7 +395,9 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     }
 }
 
-void iterativeDeepening(Position pos, Depth depth, bool uci) {
+void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning) {
+
+    searchRunning = true;
 
     Score prevScore;
     Move bestMove;
@@ -428,4 +430,6 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
     if (uci) {
         out("bestmove", bestMove);
     }
+
+    searchRunning = false;
 }
