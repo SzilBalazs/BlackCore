@@ -69,6 +69,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install g++-11
+          g++-11 --version
+
       - name: Making BlackCore
         run: |
           cd src

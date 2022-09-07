@@ -22,7 +22,7 @@ This project contains the following files:
 
 * UCI support
 * Perft test
-    * Up to ~230M nps
+    * Up to ~240M nps
         * Intel i3-7100 3.9Ghz CPU
         * Single-threaded
         * Hashing disabled
@@ -33,6 +33,7 @@ This project contains the following files:
 * Engine
     * Search
         * Iterative deepening
+        * Aspiration window
         * Alpha-Beta
             * Negamax
             * Transposition table
@@ -42,8 +43,9 @@ This project contains the following files:
                     * 1 always replace
                     * 1 depth preferred
             * Principal variation search
-                * Late move pruning
-                    * R = LMR_BASE + (sqrt(index - 1) + sqrt(depth - 1)) / LMR_SCALE
+                * Late move reduction
+                    * R = max(2, LMR_BASE + (log(moveIndex) * log(depth) / LMR_SCALE)));
+                * Move count/late move pruning
             * Razoring
                 * Dropping into qsearch at frontier nodes
             * Reverse futility pruning
@@ -60,20 +62,23 @@ This project contains the following files:
             * Under promotions
             * Captures
                 * MVV-LVA
-                * SEE - currently disabled
+                * SEE
             * Quiet moves
                 * Killer heuristic
                 * History heuristic
         * Fast repetition detection
     * Time management
-        * Sudden death
-        * Increment per move
-        * Move-time
-        * Moves to go support
+        * Allocate time using search stability
+        * Supports
+            * Sudden death
+            * Increment per move
+            * Move-time
+            * Moves to go
     * Handcrafted evaluation
         * Tapered eval
             * Mid-game and end-game
         * Material balance
+        * Piece-square tables
         * Pawn structure
             * Double pawns
             * Isolated pawns
@@ -81,7 +86,8 @@ This project contains the following files:
         * King safety
             * Pawn king shield
             * Bonus for castled king
-            * Trapped rooks restricted by uncastled king
+            * Trapped rooks
+            * Penalty for enemy pieces threataning king
         * Knight mobility
             * Restricted by enemy pawns
         * Bishop mobility

@@ -85,6 +85,8 @@ void uciLoop() {
     Position pos = {STARTING_FEN};
     std::thread searchThread;
 
+    std::atomic<bool> searchRunning(false);
+
     while (true) {
         std::string line, command, token;
         std::getline(std::cin, line);
@@ -102,13 +104,9 @@ void uciLoop() {
             out("readyok");
         } else if (command == "quit") {
             stopSearch();
-            if (searchThread.joinable())
-                searchThread.join();
             break;
         } else if (command == "stop") {
             stopSearch();
-            if (searchThread.joinable())
-                searchThread.join();
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -149,8 +147,10 @@ void uciLoop() {
 
         } else if (command == "go") {
 
-            if (searchThread.joinable())
-                searchThread.join();
+            if (searchRunning) {
+                out("Search is already running!", "To stop it use the \"stop\" command.");
+                continue;
+            }
 
             U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, depth = 64, movetime = 0;
 
@@ -184,7 +184,8 @@ void uciLoop() {
             else
                 startSearch(btime, binc, movestogo, movetime);
 
-            searchThread = std::thread(iterativeDeepening, pos, depth, true);
+            searchThread = std::thread(iterativeDeepening, pos, depth, true, std::ref(searchRunning));
+            searchThread.detach();
 
         } else if (command == "d" || command == "display") {
             pos.display();

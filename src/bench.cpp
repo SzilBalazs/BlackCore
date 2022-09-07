@@ -17,6 +17,7 @@
 #include <string>
 #include <chrono>
 #include <iostream>
+#include <functional>
 #include "bench.h"
 #include "tt.h"
 #include "search.h"
@@ -83,7 +84,8 @@ void testSearch() {
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
-        iterativeDeepening(pos, SEARCH_DEPTH, false);
+        std::atomic<bool> a;
+        iterativeDeepening(pos, SEARCH_DEPTH, false, std::ref(a));
     }
 
     std::cout << nodeCount << " nodes " << getNps() << " nps" << std::endl;
