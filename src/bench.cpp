@@ -17,6 +17,7 @@
 #include <string>
 #include <chrono>
 #include <iostream>
+#include <functional>
 #include "bench.h"
 #include "tt.h"
 #include "search.h"
