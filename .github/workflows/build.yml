@@ -68,8 +68,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
+          sudo update-alternatives --remove-all g++
           sudo apt-get install g++-12
-          g++ --version
+
       - name: Making BlackCore
         run: |
           cd src
