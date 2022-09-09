@@ -45,26 +45,52 @@ namespace NNUE {
             for (PieceType type : {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN}) {
                 Bitboard bb = pos.pieces(color, type);
                 while (bb) {
-                    addFeature(color * 384 + type * 64 + bb.popLsb());
+                    addFeature(getAccumulatorIndex(color, type, bb.popLsb()));
                 }
             }
         }
     }
 
     void Accumulator::addFeature(unsigned int index) {
-        for (unsigned int i = 0; i < L_1_SIZE; i++) {
+        for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] += L_1_WEIGHTS[index * L_1_SIZE + i];
         }
     }
 
     void Accumulator::removeFeature(unsigned int index) {
-        for (unsigned int i = 0; i < L_1_SIZE; i++) {
+        for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] -= L_1_WEIGHTS[index * L_1_SIZE + i];
         }
     }
 
+    Score Accumulator::forward() {
+
+        int16_t layer2[L_2_SIZE];
+
+        std::memcpy(layer2, L_2_BIASES, sizeof(int16_t) * L_2_SIZE);
+
+        for (int inIndex = 0; inIndex < L_1_SIZE; inIndex++) {
+            for (int outIndex = 0; outIndex < L_2_SIZE; outIndex++) {
+                layer2[outIndex] += ReLu(hiddenLayer[inIndex]) * L_2_WEIGHTS[inIndex * L_2_SIZE + outIndex];
+            }
+        }
+
+        Score output = 0;
+
+        for (int inIndex = 0; inIndex < L_2_SIZE; inIndex++) {
+            output += ReLu(layer2[inIndex]) * OUT_WEIGHTS[inIndex];
+        }
+
+        return output;
+    }
 
     void init() {
+
+        std::memset(L_1_WEIGHTS, 0, sizeof(L_1_WEIGHTS));
+        std::memset(L_1_BIASES, 0, sizeof(L_1_BIASES));
+        std::memset(L_2_WEIGHTS, 0, sizeof(L_2_WEIGHTS));
+        std::memset(L_2_BIASES, 0, sizeof(L_2_BIASES));
+        std::memset(OUT_WEIGHTS, 0, sizeof(OUT_WEIGHTS));
 
         FILE *file = fopen("nnue.net", "rb");
 
@@ -80,6 +106,7 @@ namespace NNUE {
             std::cout << "No net was found! Please download the nnue.net with the executable" << std::endl;
             exit(1);
         }
+
     }
 
 

@@ -23,6 +23,7 @@
 #include "timeman.h"
 #include "position.h"
 #include "bench.h"
+#include "nnue.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));

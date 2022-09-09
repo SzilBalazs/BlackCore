@@ -23,7 +23,7 @@ namespace NNUE {
 
     /* +-------------------+
      * | NNUE Architecture |
-     * | 768->32->32->1     |
+     * | 768->32->32->1    |
      * +-------------------+
      *
      * L_0_IN = features count
@@ -45,7 +45,7 @@ namespace NNUE {
     struct Accumulator {
         int16_t hiddenLayer[L_1_SIZE] = {0};
 
-        explicit Accumulator(const Position &pos);
+        Accumulator(const Position &pos);
 
         Accumulator(Accumulator &accumulator);
 
@@ -54,7 +54,17 @@ namespace NNUE {
         void addFeature(unsigned int index);
 
         void removeFeature(unsigned int index);
+
+        Score forward();
     };
+
+    constexpr unsigned int getAccumulatorIndex(Color color, PieceType type, Square square) {
+        return color * 384 + type * 64 + square;
+    }
+
+    constexpr int16_t ReLu(int16_t in) {
+        return std::max((int16_t) 0, in);
+    }
 
     void init();
 }
