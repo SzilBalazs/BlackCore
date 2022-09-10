@@ -23,7 +23,6 @@
 #include "timeman.h"
 #include "position.h"
 #include "bench.h"
-#include "nnue.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -153,7 +152,8 @@ void uciLoop() {
                 continue;
             }
 
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, depth = 64, movetime = 0;
+            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0;
+            Depth depth = 64;
 
             for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {

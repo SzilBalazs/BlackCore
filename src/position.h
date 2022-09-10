@@ -21,6 +21,7 @@
 #include "bitboard.h"
 #include "utils.h"
 #include "move.h"
+#include "nnue.h"
 
 extern U64 nodeCount;
 
@@ -33,6 +34,8 @@ struct BoardState {
     Piece capturedPiece = {};
 
     BoardState *lastIrreversibleMove = nullptr;
+
+    NNUE::Accumulator accumulator = {};
 
     constexpr BoardState() = default;
 };
@@ -57,6 +60,7 @@ struct StateStack {
 
     inline void push(BoardState newState) {
         newState.lastIrreversibleMove = currState->lastIrreversibleMove;
+        newState.accumulator.loadAccumulator(currState->accumulator);
         currState++;
         *currState = newState;
     }
@@ -156,10 +160,13 @@ public:
 
 private:
 
+    template<bool updateAccumulator>
     void clearSquare(Square square);
 
+    template<bool updateAccumulator>
     void setSquare(Square square, Piece piece);
 
+    template<bool updateAccumulator>
     void movePiece(Square from, Square to);
 
     inline void setCastleRight(unsigned char castleRight) { state->castlingRights |= castleRight; }
@@ -181,6 +188,57 @@ private:
     StateStack states;
 };
 
+template<bool updateAccumulator>
+void Position::clearSquare(Square square) {
+    if (pieceAt(square).isNull())
+        return;
+
+    Piece piece = pieceAt(square);
+
+    pieceBB[piece.type].clear(square);
+    allPieceBB[piece.color].clear(square);
+
+    board[square] = {};
+
+    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
+
+    if constexpr (updateAccumulator) {
+        state->accumulator.removeFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+    }
+}
+
+template<bool updateAccumulator>
+void Position::setSquare(Square square, Piece piece) {
+    if (!pieceAt(square).isNull()) {
+        Piece p = pieceAt(square);
+
+        pieceBB[p.type].clear(square);
+        allPieceBB[p.color].clear(square);
+
+        state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
+
+        if constexpr (updateAccumulator) {
+            state->accumulator.removeFeature(NNUE::getAccumulatorIndex(p.color, p.type, square));
+        }
+    }
+
+    pieceBB[piece.type].set(square);
+    allPieceBB[piece.color].set(square);
+    board[square] = piece;
+
+    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
+
+    if constexpr (updateAccumulator) {
+        state->accumulator.addFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+    }
+}
+
+template<bool updateAccumulator>
+void Position::movePiece(Square from, Square to) {
+    setSquare<updateAccumulator>(to, pieceAt(from));
+    clearSquare<updateAccumulator>(from);
+}
+
 template<Color color>
 void Position::makeMove(Move move) {
     nodeCount++;
@@ -194,10 +252,8 @@ void Position::makeMove(Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-
     if (move.equalFlag(EP_CAPTURE)) {
         newState.capturedPiece = {PAWN, enemyColor};
-        clearSquare(to + DOWN);
     } else {
         newState.capturedPiece = pieceAt(to);
     }
@@ -218,6 +274,10 @@ void Position::makeMove(Move move) {
     }
 
     states.push(newState);
+
+    if (move.equalFlag(EP_CAPTURE)) {
+        clearSquare<true>(to + DOWN);
+    }
 
     if (move.isCapture() || pieceAt(from).type == PAWN) {
         state->lastIrreversibleMove = state;
@@ -242,19 +302,19 @@ void Position::makeMove(Move move) {
     // Moving rook in case of a castle
     if (move.equalFlag(KING_CASTLE)) {
         if constexpr (color == WHITE) {
-            movePiece(H1, F1);
+            movePiece<true>(H1, F1);
         } else {
-            movePiece(H8, F8);
+            movePiece<true>(H8, F8);
         }
     } else if (move.equalFlag(QUEEN_CASTLE)) {
         if constexpr (color == WHITE) {
-            movePiece(A1, D1);
+            movePiece<true>(A1, D1);
         } else {
-            movePiece(A8, D8);
+            movePiece<true>(A8, D8);
         }
     }
 
-    movePiece(from, to);
+    movePiece<true>(from, to);
 
     if (move.isFlag(PROMO_FLAG)) {
         Piece piece = {PIECE_EMPTY, color};
@@ -267,7 +327,7 @@ void Position::makeMove(Move move) {
         } else if (move.equalFlag(PROMO_QUEEN) || move.equalFlag(PROMO_CAPTURE_QUEEN)) {
             piece.type = QUEEN;
         }
-        setSquare(to, piece);
+        setSquare<true>(to, piece);
     }
 }
 
@@ -281,30 +341,30 @@ void Position::undoMove(Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    movePiece(to, from);
+    movePiece<false>(to, from);
 
 
     if (move.equalFlag(KING_CASTLE)) {
         if constexpr (enemyColor == WHITE) {
-            movePiece(F1, H1);
+            movePiece<false>(F1, H1);
         } else {
-            movePiece(F8, H8);
+            movePiece<false>(F8, H8);
         }
     } else if (move.equalFlag(QUEEN_CASTLE)) {
         if constexpr (enemyColor == WHITE) {
-            movePiece(D1, A1);
+            movePiece<false>(D1, A1);
         } else {
-            movePiece(D8, A8);
+            movePiece<false>(D8, A8);
         }
     }
 
     if (move.equalFlag(EP_CAPTURE))
-        setSquare(to + DOWN, state->capturedPiece);
+        setSquare<false>(to + DOWN, state->capturedPiece);
     else if (move.isCapture())
-        setSquare(to, state->capturedPiece);
+        setSquare<false>(to, state->capturedPiece);
 
     if (move.isPromo())
-        setSquare(from, {PAWN, enemyColor});
+        setSquare<false>(from, {PAWN, enemyColor});
 
     states.pop();
 }

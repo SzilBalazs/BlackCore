@@ -397,6 +397,8 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 
 void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning) {
 
+    pos.getState()->accumulator.refresh(pos);
+
     searchRunning = true;
 
     Score prevScore;

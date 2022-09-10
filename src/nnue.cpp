@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cstring>
 #include "nnue.h"
+#include "position.h"
 
 namespace NNUE {
 
@@ -30,23 +31,17 @@ namespace NNUE {
 
     int16_t OUT_WEIGHTS[L_2_SIZE];
 
-    Accumulator::Accumulator(const Position &pos) {
-        refresh(pos);
-    }
-
-    Accumulator::Accumulator(NNUE::Accumulator &accumulator) {
+    void Accumulator::loadAccumulator(NNUE::Accumulator &accumulator) {
         std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
     }
 
     void Accumulator::refresh(const Position &pos) {
         std::memcpy(hiddenLayer, L_1_BIASES, sizeof(int16_t) * L_1_SIZE);
 
-        for (Color color : {WHITE, BLACK}) {
-            for (PieceType type : {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN}) {
-                Bitboard bb = pos.pieces(color, type);
-                while (bb) {
-                    addFeature(getAccumulatorIndex(color, type, bb.popLsb()));
-                }
+        for (Square sq = A1; sq < 64; sq += 1) {
+            Piece p = pos.pieceAt(sq);
+            if (!p.isNull()) {
+                addFeature(getAccumulatorIndex(p.color, p.type, sq));
             }
         }
     }
@@ -92,6 +87,7 @@ namespace NNUE {
         std::memset(L_2_BIASES, 0, sizeof(L_2_BIASES));
         std::memset(OUT_WEIGHTS, 0, sizeof(OUT_WEIGHTS));
 
+        return;
         FILE *file = fopen("nnue.net", "rb");
 
         if (file != nullptr) {
@@ -108,6 +104,4 @@ namespace NNUE {
         }
 
     }
-
-
 }

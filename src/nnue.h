@@ -17,7 +17,9 @@
 #ifndef BLACKCORE_NNUE_H
 #define BLACKCORE_NNUE_H
 
-#include "position.h"
+#include "bitboard.h"
+
+class Position;
 
 namespace NNUE {
 
@@ -41,13 +43,12 @@ namespace NNUE {
     constexpr unsigned int L_1_SIZE = 32;
     constexpr unsigned int L_2_SIZE = 32;
 
-
     struct Accumulator {
-        int16_t hiddenLayer[L_1_SIZE] = {0};
+        int16_t hiddenLayer[L_1_SIZE];
 
-        Accumulator(const Position &pos);
+        constexpr Accumulator() = default;
 
-        Accumulator(Accumulator &accumulator);
+        void loadAccumulator(Accumulator &accumulator);
 
         void refresh(const Position &pos);
 
