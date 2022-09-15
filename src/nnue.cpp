@@ -29,7 +29,6 @@ namespace NNUE {
     int16_t L_1_WEIGHTS[L_1_SIZE * 1];
     int16_t L_1_BIASES[1];
 
-
     void Accumulator::loadAccumulator(NNUE::Accumulator &accumulator) {
         std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
     }
@@ -45,13 +44,13 @@ namespace NNUE {
         }
     }
 
-    void Accumulator::addFeature(unsigned int index) {
+    void Accumulator::addFeature(int index) {
         for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] += L_0_WEIGHTS[i * L_0_SIZE + index];
         }
     }
 
-    void Accumulator::removeFeature(unsigned int index) {
+    void Accumulator::removeFeature(int index) {
         for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] -= L_0_WEIGHTS[i * L_0_SIZE + index];
         }
@@ -59,7 +58,7 @@ namespace NNUE {
 
     Score Accumulator::forward() {
 
-        int32_t output = L_1_BIASES[0] * 64;
+        int32_t output = L_1_BIASES[0];
 
         for (int i = 0; i < L_1_SIZE; i++) {
             output += ReLU(hiddenLayer[i]) * L_1_WEIGHTS[i];

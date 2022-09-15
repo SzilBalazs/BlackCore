@@ -40,8 +40,15 @@ namespace NNUE {
      */
 
 
-    constexpr unsigned int L_0_SIZE = 2 * 6 * 64;
-    constexpr unsigned int L_1_SIZE = 256;
+    constexpr int L_0_SIZE = 768;
+    constexpr int L_1_SIZE = 256;
+
+
+    extern int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
+    extern int16_t L_0_BIASES[L_1_SIZE];
+
+    extern int16_t L_1_WEIGHTS[L_1_SIZE * 1];
+    extern int16_t L_1_BIASES[1];
 
     struct Accumulator {
         int16_t hiddenLayer[L_1_SIZE];
@@ -52,14 +59,14 @@ namespace NNUE {
 
         void refresh(const Position &pos);
 
-        void addFeature(unsigned int index);
+        void addFeature(int index);
 
-        void removeFeature(unsigned int index);
+        void removeFeature(int index);
 
         Score forward();
     };
 
-    constexpr unsigned int getAccumulatorIndex(Color color, PieceType type, Square square) {
+    constexpr int getAccumulatorIndex(Color color, PieceType type, Square square) {
         return color * 384 + type * 64 + square;
     }
 
