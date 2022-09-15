@@ -23,10 +23,11 @@ class Position;
 
 namespace NNUE {
 
-    /* +-------------------+
-     * | NNUE Architecture |
-     * | 768->32->32->1    |
-     * +-------------------+
+    /* +-----------------------+
+     * |   NNUE Architecture   |
+     * |      768->256->1      |
+     * |   Activation: ReLU    |
+     * +-----------------------+
      *
      * L_0_IN = features count
      *
@@ -39,9 +40,8 @@ namespace NNUE {
      */
 
 
-    constexpr unsigned int L_0_IN = 2 * 6 * 64;
-    constexpr unsigned int L_1_SIZE = 32;
-    constexpr unsigned int L_2_SIZE = 32;
+    constexpr unsigned int L_0_SIZE = 2 * 6 * 64;
+    constexpr unsigned int L_1_SIZE = 256;
 
     struct Accumulator {
         int16_t hiddenLayer[L_1_SIZE];
@@ -63,7 +63,7 @@ namespace NNUE {
         return color * 384 + type * 64 + square;
     }
 
-    constexpr int16_t ReLu(int16_t in) {
+    constexpr int16_t ReLU(int16_t in) {
         return std::max((int16_t) 0, in);
     }
 

@@ -145,6 +145,8 @@ void uciLoop() {
                 }
             }
 
+            pos.getState()->accumulator.refresh(pos);
+
         } else if (command == "go") {
 
             if (searchRunning) {

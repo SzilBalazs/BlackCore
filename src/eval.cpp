@@ -315,7 +315,11 @@ Value evalKings(const Position &pos, EvalData &evalData) {
 
 Score eval(const Position &pos) {
 
-    Square wKing = pos.pieces<WHITE, KING>().lsb();
+    Score score = pos.getState()->accumulator.forward();
+
+    return pos.getSideToMove() == WHITE ? score : -score;
+
+    /*Square wKing = pos.pieces<WHITE, KING>().lsb();
     Square bKing = pos.pieces<BLACK, KING>().lsb();
 
     EvalData evalData = {wKing, bKing};
@@ -348,5 +352,5 @@ Score eval(const Position &pos) {
     Score score = ((value.eg * (24 - phase)) + (value.mg * phase)) / 24;
 
 
-    return TEMPO_SCORE + (pos.getSideToMove() == WHITE ? score : -score);
+    return TEMPO_SCORE + (pos.getSideToMove() == WHITE ? score : -score);*/
 }

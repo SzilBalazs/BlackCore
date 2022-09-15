@@ -130,6 +130,8 @@ public:
 
     inline BoardState *getState() { return state; }
 
+    inline BoardState *getState() const { return state; }
+
     inline U64 getHash() const { return state->hash; }
 
     inline Ply getMove50() const { return states.getMove50(); }
