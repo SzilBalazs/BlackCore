@@ -18,19 +18,38 @@
 #include <cstdio>
 #include <iostream>
 #include <cstring>
+#include <immintrin.h>
 #include "nnue.h"
 #include "position.h"
 
 namespace NNUE {
 
-    int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
-    int16_t L_0_BIASES[L_1_SIZE];
+    alignas(64) int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
+    alignas(64) int16_t L_0_BIASES[L_1_SIZE];
 
-    int16_t L_1_WEIGHTS[L_1_SIZE * 1];
-    int16_t L_1_BIASES[1];
+    alignas(64) int16_t L_1_WEIGHTS[L_1_SIZE * 1];
+    alignas(64) int16_t L_1_BIASES[1];
 
     void Accumulator::loadAccumulator(NNUE::Accumulator &accumulator) {
-        std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
+
+        for (int i = 0; i < chunkNum; i += 4) {
+            const int offset1 = (i + 0) * regWidth;
+            const int offset2 = (i + 1) * regWidth;
+            const int offset3 = (i + 2) * regWidth;
+            const int offset4 = (i + 3) * regWidth;
+
+            __m256i ac1 = _mm256_loadu_si256((__m256i *) &accumulator.hiddenLayer[offset1]);
+            __m256i ac2 = _mm256_loadu_si256((__m256i *) &accumulator.hiddenLayer[offset2]);
+            __m256i ac3 = _mm256_loadu_si256((__m256i *) &accumulator.hiddenLayer[offset3]);
+            __m256i ac4 = _mm256_loadu_si256((__m256i *) &accumulator.hiddenLayer[offset4]);
+
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset1], ac1);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset2], ac2);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], ac3);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], ac4);
+        }
+
+        // std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
     }
 
     void Accumulator::refresh(const Position &pos) {
@@ -45,15 +64,72 @@ namespace NNUE {
     }
 
     void Accumulator::addFeature(int index) {
-        for (int i = 0; i < L_1_SIZE; i++) {
-            hiddenLayer[i] += L_0_WEIGHTS[i * L_0_SIZE + index];
+
+        for (int i = 0; i < chunkNum; i += 4) {
+            const int offset1 = (i + 0) * regWidth;
+            const int offset2 = (i + 1) * regWidth;
+            const int offset3 = (i + 2) * regWidth;
+            const int offset4 = (i + 3) * regWidth;
+
+            __m256i ac1 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset1]);
+            __m256i ac2 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset2]);
+            __m256i ac3 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset3]);
+            __m256i ac4 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset4]);
+
+            __m256i we1 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset1]);
+            __m256i we2 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset2]);
+            __m256i we3 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset3]);
+            __m256i we4 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset4]);
+
+            __m256i sum1 = _mm256_add_epi16(ac1, we1);
+            __m256i sum2 = _mm256_add_epi16(ac2, we2);
+            __m256i sum3 = _mm256_add_epi16(ac3, we3);
+            __m256i sum4 = _mm256_add_epi16(ac4, we4);
+
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset1], sum1);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset2], sum2);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], sum3);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], sum4);
         }
+
+        /*for (int i = 0; i < L_1_SIZE; i++) {
+            hiddenLayer[i] += L_0_WEIGHTS[index * L_1_SIZE + i];
+        }*/
     }
 
     void Accumulator::removeFeature(int index) {
-        for (int i = 0; i < L_1_SIZE; i++) {
-            hiddenLayer[i] -= L_0_WEIGHTS[i * L_0_SIZE + index];
+
+        for (int i = 0; i < chunkNum; i += 4) {
+
+            const int offset1 = (i + 0) * regWidth;
+            const int offset2 = (i + 1) * regWidth;
+            const int offset3 = (i + 2) * regWidth;
+            const int offset4 = (i + 3) * regWidth;
+
+            __m256i ac1 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset1]);
+            __m256i ac2 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset2]);
+            __m256i ac3 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset3]);
+            __m256i ac4 = _mm256_loadu_si256((__m256i *) &hiddenLayer[offset4]);
+
+            __m256i we1 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset1]);
+            __m256i we2 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset2]);
+            __m256i we3 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset3]);
+            __m256i we4 = _mm256_loadu_si256((__m256i *) &L_0_WEIGHTS[index * L_1_SIZE + offset4]);
+
+            __m256i sum1 = _mm256_sub_epi16(ac1, we1);
+            __m256i sum2 = _mm256_sub_epi16(ac2, we2);
+            __m256i sum3 = _mm256_sub_epi16(ac3, we3);
+            __m256i sum4 = _mm256_sub_epi16(ac4, we4);
+
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset1], sum1);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset2], sum2);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], sum3);
+            _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], sum4);
         }
+
+        /*for (int i = 0; i < L_1_SIZE; i++) {
+            hiddenLayer[i] -= L_0_WEIGHTS[index * L_1_SIZE + i];
+        }*/
     }
 
     Score Accumulator::forward() {
