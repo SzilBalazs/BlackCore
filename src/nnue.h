@@ -49,7 +49,7 @@ namespace NNUE {
     struct Accumulator {
         alignas(32) int16_t hiddenLayer[L_1_SIZE];
 
-        constexpr Accumulator() = default;
+        constexpr Accumulator() {}
 
         void loadAccumulator(Accumulator &accumulator);
 

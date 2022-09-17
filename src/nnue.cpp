@@ -15,7 +15,6 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <immintrin.h>
 #include "nnue.h"
@@ -34,7 +33,7 @@ namespace NNUE {
     alignas(64) int16_t L_1_BIASES[1];
 
     void Accumulator::loadAccumulator(NNUE::Accumulator &accumulator) {
-
+#ifdef AVX2
         for (int i = 0; i < chunkNum; i += 4) {
             const int offset1 = (i + 0) * regWidth;
             const int offset2 = (i + 1) * regWidth;
@@ -51,8 +50,9 @@ namespace NNUE {
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], ac3);
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], ac4);
         }
-
-        // std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
+#else
+        std::memcpy(hiddenLayer, accumulator.hiddenLayer, sizeof(int16_t) * L_1_SIZE);
+#endif
     }
 
     void Accumulator::refresh(const Position &pos) {
@@ -67,7 +67,7 @@ namespace NNUE {
     }
 
     void Accumulator::addFeature(int index) {
-
+#ifdef AVX2
         for (int i = 0; i < chunkNum; i += 4) {
             const int offset1 = (i + 0) * regWidth;
             const int offset2 = (i + 1) * regWidth;
@@ -94,14 +94,15 @@ namespace NNUE {
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], sum3);
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], sum4);
         }
-
-        /*for (int i = 0; i < L_1_SIZE; i++) {
+#else
+        for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] += L_0_WEIGHTS[index * L_1_SIZE + i];
-        }*/
+        }
+#endif
     }
 
     void Accumulator::removeFeature(int index) {
-
+#ifdef AVX2
         for (int i = 0; i < chunkNum; i += 4) {
 
             const int offset1 = (i + 0) * regWidth;
@@ -129,10 +130,11 @@ namespace NNUE {
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset3], sum3);
             _mm256_storeu_si256((__m256i *) &hiddenLayer[offset4], sum4);
         }
-
-        /*for (int i = 0; i < L_1_SIZE; i++) {
+#else
+        for (int i = 0; i < L_1_SIZE; i++) {
             hiddenLayer[i] -= L_0_WEIGHTS[index * L_1_SIZE + i];
-        }*/
+        }
+#endif
     }
 
     Score Accumulator::forward() {
@@ -148,12 +150,19 @@ namespace NNUE {
 
     void init() {
 
-        std::memset(L_0_WEIGHTS, 0, sizeof(L_0_WEIGHTS));
-        std::memset(L_0_BIASES, 0, sizeof(L_0_BIASES));
-        std::memset(L_1_WEIGHTS, 0, sizeof(L_1_WEIGHTS));
-        std::memset(L_1_BIASES, 0, sizeof(L_1_BIASES));
+        int ptr = 0;
+        std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
+        ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;
+        std::memcpy(L_0_BIASES, gNetData + ptr, sizeof(int16_t) * L_1_SIZE);
+        ptr += sizeof(int16_t) * L_1_SIZE;
+        std::memcpy(L_1_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_1_SIZE * 1);
+        ptr += sizeof(int16_t) * L_1_SIZE * 1;
+        std::memcpy(L_1_BIASES, gNetData + ptr, sizeof(int16_t) * 1);
 
-        FILE *file = fopen("corenet.bin", "rb");
+        // Currently loading net from a file is not supported
+        // Legacy code:
+
+        /*FILE *file = fopen(filename.c_str(), "rb");
 
         if (file != nullptr) {
 
@@ -162,19 +171,6 @@ namespace NNUE {
             fread(L_1_WEIGHTS, sizeof(int16_t), L_1_SIZE * 1, file);
             fread(L_1_BIASES, sizeof(int16_t), 1, file);
 
-        } else {
-
-            int ptr = 0;
-            std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
-            ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;
-            std::memcpy(L_0_BIASES, gNetData + ptr, sizeof(int16_t) * L_1_SIZE);
-            ptr += sizeof(int16_t) * L_1_SIZE;
-            std::memcpy(L_1_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_1_SIZE * 1);
-            ptr += sizeof(int16_t) * L_1_SIZE * 1;
-            std::memcpy(L_1_BIASES, gNetData + ptr, sizeof(int16_t) * 1);
-            ptr += sizeof(int16_t) * 1;
-
-        }
-
+        }*/
     }
 }
