@@ -46,8 +46,8 @@ namespace NNUE {
     constexpr int regWidth = 256 / 16;
     constexpr int chunkNum = 256 / regWidth;
 
-    struct alignas(64) Accumulator {
-        alignas(64) int16_t hiddenLayer[L_1_SIZE];
+    struct Accumulator {
+        alignas(32) int16_t hiddenLayer[L_1_SIZE];
 
         constexpr Accumulator() = default;
 

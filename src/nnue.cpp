@@ -16,13 +16,16 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <iostream>
 #include <cstring>
 #include <immintrin.h>
 #include "nnue.h"
 #include "position.h"
 
+#include "incbin/incbin.h"
+
 namespace NNUE {
+
+    INCBIN(Net, "corenet.bin");
 
     alignas(64) int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
     alignas(64) int16_t L_0_BIASES[L_1_SIZE];
@@ -153,15 +156,24 @@ namespace NNUE {
         FILE *file = fopen("corenet.bin", "rb");
 
         if (file != nullptr) {
+
             fread(L_0_WEIGHTS, sizeof(int16_t), L_0_SIZE * L_1_SIZE, file);
             fread(L_0_BIASES, sizeof(int16_t), L_1_SIZE, file);
-
             fread(L_1_WEIGHTS, sizeof(int16_t), L_1_SIZE * 1, file);
             fread(L_1_BIASES, sizeof(int16_t), 1, file);
 
         } else {
-            std::cout << "No net was found! Please download the nnue.net with the executable" << std::endl;
-            exit(1);
+
+            int ptr = 0;
+            std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
+            ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;
+            std::memcpy(L_0_BIASES, gNetData + ptr, sizeof(int16_t) * L_1_SIZE);
+            ptr += sizeof(int16_t) * L_1_SIZE;
+            std::memcpy(L_1_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_1_SIZE * 1);
+            ptr += sizeof(int16_t) * L_1_SIZE * 1;
+            std::memcpy(L_1_BIASES, gNetData + ptr, sizeof(int16_t) * 1);
+            ptr += sizeof(int16_t) * 1;
+
         }
 
     }
