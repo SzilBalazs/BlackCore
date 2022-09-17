@@ -21,6 +21,15 @@
 
 // #define TUNE
 
+#if defined(NATIVE) && defined(__BMI2__)
+#define BMI2
+#endif
+
+#if defined(NATIVE) && defined(__AVX2__)
+#define AVX2
+#endif
+
+
 typedef uint64_t U64;
 typedef int32_t Score;
 typedef int32_t Depth;

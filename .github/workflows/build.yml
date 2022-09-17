@@ -19,7 +19,6 @@ jobs:
             compiler: g++-11,
             arch: popcnt,
             target: BlackCore-popcnt-linux,
-            upload_target: true,
           }
           - {
             name: "Ubuntu g++ modern",
@@ -27,7 +26,13 @@ jobs:
             compiler: g++-11,
             arch: modern,
             target: BlackCore-modern-linux,
-            upload_target: true,
+          }
+          - {
+            name: "Ubuntu g++ avx2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: avx2,
+            target: BlackCore-avx2-linux,
           }
           - {
             name: "Ubuntu g++ bmi2",
@@ -35,7 +40,6 @@ jobs:
             compiler: g++-11,
             arch: bmi2,
             target: BlackCore-bmi2-linux,
-            upload_target: true,
           }
           - {
             name: "Windows g++ popcnt",
@@ -43,7 +47,6 @@ jobs:
             compiler: g++,
             arch: popcnt,
             target: BlackCore-popcnt-win.exe,
-            upload_target: true,
           }
           - {
             name: "Windows g++ modern",
@@ -51,7 +54,13 @@ jobs:
             compiler: g++,
             arch: popcnt,
             target: BlackCore-modern-win.exe,
-            upload_target: true,
+          }
+          - {
+            name: "Windows g++ avx2",
+            os: windows-latest,
+            compiler: g++,
+            arch: avx2,
+            target: BlackCore-avx2-win.exe,
           }
           - {
             name: "Windows g++ bmi2",
@@ -59,7 +68,6 @@ jobs:
             compiler: g++,
             arch: bmi2,
             target: BlackCore-bmi2-win.exe,
-            upload_target: true,
           }
 
     steps:
@@ -84,7 +92,6 @@ jobs:
           cd src
           ./${{matrix.config.target}} bench
       - name: Upload artifact
-        if: ${{matrix.config.upload_target}}
         uses: actions/upload-artifact@v3
         with:
           name: BlackCore

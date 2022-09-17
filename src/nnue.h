@@ -43,17 +43,13 @@ namespace NNUE {
     constexpr int L_0_SIZE = 768;
     constexpr int L_1_SIZE = 256;
 
-
-    extern int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
-    extern int16_t L_0_BIASES[L_1_SIZE];
-
-    extern int16_t L_1_WEIGHTS[L_1_SIZE * 1];
-    extern int16_t L_1_BIASES[1];
+    constexpr int regWidth = 256 / 16;
+    constexpr int chunkNum = 256 / regWidth;
 
     struct Accumulator {
-        int16_t hiddenLayer[L_1_SIZE];
+        alignas(32) int16_t hiddenLayer[L_1_SIZE];
 
-        constexpr Accumulator() = default;
+        constexpr Accumulator() {}
 
         void loadAccumulator(Accumulator &accumulator);
 
