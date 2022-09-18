@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
     srand(RANDOM_SEED);
     initBitboard();
     initLmr();
-    initEval();
     NNUE::init();
     std::string mode;
     if (argc >= 2) {

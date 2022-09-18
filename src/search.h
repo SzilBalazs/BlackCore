@@ -20,6 +20,37 @@
 #include <atomic>
 #include "movegen.h"
 
+#ifdef TUNE
+
+extern Score DELTA_MARGIN;
+
+extern Score RAZOR_MARGIN;
+
+extern Depth RFP_DEPTH;
+extern Score RFP_DEPTH_MULTIPLIER;
+extern Score RFP_IMPROVING_MULTIPLIER;
+
+extern Depth NULL_MOVE_DEPTH;
+extern Depth NULL_MOVE_BASE_R;
+extern Depth NULL_MOVE_R_SCALE;
+
+extern Depth LMR_DEPTH;
+extern double LMR_BASE;
+extern double LMR_SCALE;
+extern int LMR_MIN_I;
+extern int LMR_PVNODE_I;
+
+extern Depth LMP_DEPTH;
+extern int LMP_MOVES;
+
+extern Depth ASPIRATION_DEPTH;
+extern Score ASPIRATION_DELTA;
+extern Score ASPIRATION_BOUND;
+
+extern Score SEE_MARGIN;
+
+#else
+
 constexpr Score DELTA_MARGIN = 400;
 
 constexpr Score RAZOR_MARGIN = 130;
@@ -44,6 +75,10 @@ constexpr int LMP_MOVES = 5;
 constexpr Depth ASPIRATION_DEPTH = 9;
 constexpr Score ASPIRATION_DELTA = 30;
 constexpr Score ASPIRATION_BOUND = 3000;
+
+constexpr Score SEE_MARGIN = 0;
+
+#endif
 
 struct SearchState {
     Move move;
