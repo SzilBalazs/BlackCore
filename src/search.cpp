@@ -292,7 +292,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
 
             // Late move/movecount pruning
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
                 break;
 
         }
