@@ -48,8 +48,6 @@ extern Score ASPIRATION_DELTA;
 extern Score ASPIRATION_BOUND;
 
 extern Score SEE_MARGIN;
-extern Depth SEE_DEPTH;
-extern Score SEE_DEPTH_MARGIN;
 
 #else
 
