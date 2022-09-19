@@ -50,8 +50,8 @@ Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
 Score SEE_MARGIN = 2;
-Depth SEE_DEPTH = 6;
-Score SEE_DEPTH_MARGIN = 100;
+Depth SEE_DEPTH = 4;
+Score SEE_DEPTH_MARGIN = 200;
 
 #endif
 
