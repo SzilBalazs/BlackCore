@@ -27,7 +27,7 @@ extern Score PIECE_VALUES[6];
 #else
 
 constexpr Score PIECE_VALUES[6] = {
-        0, 150, 750, 850, 1250, 1600
+        0, 150, 762, 892, 1254, 1651
 };
 
 #endif
