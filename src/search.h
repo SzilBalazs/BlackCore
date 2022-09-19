@@ -87,6 +87,12 @@ struct SearchState {
 
 void initLmr();
 
+inline void initSearch() {
+    initBitboard();
+    initLmr();
+    NNUE::init();
+}
+
 Score see(const Position &pos, Move move);
 
 void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning);

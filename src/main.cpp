@@ -31,9 +31,6 @@ int main(int argc, char **argv) {
 #endif
 
     srand(RANDOM_SEED);
-    initBitboard();
-    initLmr();
-    NNUE::init();
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);
