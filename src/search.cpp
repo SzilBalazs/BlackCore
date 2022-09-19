@@ -282,7 +282,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
     int index = 0;
-    // bool skipQuiets = true;
+    bool skipQuiets = false;
 
     while (!moves.empty()) {
 
@@ -295,15 +295,15 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
 
             // Late move/movecount pruning
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
-                break;
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
+                skipQuiets = true;
 
             // if (m.isCapture() && depth <= SEE_DEPTH && see(pos, m) < -(depth * SEE_DEPTH_MARGIN))
-            //    continue;
+            //     continue;
 
         }
 
-        // if (skipQuiets && m.isQuiet()) continue;
+        if (skipQuiets && m.isQuiet()) continue;
 
         pos.makeMove(m);
 
