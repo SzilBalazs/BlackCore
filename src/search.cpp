@@ -112,7 +112,7 @@ Score see(const Position &pos, Move move) {
         d++;
         e[d] = PIECE_VALUES[type] - e[d - 1];
 
-        if (std::max(-e[d - 1], e[d]) < 0) break;
+        // if (std::max(-e[d - 1], e[d]) < 0) break;
 
         occ ^= attacker;
         attackers ^= attacker;
