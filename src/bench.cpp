@@ -52,6 +52,7 @@ const TestPosition testPositions[posCount] = {
 };
 
 void testPerft() {
+    initSearch();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     U64 totalNodes = 0;
     bool ok = true;
@@ -78,6 +79,7 @@ void testPerft() {
 }
 
 void testSearch() {
+    initSearch();
     ttResize(searchTestHashSize);
 
     startSearch(0, 0, 0, 0);

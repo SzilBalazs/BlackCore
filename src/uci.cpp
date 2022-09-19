@@ -107,6 +107,9 @@ void uciLoop() {
     // We have sent all the parameters
     out("uciok");
 
+    // Only now we initialize stuff
+    initSearch();
+
     Position pos = {STARTING_FEN};
     std::thread searchThread;
 

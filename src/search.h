@@ -48,6 +48,8 @@ extern Score ASPIRATION_DELTA;
 extern Score ASPIRATION_BOUND;
 
 extern Score SEE_MARGIN;
+extern Depth SEE_DEPTH = 6;
+extern Score SEE_DEPTH_MARGIN = 100;
 
 #else
 
@@ -77,6 +79,8 @@ constexpr Score ASPIRATION_DELTA = 28;
 constexpr Score ASPIRATION_BOUND = 3000;
 
 constexpr Score SEE_MARGIN = 2;
+constexpr Depth SEE_DEPTH = 6;
+constexpr Score SEE_DEPTH_MARGIN = 100;
 
 #endif
 
@@ -86,6 +90,12 @@ struct SearchState {
 };
 
 void initLmr();
+
+inline void initSearch() {
+    initBitboard();
+    initLmr();
+    NNUE::init();
+}
 
 Score see(const Position &pos, Move move);
 

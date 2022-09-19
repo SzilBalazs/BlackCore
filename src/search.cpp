@@ -50,6 +50,8 @@ Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
 Score SEE_MARGIN = 2;
+Depth SEE_DEPTH = 6;
+Score SEE_DEPTH_MARGIN = 100;
 
 #endif
 
@@ -294,6 +296,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             // Late move/movecount pruning
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
                 break;
+
+            if (depth <= SEE_DEPTH && see(pos, m) < -depth * SEE_DEPTH_MARGIN)
+                continue;
 
         }
 
