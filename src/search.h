@@ -73,10 +73,10 @@ constexpr Depth LMP_DEPTH = 4;
 constexpr int LMP_MOVES = 5;
 
 constexpr Depth ASPIRATION_DEPTH = 9;
-constexpr Score ASPIRATION_DELTA = 30;
+constexpr Score ASPIRATION_DELTA = 28;
 constexpr Score ASPIRATION_BOUND = 3000;
 
-constexpr Score SEE_MARGIN = 0;
+constexpr Score SEE_MARGIN = 2;
 
 #endif
 

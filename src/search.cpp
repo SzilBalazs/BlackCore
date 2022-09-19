@@ -46,10 +46,10 @@ Depth LMP_DEPTH = 4;
 int LMP_MOVES = 5;
 
 Depth ASPIRATION_DEPTH = 9;
-Score ASPIRATION_DELTA = 30;
+Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
-Score SEE_MARGIN = 0;
+Score SEE_MARGIN = 2;
 
 #endif
 
