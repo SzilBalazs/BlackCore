@@ -112,7 +112,7 @@ Score see(const Position &pos, Move move) {
         d++;
         e[d] = PIECE_VALUES[type] - e[d - 1];
 
-        // if (std::max(-e[d - 1], e[d]) < 0) break;
+        if (std::max(-e[d - 1], e[d]) < 0) break;
 
         occ ^= attacker;
         attackers ^= attacker;
@@ -282,7 +282,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
     int index = 0;
-    bool skipQuiets = false;
 
     while (!moves.empty()) {
 
@@ -295,15 +294,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
 
             // Late move/movecount pruning
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
-                skipQuiets = true;
-
-            // if (m.isCapture() && depth <= SEE_DEPTH && see(pos, m) < -(depth * SEE_DEPTH_MARGIN))
-            //     continue;
-
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
+                break;
         }
-
-        if (skipQuiets && m.isQuiet()) continue;
 
         pos.makeMove(m);
 
