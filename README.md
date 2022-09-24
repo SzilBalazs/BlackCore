@@ -22,7 +22,7 @@ This project contains the following files:
 
 * UCI support
 * Perft test
-    * Up to ~240M nps
+    * Up to ~240M nps (with NNUE accumulator disabled)
         * Intel i3-7100 3.9Ghz CPU
         * Single-threaded
         * Hashing disabled
@@ -32,70 +32,37 @@ This project contains the following files:
 * Bitboard representation
 * Engine
     * Search
+        * Parameters tuned using <a href="https://github.com/dsekercioglu/weather-factory">weather
+          factory</a>
         * Iterative deepening
         * Aspiration window
         * Alpha-Beta
             * Negamax
             * Transposition table
-                * Cut-offs
                 * Entry aging
                 * Bucket system
-                    * 1 always replace
-                    * 1 depth preferred
             * Principal variation search
                 * Late move reduction
-                    * R = max(2, LMR_BASE + (log(moveIndex) * log(depth) / LMR_SCALE)));
+                    * R = max(2, LMR_BASE + (ln(moveIndex) * ln(depth) / LMR_SCALE)));
                 * Move count/late move pruning
             * Razoring
-                * Dropping into qsearch at frontier nodes
             * Reverse futility pruning
-                * With improving detection
             * Null move pruning
-                * Reduction depends on depth searched
         * Quintessence search
             * Stand-pat
             * Delta pruning
             * Static-exchange-evaluation pruning
         * Move ordering
             * Hash move
-            * Promotions
-            * Under promotions
-            * Captures
-                * MVV-LVA
-                * SEE
-            * Quiet moves
-                * Killer heuristic
-                * History heuristic
+            * MVV-LVA and SEE
+            * Killer and history heuristics
         * Fast repetition detection
-    * Time management
-        * Allocate time using search stability
-        * Supports
-            * Sudden death
-            * Increment per move
-            * Move-time
-            * Moves to go
-    * Handcrafted evaluation
-        * Tapered eval
-            * Mid-game and end-game
-        * Material balance
-        * Piece-square tables
-        * Pawn structure
-            * Double pawns
-            * Isolated pawns
-            * Passed pawns
-        * King safety
-            * Pawn king shield
-            * Bonus for castled king
-            * Trapped rooks
-            * Penalty for enemy pieces threataning king
-        * Knight mobility
-            * Restricted by enemy pawns
-        * Bishop mobility
-            * Depending on the pawn structure
-        * Rooks
-            * Mobility
-            * Bonuses for open and half open files
-        * Tempo
+    * Time management based on search stability
+    * NNUE evaluation
+        * Trained using <a href="https://github.com/SzilBalazs/CoreTrainer">CoreTrainer</a>
+        * Training data was generated using <a href="https://github.com/jhonnold/berserk">Berserk</a> data
+        * Support for AVX2 architecture for vectorized accumulator updates
+        * Net embedded using incbin (for license see /src/incbin/UNLICENSE)
 
 ## Installation
 
@@ -103,14 +70,14 @@ This project contains the following files:
 
 After downloading the sources (preferably the source of the latest release) you can run the following commands, to build
 a native binary.
-BlackCore uses c++20 standard, so older versions of compilers might not work.
+**Please update your compiler before building!**
 
 ```
 cd src
-make clean build CXX=g++-11 ARCH=native
+make clean build CXX=g++ ARCH=native
 ```
 
-ARCH = popcnt/modern/bmi2/native
+ARCH = popcnt/modern/avx2/bmi2/native
 
 CXX = the compiler of your choice (I recommend using g++, as it gives the best performance)
 
@@ -118,9 +85,8 @@ CXX = the compiler of your choice (I recommend using g++, as it gives the best p
 
 You can download the latest release <a href="https://github.com/SzilBalazs/BlackCore/releases/latest">here</a> both for
 Windows and Linux.
-To select the right binary, choose the bmi2 build if you have a fairly new CPU, otherwise you can use the modern build
-or in case of an older
-processor use the popcnt build. Only 64 bits CPUs with popcnt are supported at the moment.
+To select the right binary use the first instruction set that your CPU supports (doesn't crash), in the order of BMI2 ->
+AVX2 -> modern -> popcnt
 
 ## Usage
 
@@ -136,7 +102,7 @@ or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experienc
   this
   higher if you notice that the engine often runs out of time.
 
-## Big thanks to
+## Special thanks to
 
 ### <a href="https://www.chessprogramming.org/Main_Page">Chess Programming Wiki</a>
 
@@ -144,18 +110,34 @@ The Chess Programming Wiki is the greatest
 resource for everybody who wants to be informed about the basics and the state-of-the-art technologies of chess
 programming.
 
-### <a href="https://github.com/AndyGrant/OpenBench">OpenBench</a> by Andrew Grant
+### <a href="https://github.com/AndyGrant/OpenBench">OpenBench</a> by <a href="https://github.com/AndyGrant">Andrew Grant</a>
 
-OpenBench is an usefull SPRT testing framework, which contributed
-to the development of BlackCore substantially.
+OpenBench is a SPRT testing framework, used for the testing of different techniques in BlackCore
 
-### <a href="https://github.com/official-stockfish/Stockfish">StockFish</a> by The StockFish team
+### <a href="https://github.com/dsekercioglu/weather-factory">Weather factory</a> by <a href="https://github.com/dsekercioglu">Pali</a>
 
-Thanks to the StockFish team for making such a wonderful and an easy-to-read codebase, that inspired me to get into
-chess programming in the first place.
+Weather factory was used to train various parameters of BlackCore using
+the <a href="https://www.chessprogramming.org/SPSA">
+SPSA method</a>.
+
+### <a href="https://github.com/jhonnold/berserk">Berserk</a> by <a href="https://github.com/jhonnold">Jay</a>
+
+Berserk is a strong chess engine that generated the training data with the contribution of Sohail which was used in the
+latest neural network and
+crucial for the progress made in BlackCore.
+
+### <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>
+
+Sohail (developer of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo</a>) helped me in countless
+problems
+regarding NNUE and I really can't thank him enough
 
 ### <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> by <a href="https://github.com/Disservin">Disservin</a>
 
 Smallbrain is a great chess engine which helped me understand many important concepts, and thanks to Disservin for
 giving me many great ideas how can I further improve my engine.
 
+### <a href="https://github.com/official-stockfish/Stockfish">StockFish</a> by The StockFish team
+
+Thanks to the StockFish team for making such a wonderful and an easy-to-read codebase, that inspired me to get into
+chess programming in the first place.

@@ -23,7 +23,6 @@
 #include "timeman.h"
 #include "position.h"
 #include "bench.h"
-#include "eval.h"
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -68,7 +67,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v1-1");
+    out("id", "name", "BlackCore_v2-0");
 
     out("id", "author", "SzilBalazs");
 
