@@ -99,7 +99,7 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     TTBucket *bucket = getBucket(hash);
     TTEntry *entry;
 
-    if (bucket->entryA.hash == hash || bucket->entryA.depth <= depth ||
+    if (bucket->entryA.hash == hash || bucket->entryA.depth * 2 / 3 <= depth ||
         globalAge - bucket->entryA.age >= 3) {
         entry = &bucket->entryA;
     } else {
