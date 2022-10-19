@@ -22,6 +22,38 @@
 
 #include <cmath>
 
+#ifdef TUNE
+
+Score DELTA_MARGIN = 307;
+
+Score RAZOR_MARGIN = 146;
+
+Depth RFP_DEPTH = 8;
+Score RFP_DEPTH_MULTIPLIER = 60;
+Score RFP_IMPROVING_MULTIPLIER = 56;
+
+Depth NULL_MOVE_DEPTH = 2;
+Depth NULL_MOVE_BASE_R = 3;
+Depth NULL_MOVE_R_SCALE = 3;
+
+Depth LMR_DEPTH = 3;
+double LMR_BASE = 1;
+double LMR_SCALE = 1.75;
+int LMR_MIN_I = 2;
+int LMR_PVNODE_I = 1;
+
+Depth LMP_DEPTH = 4;
+int LMP_MOVES = 5;
+
+Depth ASPIRATION_DEPTH = 9;
+Score ASPIRATION_DELTA = 28;
+Score ASPIRATION_BOUND = 3000;
+
+Score SEE_MARGIN = 2;
+Depth SEE_DEPTH = 4;
+
+#endif
+
 Ply selectiveDepth = 0;
 Move bestPV;
 
@@ -64,7 +96,7 @@ Score see(const Position &pos, Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    e[0] = PIECE_VALUES[pos.pieceAt(to).type].mg;
+    e[0] = PIECE_VALUES[pos.pieceAt(to).type];
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
@@ -77,7 +109,7 @@ Score see(const Position &pos, Move move) {
 
     do {
         d++;
-        e[d] = PIECE_VALUES[type].mg - e[d - 1];
+        e[d] = PIECE_VALUES[type] - e[d - 1];
 
         if (std::max(-e[d - 1], e[d]) < 0) break;
 
@@ -131,12 +163,12 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         Move m = moves.nextMove();
 
         // Delta pruning
-        if (m.isPromo() * PIECE_VALUES[QUEEN].mg + PIECE_VALUES[pos.pieceAt(m.getTo()).type].mg +
+        if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
             staticEval + DELTA_MARGIN < alpha)
             continue;
 
         // SEE pruning
-        if (alpha > -WORST_MATE && see(pos, m) < 0)
+        if (alpha > -WORST_MATE && see(pos, m) < -SEE_MARGIN)
             continue;
 
         pos.makeMove(m);
@@ -261,9 +293,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
 
             // Late move/movecount pruning
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet() && !m.isPromo())
-                continue;
-
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
+                break;
         }
 
         pos.makeMove(m);
@@ -396,6 +427,8 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning) {
+
+    pos.getState()->accumulator.refresh(pos);
 
     searchRunning = true;
 

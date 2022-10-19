@@ -47,7 +47,7 @@ double E(const std::vector<DataEntry> &data) {
 }
 
 void saveResults(const unsigned int paramCnt, EvalParameter *evalParameters) {
-#ifdef TUNE
+#ifdef TUNE_
     std::ofstream params("params.txt");
 
     for (unsigned int i = 0; i < paramCnt; i++) {
@@ -93,7 +93,7 @@ void saveResults(const unsigned int paramCnt, EvalParameter *evalParameters) {
 }
 
 void tune(const std::string &inputFile) {
-#ifdef TUNE
+#ifdef TUNE_
     std::vector<DataEntry> trainingData;
     std::cout << "Loading training data..." << std::endl;
     std::ifstream f(inputFile);

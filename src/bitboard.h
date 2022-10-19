@@ -26,10 +26,6 @@
 #include <nmmintrin.h>
 #endif
 
-#if defined(NATIVE) && defined(__BMI2__)
-#define BMI2
-#endif
-
 struct Bitboard {
 
     U64 bb = 0;
@@ -65,7 +61,7 @@ struct Bitboard {
         _BitScanForward64(&a, bb);
         return Square(a);
 #else
-#error "Unable to determine least significant bit please use a compatible compiler!"
+#error "Unsupported compiler!"
 #endif
 
     }

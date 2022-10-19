@@ -21,6 +21,7 @@
 #include "search.h"
 #include "eval.h"
 #include "tuner.h"
+#include "nnue.h"
 
 int main(int argc, char **argv) {
 
@@ -30,9 +31,6 @@ int main(int argc, char **argv) {
 #endif
 
     srand(RANDOM_SEED);
-    initBitboard();
-    initLmr();
-    initEval();
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);

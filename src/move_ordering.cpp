@@ -21,8 +21,8 @@
 #include <cstring>
 
 constexpr Score winningCapture[6][6] = {
-        //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
-        {0, 0,      0,      0,      0,      0},     // KING
+//    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
+        {0, 0,      0,      0,      0,      0},       // KING
         {0, 800004, 800104, 800204, 800304, 800404},  // PAWN
         {0, 800003, 800103, 800203, 800303, 800403},  // KNIGHT
         {0, 800002, 800102, 800202, 800302, 800402},  // BISHOP
@@ -31,13 +31,13 @@ constexpr Score winningCapture[6][6] = {
 };
 
 constexpr Score losingCapture[6][6] = {
-        //       KING   PAWN     KNIGHT    BISHOP    ROOK      QUEEN
-        {0, 0,      0,      0,      0,      0},     // KING
-        {0, 100004, 100104, 100204, 100304, 100404},  // PAWN
-        {0, 100003, 100103, 100203, 100303, 100403},  // KNIGHT
-        {0, 100002, 100102, 100202, 100302, 100402},  // BISHOP
-        {0, 100001, 100101, 100201, 100301, 100401},  // ROOK
-        {0, 100000, 100100, 100200, 100300, 100400},  // QUEEN
+//    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
+        {0, 0,      0,      0,      0,      0},       // KING
+        {0, 200004, 200104, 200204, 200304, 200404},  // PAWN
+        {0, 200003, 200103, 200203, 200303, 200403},  // KNIGHT
+        {0, 200002, 200102, 200202, 200302, 200402},  // BISHOP
+        {0, 200001, 200101, 200201, 200301, 200401},  // ROOK
+        {0, 200000, 200100, 200200, 200300, 200400},  // QUEEN
 };
 
 Move killerMoves[101][2];

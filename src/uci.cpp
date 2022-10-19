@@ -67,7 +67,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v1-1");
+    out("id", "name", "BlackCore_v2-0");
 
     out("id", "author", "SzilBalazs");
 
@@ -77,10 +77,37 @@ void uciLoop() {
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
+#ifdef TUNE
+    tuneOut("DELTA_MARGIN", 400, 200, 500);
+    tuneOut("RAZOR_MARGIN", 130, 50, 200);
+    tuneOut("RFP_DEPTH", 5, 3, 8);
+    tuneOut("RFP_DEPTH_MULTIPLIER", 70, 30, 200);
+    tuneOut("RFP_IMPROVING_MULTIPLIER", 80, 30, 200);
+    tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
+    tuneOut("NULL_MOVE_BASE_R", 4, 2, 6);
+    tuneOut("NULL_MOVE_R_SCALE", 5, 2, 10);
+    tuneOut("LMR_DEPTH", 4, 2, 10);
+    tuneOut("LMR_MIN_I", 3, 1, 10);
+    tuneOut("LMR_PVNODE_I", 2, 1, 10);
+    tuneOut("LMP_DEPTH", 4, 1, 10);
+    tuneOut("LMP_MOVES", 5, 1, 10);
+    tuneOut("ASPIRATION_DEPTH", 9, 5, 20);
+    tuneOut("ASPIRATION_DELTA", 30, 10, 100);
+    tuneOut("SEE_MARGIN", 0, 0, 200);
+    tuneOut("PAWN_VALUE", 150, 100, 200);
+    tuneOut("KNIGHT_VALUE", 750, 500, 1000);
+    tuneOut("BISHOP_VALUE", 850, 500, 1000);
+    tuneOut("ROOK_VALUE", 1250, 1000, 1500);
+    tuneOut("QUEEN_VALUE", 1600, 1200, 2000);
+#endif
+
     ttResize(16);
 
     // We have sent all the parameters
     out("uciok");
+
+    // Only now we initialize stuff
+    initSearch();
 
     Position pos = {STARTING_FEN};
     std::thread searchThread;
@@ -118,7 +145,51 @@ void uciLoop() {
                 } else if (tokens[1] == "Ponder") {
 
                 } else {
-
+#ifdef TUNE
+                    if (tokens[1] == "DELTA_MARGIN") {
+                        DELTA_MARGIN = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "RAZOR_MARGIN") {
+                        RAZOR_MARGIN = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "RFP_DEPTH") {
+                        RFP_DEPTH = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "RFP_DEPTH_MULTIPLIER") {
+                        RFP_DEPTH_MULTIPLIER = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "RFP_IMPROVING_MULTIPLIER") {
+                        RFP_IMPROVING_MULTIPLIER = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "NULL_MOVE_DEPTH") {
+                        NULL_MOVE_DEPTH = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "NULL_MOVE_BASE_R") {
+                        NULL_MOVE_BASE_R = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "NULL_MOVE_R_SCALE") {
+                        NULL_MOVE_R_SCALE = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_DEPTH") {
+                        LMR_DEPTH = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_MIN_I") {
+                        LMR_MIN_I = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_PVNODE_I") {
+                        LMR_PVNODE_I = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMP_DEPTH") {
+                        LMP_DEPTH = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMP_MOVES") {
+                        LMP_MOVES = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "ASPIRATION_DEPTH") {
+                        ASPIRATION_DEPTH = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "ASPIRATION_DELTA") {
+                        ASPIRATION_DELTA = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "SEE_MARGIN") {
+                        SEE_MARGIN = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "PAWN_VALUE") {
+                        PIECE_VALUES[PAWN] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "KNIGHT_VALUE") {
+                        PIECE_VALUES[KNIGHT] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "BISHOP_VALUE") {
+                        PIECE_VALUES[BISHOP] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "ROOK_VALUE") {
+                        PIECE_VALUES[ROOK] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "QUEEN_VALUE") {
+                        PIECE_VALUES[QUEEN] = std::stoi(tokens[3]);
+                    }
+#endif
                 }
             }
         } else if (command == "position" || command == "pos") {
@@ -145,6 +216,8 @@ void uciLoop() {
                 }
             }
 
+            pos.getState()->accumulator.refresh(pos);
+
         } else if (command == "go") {
 
             if (searchRunning) {
@@ -152,7 +225,8 @@ void uciLoop() {
                 continue;
             }
 
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, depth = 64, movetime = 0;
+            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0;
+            Depth depth = 64;
 
             for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {

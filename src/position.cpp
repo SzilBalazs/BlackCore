@@ -27,42 +27,6 @@ using std::cout, std::string;
 
 U64 nodeCount = 0;
 
-void Position::clearSquare(Square square) {
-    if (pieceAt(square).isNull())
-        return;
-
-    Piece piece = pieceAt(square);
-
-    pieceBB[piece.type].clear(square);
-    allPieceBB[piece.color].clear(square);
-
-    board[square] = {};
-
-    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
-}
-
-void Position::setSquare(Square square, Piece piece) {
-    if (!pieceAt(square).isNull()) {
-        Piece p = pieceAt(square);
-
-        pieceBB[p.type].clear(square);
-        allPieceBB[p.color].clear(square);
-
-        state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
-    }
-
-    pieceBB[piece.type].set(square);
-    allPieceBB[piece.color].set(square);
-    board[square] = piece;
-
-    state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
-}
-
-void Position::movePiece(Square from, Square to) {
-    setSquare(to, pieceAt(from));
-    clearSquare(from);
-}
-
 void Position::clearPosition() {
     for (auto &i : pieceBB) {
         i = 0;
@@ -109,6 +73,7 @@ bool Position::isRepetition() {
 }
 
 void Position::display() const {
+    state->accumulator.forward();
     std::vector<string> text;
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
     if (getEpSquare() != NULL_SQUARE)
@@ -159,11 +124,11 @@ void Position::displayEval() {
             Piece piece = pieceAt(square);
             string evalStr = " ";
             if (!piece.isNull() && piece.type != KING) {
-                clearSquare(square);
+                clearSquare<true>(square);
                 Score newScore = eval(*this);
                 Score scoreDiff = score - newScore;
                 evalStr = std::to_string(scoreDiff);
-                setSquare(square, piece);
+                setSquare<true>(square, piece);
             }
             cout << std::setw(5) << evalStr << "|";
         }
@@ -188,7 +153,7 @@ void Position::loadPositionFromFen(const string &fen) {
         } else if (c == '/') {
             square -= 16;
         } else {
-            setSquare(square, charToPiece(c));
+            setSquare<false>(square, charToPiece(c));
             square += 1;
         }
     }
@@ -233,6 +198,8 @@ void Position::loadPositionFromFen(const string &fen) {
 
     state->hash ^= castlingRandTable[state->castlingRights];
     state->hash ^= epRandTable[squareToFile(state->epSquare)];
+
+    state->accumulator.refresh(*this);
 }
 
 void Position::loadPositionFromRawState(const RawState &rawState) {

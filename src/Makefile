@@ -2,8 +2,8 @@ CXX = g++
 TARGET_FLAGS = -static -static-libgcc -static-libstdc++
 ARCH=native
 NAME = BlackCore
-VERSION_MAJOR = 1
-VERSION_MINOR = 1
+VERSION_MAJOR = 2
+VERSION_MINOR = 0
 OBJECT_DIR = objects
 SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp, $(OBJECT_DIR)/%.o, $(SOURCES))
@@ -27,12 +27,17 @@ ifeq ($(ARCH), native)
 endif
 
 ifeq ($(ARCH), bmi2)
-	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1 -mbmi2
-	DEFINE_FLAGS = -DBMI2
+	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2 -mbmi2
+	DEFINE_FLAGS = -DAVX2 -DBMI2
+endif
+
+ifeq ($(ARCH), avx2)
+	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2
+    	DEFINE_FLAGS = -DAVX2
 endif
 
 ifeq ($(ARCH), modern)
-    ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -msse3 -mssse3 -msse4.1
+    ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1
 endif
 
 ifeq ($(ARCH), popcnt)
