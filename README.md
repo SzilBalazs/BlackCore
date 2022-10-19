@@ -5,8 +5,8 @@
 
 ## Overview
 
-BlackCore is a UCI compatible c++ chess engine written from scratch, capable of completing high performance tasks.
-Its alpha beta search uses various pruning techniques, powered by a handcrafted evaluation function and a blazing fast
+BlackCore is a grandmaster level UCI compatible c++ chess engine written from scratch.
+Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
 move generator.
 
 ## Files
@@ -66,11 +66,14 @@ This project contains the following files:
 
 ## Installation
 
-### Building from source
+### Building from source (recommended)
 
-After downloading the sources (preferably the source of the latest release) you can run the following commands, to build
+After downloading the source, you can run the following commands, to build
 a native binary.
+This option gives the best performance.
 **Please update your compiler before building!**
+
+With any questions or problems feel free to create a github issue.
 
 ```
 cd src
