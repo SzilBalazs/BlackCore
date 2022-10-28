@@ -131,8 +131,11 @@ Score see(const Position &pos, Move move) {
     return e[0];
 }
 
-
+template<NodeType type>
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
+
+    constexpr bool pvNode = type != NON_PV_NODE;
+    constexpr bool nonPvNode = !pvNode;
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
@@ -140,9 +143,9 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         selectiveDepth = ply;
     }
 
-    bool ttHit;
+    bool ttHit = false;
     Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
+    if (ttScore != UNKNOWN_SCORE && nonPvNode) return ttScore;
 
     Score staticEval = eval(pos);
 
@@ -173,7 +176,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         pos.makeMove(m);
 
-        Score score = -quiescence(pos, -beta, -alpha, ply + 1);
+        Score score = -quiescence<type>(pos, -beta, -alpha, ply + 1);
 
         pos.undoMove(m);
 
@@ -197,26 +200,33 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     return alpha;
 }
 
+template<NodeType type>
 Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
+
+    constexpr bool rootNode = type == ROOT_NODE;
+    constexpr bool pvNode = type != NON_PV_NODE;
+    constexpr bool notRootNode = !rootNode;
+    constexpr bool nonPvNode = !pvNode;
+    constexpr NodeType nextPv = rootNode ? PV_NODE : type;
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
+    if (pos.getMove50() >= 4 && notRootNode && pos.isRepetition()) return DRAW_VALUE;
 
     bool ttHit = false;
-    bool pvNode = beta - alpha > 1;
     Score matePly = MATE_VALUE - ply;
     Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
-    if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;
+
+    if (nonPvNode && ttScore != UNKNOWN_SCORE) return ttScore;
 
     // Mate distance pruning
-    if (ply > 0) {
+    if (notRootNode) {
         if (alpha < -matePly) alpha = -matePly;
         if (beta > matePly - 1) beta = matePly - 1;
         if (alpha >= beta) return alpha;
     }
 
-    if (depth <= 0) return quiescence(pos, alpha, beta, ply);
+    if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
 
     MoveList moves = {pos, ply, false};
 
@@ -233,13 +243,13 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     Score staticEval = state->eval = eval(pos);
 
-    if (ply > 0 && !inCheck) {
+    if (notRootNode && !inCheck) {
 
         bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
 
         // Razoring
-        if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
-            return quiescence(pos, alpha, beta, ply);
+        if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
+            return quiescence<NON_PV_NODE>(pos, alpha, beta, ply);
         }
 
         // Reverse futility pruning
@@ -249,7 +259,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             return beta;
 
         // Null move pruning
-        if (!pvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        if (nonPvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
             // We don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
@@ -258,7 +268,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
                 state->move = Move();
                 pos.makeNullMove();
-                Score score = -search(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
+                Score score = -search<NON_PV_NODE>(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {
@@ -269,9 +279,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && !pvNode) depth--;
+        if (!ttHit && nonPvNode) depth--;
 
-        if (depth <= 0) return quiescence(pos, alpha, beta, ply);
+        if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
     }
 
     // Check extension
@@ -290,7 +300,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         Score score;
 
         // We can prune the move in some cases
-        if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
 
             // Late move/movecount pruning
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
@@ -302,23 +312,23 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         ttPrefetch(pos.getHash());
 
         if (index == 0) {
-            score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
             if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
                 m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
 
-                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
-                                ply + 1);
+                score = -search<NON_PV_NODE>(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
+                                             ply + 1);
             } else score = alpha + 1;
 
 
             // Principal variation search
             if (score > alpha) {
-                score = -search(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+                score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
 
                 if (score > alpha) {
-                    score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+                    score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
                 }
             }
 
@@ -386,7 +396,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
         if (alpha < -ASPIRATION_BOUND) alpha = -INF_SCORE;
         if (beta > ASPIRATION_BOUND) beta = INF_SCORE;
 
-        Score score = search(pos, stateStack + 1, depth, alpha, beta, 0);
+        Score score = search<ROOT_NODE>(pos, stateStack + 1, depth, alpha, beta, 0);
 
         if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
 

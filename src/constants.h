@@ -113,6 +113,10 @@ enum Color {
     COLOR_EMPTY = 2, WHITE = 0, BLACK = 1
 };
 
+enum NodeType {
+    ROOT_NODE, PV_NODE, NON_PV_NODE
+};
+
 constexpr PieceType PIECE_TYPES_BY_VALUE[6] = {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
 
 struct Piece {
