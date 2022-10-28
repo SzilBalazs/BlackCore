@@ -67,7 +67,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v2-0");
+    out("id", "name", "BlackCore_v2-0-H1");
 
     out("id", "author", "SzilBalazs");
 
@@ -246,11 +246,6 @@ void uciLoop() {
                 } else if (tokens[i] == "infinite") {
                     depth = 64;
                 }
-            }
-
-            // A little more time, so we can fill up the TT
-            if (getHashMove(pos.getHash()).isNull()) {
-                movestogo /= 2;
             }
 
             if (pos.getSideToMove() == WHITE)
