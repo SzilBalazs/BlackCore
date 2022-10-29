@@ -144,8 +144,12 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     }
 
     bool ttHit = false;
-    Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE && nonPvNode) return ttScore;
+    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+    if (ttHit && nonPvNode && (ttEntry->flag == EXACT ||
+                               (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) ||
+                               (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
+        return ttEntry->eval;
+    }
 
     Score staticEval = eval(pos);
 
@@ -195,7 +199,6 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     }
 
-    // TODO elo test storing null move instead of bestMove
     ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
@@ -215,9 +218,14 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
-    Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
+    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
 
-    if (nonPvNode && ttScore != UNKNOWN_SCORE) return ttScore;
+    if (ttHit && nonPvNode &&
+        ttEntry->depth >= depth && (ttEntry->flag == EXACT ||
+                                    (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) ||
+                                    (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
+        return ttEntry->eval;
+    }
 
     // Mate distance pruning
     if (notRootNode) {

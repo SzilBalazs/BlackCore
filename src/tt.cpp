@@ -65,7 +65,7 @@ void ttResize(unsigned int MBSize) {
 
 }
 
-Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
+TTEntry *ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
     TTBucket *bucket = getBucket(hash);
     TTEntry *entry;
     if (bucket->entryA.hash == hash) {
@@ -74,25 +74,13 @@ Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
     } else if (bucket->entryB.hash == hash) {
         entry = &bucket->entryB;
     } else {
-        return UNKNOWN_SCORE;
+        return nullptr;
     }
+
+    if (std::abs(entry->eval) > MATE_VALUE - 100) return nullptr;
+
     ttHit = true;
-
-    if (std::abs(entry->eval) > MATE_VALUE - 100) return UNKNOWN_SCORE;
-
-    if (entry->depth >= depth) {
-        if (entry->flag == EXACT) {
-            return entry->eval;
-        }
-        if (entry->flag == ALPHA && entry->eval <= alpha) {
-            return alpha;
-        }
-        if (entry->flag == BETA && entry->eval >= beta) {
-            return beta;
-        }
-    }
-
-    return UNKNOWN_SCORE;
+    return entry;
 }
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
