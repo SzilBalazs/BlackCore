@@ -20,6 +20,7 @@
 #include "eval.h"
 #include "uci.h"
 
+#include <algorithm>
 #include <cmath>
 
 #ifdef TUNE
@@ -321,9 +322,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (index == 0) {
             score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
-
-            bool tryNullWindow = nonPvNode;
-
             // Late move reduction
             if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo()) {
 
@@ -334,19 +332,20 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
                 R -= m.isCapture();
                 R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;
 
-                Depth newDepth = std::max(1, depth - std::max(2, R));
+                Depth newDepth = std::clamp(depth - R, 1, depth - 2);
 
                 score = -search<NON_PV_NODE>(pos, state + 1, newDepth,
                                              -alpha - 1, -alpha, ply + 1);
 
-                tryNullWindow = score > alpha;
-            }
+                if (score > alpha) {
+                    score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+                }
 
-            if (tryNullWindow) {
+            } else if (nonPvNode) {
                 score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
             }
 
-            if (pvNode && score > alpha) {
+            if (pvNode && (score > alpha || rootNode)) {
                 score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
             }
         }
