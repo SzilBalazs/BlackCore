@@ -250,10 +250,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     }
 
     Score staticEval = state->eval = eval(pos);
+    bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
+
 
     if (notRootNode && !inCheck) {
-
-        bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
 
         // Razoring
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
@@ -323,11 +323,19 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
             score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
             // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
-                m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo()) {
 
-                score = -search<NON_PV_NODE>(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
-                                             ply + 1);
+                Depth R = reductions[index][depth];
+
+                R += improving;
+                R -= pvNode;
+                R -= m.isCapture();
+                R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;
+
+                Depth newDepth = std::max(1, depth - std::max(2, R));
+
+                score = -search<NON_PV_NODE>(pos, state + 1, newDepth,
+                                             -alpha - 1, -alpha, ply + 1);
             } else score = alpha + 1;
 
 
