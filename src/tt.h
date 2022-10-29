@@ -53,7 +53,7 @@ void ttClear();
 
 void ttFree();
 
-Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta);
+TTEntry *ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta);
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
 
