@@ -321,13 +321,13 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         // Late move reduction
         if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
-            m.isQuiet()) {
+            m.isQuiet() && killerMoves[ply][0] != m && killerMoves[ply][1] != m) {
 
             Depth R = reductions[index][depth];
 
-            R += improving;
+            /*R += improving;
             R -= pvNode;
-            R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;
+            R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;*/
 
             Depth newDepth = std::clamp(depth - R, 1, depth - 1);
 
