@@ -302,10 +302,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     while (!moves.empty()) {
 
+        Score score;
         Move m = moves.nextMove();
         state->move = m;
-
-        Score score;
 
         // We can prune the move in some cases
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
@@ -322,6 +321,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (index == 0) {
             score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         } else {
+
+            bool tryNullWindow = nonPvNode;
+
             // Late move reduction
             if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo()) {
 
@@ -336,18 +338,17 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
                 score = -search<NON_PV_NODE>(pos, state + 1, newDepth,
                                              -alpha - 1, -alpha, ply + 1);
-            } else score = alpha + 1;
 
-
-            // Principal variation search
-            if (score > alpha) {
-                score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
-
-                if (score > alpha) {
-                    score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
-                }
+                tryNullWindow = score > alpha;
             }
 
+            if (tryNullWindow) {
+                score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+            }
+
+            if (pvNode && score > alpha) {
+                score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+            }
         }
 
         pos.undoMove(m);
