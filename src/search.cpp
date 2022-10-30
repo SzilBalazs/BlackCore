@@ -236,18 +236,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
 
-    MoveList moves = {pos, ply, false};
-
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
-
-    if (moves.count == 0) {
-        if (inCheck) {
-            return -matePly;
-        } else {
-            return DRAW_VALUE;
-        }
-    }
 
     Score staticEval = state->eval = eval(pos);
 
@@ -295,6 +285,15 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     // Check extension
     if (inCheck)
         depth++;
+
+    MoveList moves = {pos, ply, false};
+    if (moves.count == 0) {
+        if (inCheck) {
+            return -matePly;
+        } else {
+            return DRAW_VALUE;
+        }
+    }
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
