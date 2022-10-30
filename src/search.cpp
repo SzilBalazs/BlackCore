@@ -325,9 +325,9 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
             Depth R = reductions[index][depth];
 
-            R += improving;
+            /*R += improving;
             R -= pvNode;
-            // R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;
+            R -= killerMoves[ply][0] == m || killerMoves[ply][1] == m;*/
 
             Depth newDepth = std::clamp(depth - R, 1, depth - 1);
 
@@ -343,7 +343,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         if (pvNode && (index == 0 || (score > alpha && score < beta))) {
-            score = -search<PV_NODE>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
