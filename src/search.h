@@ -38,8 +38,7 @@ extern Depth NULL_MOVE_R_SCALE;
 extern Depth LMR_DEPTH;
 extern double LMR_BASE;
 extern double LMR_SCALE;
-extern int LMR_MIN_I;
-extern int LMR_PVNODE_I;
+extern int LMR_INDEX;
 
 extern Depth LMP_DEPTH;
 extern int LMP_MOVES;
@@ -52,13 +51,13 @@ extern Score SEE_MARGIN;
 
 #else
 
-constexpr Score DELTA_MARGIN = 307;
+constexpr Score DELTA_MARGIN = 306;
 
-constexpr Score RAZOR_MARGIN = 146;
+constexpr Score RAZOR_MARGIN = 145;
 
-constexpr Depth RFP_DEPTH = 8;
-constexpr Score RFP_DEPTH_MULTIPLIER = 60;
-constexpr Score RFP_IMPROVING_MULTIPLIER = 56;
+constexpr Depth RFP_DEPTH = 7;
+constexpr Score RFP_DEPTH_MULTIPLIER = 59;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 52;
 
 constexpr Depth NULL_MOVE_DEPTH = 2;
 constexpr Depth NULL_MOVE_BASE_R = 3;
@@ -67,8 +66,7 @@ constexpr Depth NULL_MOVE_R_SCALE = 3;
 constexpr Depth LMR_DEPTH = 3;
 constexpr double LMR_BASE = 1;
 constexpr double LMR_SCALE = 1.75;
-constexpr int LMR_MIN_I = 2;
-constexpr int LMR_PVNODE_I = 1;
+constexpr int LMR_INDEX = 2;
 
 constexpr Depth LMP_DEPTH = 4;
 constexpr int LMP_MOVES = 5;

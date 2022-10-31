@@ -16,8 +16,8 @@
 
 #include <sstream>
 #include <vector>
-#include <thread>
 #include "uci.h"
+#include "eval.h"
 #include "tt.h"
 #include "search.h"
 #include "timeman.h"
@@ -87,8 +87,7 @@ void uciLoop() {
     tuneOut("NULL_MOVE_BASE_R", 4, 2, 6);
     tuneOut("NULL_MOVE_R_SCALE", 5, 2, 10);
     tuneOut("LMR_DEPTH", 4, 2, 10);
-    tuneOut("LMR_MIN_I", 3, 1, 10);
-    tuneOut("LMR_PVNODE_I", 2, 1, 10);
+    tuneOut("LMR_INDEX", 3, 1, 10);
     tuneOut("LMP_DEPTH", 4, 1, 10);
     tuneOut("LMP_MOVES", 5, 1, 10);
     tuneOut("ASPIRATION_DEPTH", 9, 5, 20);
@@ -99,6 +98,8 @@ void uciLoop() {
     tuneOut("BISHOP_VALUE", 850, 500, 1000);
     tuneOut("ROOK_VALUE", 1250, 1000, 1500);
     tuneOut("QUEEN_VALUE", 1600, 1200, 2000);
+    tuneOut("LMR_BASE", 10, 1, 30);
+    tuneOut("LMR_SCALE", 17, 10, 40);
 #endif
 
     ttResize(16);
@@ -162,10 +163,8 @@ void uciLoop() {
                         NULL_MOVE_R_SCALE = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMR_DEPTH") {
                         LMR_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_MIN_I") {
-                        LMR_MIN_I = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_PVNODE_I") {
-                        LMR_PVNODE_I = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_INDEX") {
+                        LMR_INDEX = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMP_DEPTH") {
                         LMP_DEPTH = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMP_MOVES") {
@@ -186,6 +185,10 @@ void uciLoop() {
                         PIECE_VALUES[ROOK] = std::stoi(tokens[3]);
                     } else if (tokens[1] == "QUEEN_VALUE") {
                         PIECE_VALUES[QUEEN] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_BASE") {
+                        LMR_BASE = double(std::stoi(tokens[3])) / 10;
+                    } else if (tokens[1] == "LMR_SCALE") {
+                        LMR_SCALE = double(std::stoi(tokens[3])) / 10;
                     }
 #endif
                 }
