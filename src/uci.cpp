@@ -67,7 +67,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v2-0-H1");
+    out("id", "name", "BlackCore_v2-1");
 
     out("id", "author", "SzilBalazs");
 
@@ -110,9 +110,7 @@ void uciLoop() {
     initSearch();
 
     Position pos = {STARTING_FEN};
-    std::thread searchThread;
-
-    std::atomic<bool> searchRunning(false);
+    int threadCount = 1;
 
     while (true) {
         std::string line, command, token;
@@ -130,10 +128,10 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
-            stopSearch();
+            joinThread(false);
             break;
         } else if (command == "stop") {
-            stopSearch();
+            joinThread(false);
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -220,41 +218,31 @@ void uciLoop() {
 
         } else if (command == "go") {
 
-            if (searchRunning) {
-                out("Search is already running!", "To stop it use the \"stop\" command.");
-                continue;
-            }
-
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0;
-            Depth depth = 64;
+            SearchInfo searchInfo;
 
             for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {
-                    wtime = std::stoi(tokens[i + 1]);
+                    searchInfo.wtime = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "btime") {
-                    btime = std::stoi(tokens[i + 1]);
+                    searchInfo.btime = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "winc") {
-                    winc = std::stoi(tokens[i + 1]);
+                    searchInfo.winc = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "binc") {
-                    binc = std::stoi(tokens[i + 1]);
+                    searchInfo.binc = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "movestogo") {
-                    movestogo = std::stoi(tokens[i + 1]);
+                    searchInfo.movestogo = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "depth") {
-                    depth = std::stoi(tokens[i + 1]);
+                    searchInfo.maxDepth = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "movetime") {
-                    movetime = std::stoi(tokens[i + 1]);
+                    searchInfo.movetime = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "nodes") {
+                    searchInfo.maxNodes = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "infinite") {
-                    depth = 64;
+
                 }
             }
 
-            if (pos.getSideToMove() == WHITE)
-                startSearch(wtime, winc, movestogo, movetime);
-            else
-                startSearch(btime, binc, movestogo, movetime);
-
-            searchThread = std::thread(iterativeDeepening, pos, depth, true, std::ref(searchRunning));
-            searchThread.detach();
+            startSearch(searchInfo, pos, threadCount);
 
         } else if (command == "d" || command == "display") {
             pos.display();

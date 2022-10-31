@@ -58,11 +58,11 @@ Ply selectiveDepth = 0;
 Move bestPV;
 
 // Move index -> depth
-Depth reductions[200][64];
+Depth reductions[200][MAX_PLY + 1];
 
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
-        for (Depth depth = 0; depth < 64; depth++) {
+        for (Depth depth = 0; depth < MAX_PLY; depth++) {
 
             reductions[moveIndex][depth] = std::max(2, Depth(
                     LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
@@ -153,6 +153,10 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
     Score staticEval = eval(pos);
 
+    if (ply >= MAX_PLY) {
+        return staticEval;
+    }
+
     if (staticEval >= beta) {
         return beta;
     }
@@ -232,6 +236,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         if (alpha < -matePly) alpha = -matePly;
         if (beta > matePly - 1) beta = matePly - 1;
         if (alpha >= beta) return alpha;
+    }
+
+    if (ply >= MAX_PLY) {
+        return eval(pos);
     }
 
     if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
@@ -387,7 +395,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     globalAge++;
     clearTables();
     selectiveDepth = 0;
-    SearchState stateStack[100];
+    SearchState stateStack[MAX_PLY + 1];
     Score alpha = -INF_SCORE;
     Score beta = INF_SCORE;
 
@@ -443,11 +451,9 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     }
 }
 
-void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning) {
+void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     pos.getState()->accumulator.refresh(pos);
-
-    searchRunning = true;
 
     Score prevScore;
     Move bestMove;
@@ -481,5 +487,29 @@ void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &
         out("bestmove", bestMove);
     }
 
-    searchRunning = false;
+    searchStopped() = true;
+}
+
+#include <thread>
+
+std::thread th;
+
+void joinThread(bool waitToFinish) {
+    if (!waitToFinish) stopSearch();
+
+    if (th.joinable()) th.join();
+}
+
+void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
+
+    joinThread(false);
+
+    Color stm = pos.getSideToMove();
+    if (stm == WHITE) {
+        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    } else {
+        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    }
+
+    th = std::thread(iterativeDeepening, pos, searchInfo.maxDepth, searchInfo.uciMode);
 }

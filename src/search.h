@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include "movegen.h"
+#include "uci.h"
 
 #ifdef TUNE
 
@@ -95,6 +96,8 @@ inline void initSearch() {
 
 Score see(const Position &pos, Move move);
 
-void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning);
+void joinThread(bool waitToFinish);
+
+void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 
 #endif //BLACKCORE_SEARCH_H

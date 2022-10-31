@@ -41,6 +41,8 @@ constexpr Score MATE_VALUE = 100000;
 constexpr Score WORST_MATE = MATE_VALUE - 100;
 constexpr Score DRAW_VALUE = 0;
 
+const Ply MAX_PLY = 100;
+
 const std::string STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 constexpr unsigned int RANDOM_SEED = 1254383;
