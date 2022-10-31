@@ -81,7 +81,7 @@ constexpr Score SEE_MARGIN = 2;
 
 #endif
 
-struct SearchState {
+struct SearchStack {
     Move move;
     Score eval = 0;
 };
