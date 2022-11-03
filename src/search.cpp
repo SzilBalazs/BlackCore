@@ -217,7 +217,10 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    if (pos.getMove50() >= 4 && notRootNode && pos.isRepetition()) return DRAW_VALUE;
+    if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
+        alpha = DRAW_VALUE;
+        if (alpha >= beta) return alpha;
+    }
 
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
@@ -259,7 +262,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         // Reverse futility pruning
         if (depth <= RFP_DEPTH &&
-            staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
+            staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
