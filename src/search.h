@@ -55,9 +55,9 @@ constexpr Score DELTA_MARGIN = 252;
 
 constexpr Score RAZOR_MARGIN = 155;
 
-constexpr Depth RFP_DEPTH = 9;
+constexpr Depth RFP_DEPTH = 8;
 constexpr Score RFP_DEPTH_MULTIPLIER = 42;
-constexpr Score RFP_IMPROVING_MULTIPLIER = 63;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 66;
 
 constexpr Depth NULL_MOVE_DEPTH = 2;
 constexpr Depth NULL_MOVE_BASE_R = 4;
