@@ -51,21 +51,21 @@ extern Score SEE_MARGIN;
 
 #else
 
-constexpr Score DELTA_MARGIN = 306;
+constexpr Score DELTA_MARGIN = 252;
 
-constexpr Score RAZOR_MARGIN = 145;
+constexpr Score RAZOR_MARGIN = 155;
 
-constexpr Depth RFP_DEPTH = 7;
-constexpr Score RFP_DEPTH_MULTIPLIER = 59;
-constexpr Score RFP_IMPROVING_MULTIPLIER = 52;
+constexpr Depth RFP_DEPTH = 9;
+constexpr Score RFP_DEPTH_MULTIPLIER = 42;
+constexpr Score RFP_IMPROVING_MULTIPLIER = 63;
 
 constexpr Depth NULL_MOVE_DEPTH = 2;
-constexpr Depth NULL_MOVE_BASE_R = 3;
-constexpr Depth NULL_MOVE_R_SCALE = 3;
+constexpr Depth NULL_MOVE_BASE_R = 4;
+constexpr Depth NULL_MOVE_R_SCALE = 2;
 
 constexpr Depth LMR_DEPTH = 3;
 constexpr double LMR_BASE = 1;
-constexpr double LMR_SCALE = 1.75;
+constexpr double LMR_SCALE = 1.65;
 constexpr int LMR_INDEX = 2;
 
 constexpr Depth LMP_DEPTH = 4;

@@ -80,7 +80,7 @@ void uciLoop() {
 #ifdef TUNE
     tuneOut("DELTA_MARGIN", 400, 200, 500);
     tuneOut("RAZOR_MARGIN", 130, 50, 200);
-    tuneOut("RFP_DEPTH", 5, 3, 8);
+    tuneOut("RFP_DEPTH", 5, 3, 10);
     tuneOut("RFP_DEPTH_MULTIPLIER", 70, 30, 200);
     tuneOut("RFP_IMPROVING_MULTIPLIER", 80, 30, 200);
     tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
@@ -94,10 +94,10 @@ void uciLoop() {
     tuneOut("ASPIRATION_DELTA", 30, 10, 100);
     tuneOut("SEE_MARGIN", 0, 0, 200);
     tuneOut("PAWN_VALUE", 150, 100, 200);
-    tuneOut("KNIGHT_VALUE", 750, 500, 1000);
-    tuneOut("BISHOP_VALUE", 850, 500, 1000);
-    tuneOut("ROOK_VALUE", 1250, 1000, 1500);
-    tuneOut("QUEEN_VALUE", 1600, 1200, 2000);
+    tuneOut("KNIGHT_VALUE", 750, 300, 1000);
+    tuneOut("BISHOP_VALUE", 850, 300, 1000);
+    tuneOut("ROOK_VALUE", 800, 300, 1000);
+    tuneOut("QUEEN_VALUE", 1000, 500, 1500);
     tuneOut("LMR_BASE", 10, 1, 30);
     tuneOut("LMR_SCALE", 17, 10, 40);
 #endif

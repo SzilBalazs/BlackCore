@@ -25,13 +25,13 @@
 
 #ifdef TUNE
 
-Score DELTA_MARGIN = 307;
+Score DELTA_MARGIN = 252;
 
-Score RAZOR_MARGIN = 146;
+Score RAZOR_MARGIN = 155;
 
 Depth RFP_DEPTH = 8;
-Score RFP_DEPTH_MULTIPLIER = 60;
-Score RFP_IMPROVING_MULTIPLIER = 56;
+Score RFP_DEPTH_MULTIPLIER = 56;
+Score RFP_IMPROVING_MULTIPLIER = 46;
 
 Depth NULL_MOVE_DEPTH = 2;
 Depth NULL_MOVE_BASE_R = 3;
@@ -39,7 +39,7 @@ Depth NULL_MOVE_R_SCALE = 3;
 
 Depth LMR_DEPTH = 3;
 double LMR_BASE = 1;
-double LMR_SCALE = 1.75;
+double LMR_SCALE = 1.65;
 int LMR_INDEX = 2;
 
 Depth LMP_DEPTH = 4;
@@ -50,7 +50,6 @@ Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
 Score SEE_MARGIN = 2;
-Depth SEE_DEPTH = 4;
 
 #endif
 
@@ -285,7 +284,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && nonPvNode) depth--;
+        if (!ttHit && pvNode) depth--;
+        if (!ttHit && depth >= 5) depth--;
 
         if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
     }
