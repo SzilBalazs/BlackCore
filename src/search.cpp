@@ -21,16 +21,17 @@
 #include "uci.h"
 
 #include <cmath>
+#include <algorithm>
 
 #ifdef TUNE
 
-Score DELTA_MARGIN = 307;
+Score DELTA_MARGIN = 252;
 
-Score RAZOR_MARGIN = 146;
+Score RAZOR_MARGIN = 155;
 
 Depth RFP_DEPTH = 8;
-Score RFP_DEPTH_MULTIPLIER = 60;
-Score RFP_IMPROVING_MULTIPLIER = 56;
+Score RFP_DEPTH_MULTIPLIER = 56;
+Score RFP_IMPROVING_MULTIPLIER = 46;
 
 Depth NULL_MOVE_DEPTH = 2;
 Depth NULL_MOVE_BASE_R = 3;
@@ -38,9 +39,8 @@ Depth NULL_MOVE_R_SCALE = 3;
 
 Depth LMR_DEPTH = 3;
 double LMR_BASE = 1;
-double LMR_SCALE = 1.75;
-int LMR_MIN_I = 2;
-int LMR_PVNODE_I = 1;
+double LMR_SCALE = 1.65;
+int LMR_INDEX = 2;
 
 Depth LMP_DEPTH = 4;
 int LMP_MOVES = 5;
@@ -50,7 +50,6 @@ Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
 Score SEE_MARGIN = 2;
-Depth SEE_DEPTH = 4;
 
 #endif
 
@@ -208,7 +207,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 }
 
 template<NodeType type>
-Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score beta, Ply ply) {
 
     constexpr bool rootNode = type == ROOT_NODE;
     constexpr bool pvNode = type != NON_PV_NODE;
@@ -218,7 +217,10 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
     if (shouldEnd()) return UNKNOWN_SCORE;
 
-    if (pos.getMove50() >= 4 && notRootNode && pos.isRepetition()) return DRAW_VALUE;
+    if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
+        alpha = DRAW_VALUE;
+        if (alpha >= beta) return alpha;
+    }
 
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
@@ -247,11 +249,11 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
 
-    Score staticEval = state->eval = eval(pos);
+    Score staticEval = stack->eval = eval(pos);
+
+    bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
 
     if (notRootNode && !inCheck) {
-
-        bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
 
         // Razoring
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
@@ -260,21 +262,21 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         // Reverse futility pruning
         if (depth <= RFP_DEPTH &&
-            staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
+            staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
         // Null move pruning
-        if (nonPvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        if (nonPvNode && !(stack - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
             // We don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
 
                 Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
 
-                state->move = Move();
+                stack->move = Move();
                 pos.makeNullMove();
-                Score score = -search<NON_PV_NODE>(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
+                Score score = -search<NON_PV_NODE>(pos, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {
@@ -285,7 +287,8 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && nonPvNode) depth--;
+        if (!ttHit && pvNode) depth--;
+        if (!ttHit && depth >= 5) depth--;
 
         if (depth <= 0) return quiescence<nextPv>(pos, alpha, beta, ply);
     }
@@ -310,7 +313,7 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
-        state->move = m;
+        stack->move = m;
 
         Score score;
 
@@ -326,27 +329,30 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         ttPrefetch(pos.getHash());
 
-        if (index == 0) {
-            score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
-        } else {
-            // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
-                m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+        // Late move reduction
+        if (!inCheck && depth >= LMR_DEPTH && index >= LMR_INDEX && !m.isPromo() &&
+            m.isQuiet()) {
 
-                score = -search<NON_PV_NODE>(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
-                                             ply + 1);
-            } else score = alpha + 1;
+            Depth R = reductions[index][depth];
 
+            R += improving;
+            R -= pvNode;
 
-            // Principal variation search
-            if (score > alpha) {
-                score = -search<NON_PV_NODE>(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+            Depth newDepth = std::clamp(depth - R, 1, depth - 1);
 
-                if (score > alpha) {
-                    score = -search<nextPv>(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
-                }
+            score = -search<NON_PV_NODE>(pos, stack + 1, newDepth,
+                                         -alpha - 1, -alpha, ply + 1);
+
+            if (score > alpha && R > 1) {
+                score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
             }
 
+        } else if (nonPvNode || index != 0) {
+            score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+        }
+
+        if (pvNode && (index == 0 || (score > alpha && score < beta))) {
+            score = -search<nextPv>(pos, stack + 1, depth - 1, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
@@ -395,7 +401,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     globalAge++;
     clearTables();
     selectiveDepth = 0;
-    SearchState stateStack[MAX_PLY + 1];
+    SearchStack stateStack[MAX_PLY + 1];
     Score alpha = -INF_SCORE;
     Score beta = INF_SCORE;
 

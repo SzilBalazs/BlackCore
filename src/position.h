@@ -205,7 +205,7 @@ void Position::clearSquare(Square square) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.removeFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+        state->accumulator.removeFeature(piece.color, piece.type, square);
     }
 }
 
@@ -220,7 +220,7 @@ void Position::setSquare(Square square, Piece piece) {
         state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
 
         if constexpr (updateAccumulator) {
-            state->accumulator.removeFeature(NNUE::getAccumulatorIndex(p.color, p.type, square));
+            state->accumulator.removeFeature(p.color, p.type, square);
         }
     }
 
@@ -231,7 +231,7 @@ void Position::setSquare(Square square, Piece piece) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.addFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+        state->accumulator.addFeature(piece.color, piece.type, square);
     }
 }
 

@@ -73,7 +73,7 @@ bool Position::isRepetition() {
 }
 
 void Position::display() const {
-    state->accumulator.forward();
+
     std::vector<string> text;
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
     if (getEpSquare() != NULL_SQUARE)
