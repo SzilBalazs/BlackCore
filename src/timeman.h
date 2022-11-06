@@ -21,11 +21,13 @@
 
 extern unsigned int MOVE_OVERHEAD;
 
-void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime);
+void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes);
 
 bool shouldEnd();
 
 void stopSearch();
+
+bool &searchStopped();
 
 void allocateTime(int stability);
 

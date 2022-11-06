@@ -31,9 +31,9 @@ struct TestPosition {
 
 const unsigned int posCount = 10;
 
-const unsigned int searchTestHashSize = 16;
+const unsigned int searchTestHashSize = 32;
 
-const Depth SEARCH_DEPTH = 13;
+const Depth SEARCH_DEPTH = 15;
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
@@ -82,13 +82,20 @@ void testSearch() {
     initSearch();
     ttResize(searchTestHashSize);
 
-    startSearch(0, 0, 0, 0);
+    U64 totalNodes = 0;
+    U64 nps;
+
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
-        std::atomic<bool> a;
-        iterativeDeepening(pos, SEARCH_DEPTH, false, std::ref(a));
+        SearchInfo info;
+        info.maxDepth = SEARCH_DEPTH;
+        info.uciMode = false;
+        startSearch(info, pos, 1);
+        joinThread(true);
+        totalNodes += nodeCount;
+        nps += getNps();
     }
 
-    std::cout << nodeCount << " nodes " << getNps() << " nps" << std::endl;
+    std::cout << totalNodes << " nodes " << nps / posCount << " nps" << std::endl;
 }

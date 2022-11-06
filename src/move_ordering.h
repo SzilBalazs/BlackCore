@@ -20,7 +20,7 @@
 #include "move.h"
 #include "position.h"
 
-extern Move killerMoves[101][2];
+extern Move killerMoves[MAX_PLY + 1][2];
 
 Score scoreMove(const Position &pos, Move m, Ply ply);
 

@@ -18,21 +18,30 @@
 #define BLACKCORE_UCI_H
 
 #include <iostream>
+#include "constants.h"
 
-inline void _out() {
-    std::cout << std::endl;
-}
+struct SearchInfo {
+    U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0, maxNodes = 0;
+    Depth maxDepth = MAX_PLY;
+    bool uciMode = true;
+};
 
-template<typename T, typename... Args>
-inline void _out(T a, Args... args) {
-    std::cout << " " << a;
-    _out(args...);
+namespace BlackCore {
+    inline void _out() {
+        std::cout << std::endl;
+    }
+
+    template<typename T, typename... Args>
+    inline void _out(T a, Args... args) {
+        std::cout << " " << a;
+        _out(args...);
+    }
 }
 
 template<typename T, typename... Args>
 inline void out(T a, Args... args) {
     std::cout << a;
-    _out(args...);
+    BlackCore::_out(args...);
 }
 
 inline void tuneOut(const std::string &name, int value, int min, int max) {

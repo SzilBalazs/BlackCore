@@ -23,19 +23,20 @@ class Position;
 
 namespace NNUE {
 
-    /* +-----------------------+
+    /*
+     * +-----------------------+
      * |   NNUE Architecture   |
-     * |      768->256->1      |
-     * |   Activation: ReLU    |
+     * |    2x(768->256)->1    |
+     * |    Activation: ReLU   |
      * +-----------------------+
      *
-     * L_0_IN = features count
+     * L_0_SIZE = features count
      *
-     * L_1_WEIGHTS = in features -> L_1 (768 -> 32)
-     * L_1_BIASES = L_1 biases
+     * L_0_WEIGHTS = in features -> L_1 (768 -> 256)
+     * L_0_BIASES = L_1 biases
      *
-     * L_2_WEIGHTS = L_1 -> L_2 (32 -> 32)
-     * L_2_BIASES = L_2 biases
+     * L_1_WEIGHTS = 2xL_1 -> L_2 (2x256 -> 1)
+     * L_1_BIASES = L_2 biases
      *
      */
 
@@ -47,7 +48,7 @@ namespace NNUE {
     constexpr int chunkNum = 256 / regWidth;
 
     struct Accumulator {
-        alignas(32) int16_t hiddenLayer[L_1_SIZE];
+        alignas(32) int16_t hiddenLayer[2][L_1_SIZE];
 
         constexpr Accumulator() {}
 
@@ -55,15 +56,16 @@ namespace NNUE {
 
         void refresh(const Position &pos);
 
-        void addFeature(int index);
+        void addFeature(Color pieceColor, PieceType pieceType, Square sq);
 
-        void removeFeature(int index);
+        void removeFeature(Color pieceColor, PieceType pieceType, Square sq);
 
-        Score forward();
+        Score forward(Color stm);
     };
 
-    constexpr int getAccumulatorIndex(Color color, PieceType type, Square square) {
-        return color * 384 + type * 64 + square;
+    constexpr int getAccumulatorIndex(Color perspective, Color pieceColor, PieceType pieceType, Square square) {
+        return (perspective == WHITE ? pieceColor : 1 - pieceColor) * 384 + pieceType * 64 +
+               (perspective == WHITE ? square : square ^ 56);
     }
 
     constexpr int16_t ReLU(int16_t in) {

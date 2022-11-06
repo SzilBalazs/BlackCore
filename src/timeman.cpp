@@ -16,50 +16,48 @@
 
 #include "timeman.h"
 #include "position.h"
-
 #include <chrono>
 
 unsigned int MOVE_OVERHEAD = 10;
 
-constexpr U64 mask = (1ULL << 15) - 1;
+constexpr U64 mask = 1023;
 
-U64 startedSearch;
-U64 shouldSearch;
-U64 searchTime;
-U64 maxSearch;
-U64 stabilityTime;
+U64 startedSearch, shouldSearch, searchTime, maxSearch, stabilityTime, maxNodes;
 
-
-bool stop = false;
+bool stopping = true;
+bool stopped = true;
 
 U64 getTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime) {
+void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
     nodeCount = 0;
 
     movesToGo = movesToGo == 0 ? 15 : movesToGo;
 
     startedSearch = getTime();
     stabilityTime = 0;
-    stop = false;
+    stopping = false;
+    stopped = false;
 
-    if (time == 0) {
-        // We have infinite time
-        shouldSearch = 0;
-        maxSearch = 0;
-    } else if (moveTime != 0) {
+    maxNodes = nodes;
+
+    if (moveTime != 0) {
         // We are limited how much can we search
         shouldSearch = moveTime - MOVE_OVERHEAD;
         maxSearch = moveTime - MOVE_OVERHEAD;
+    } else if (time == 0) {
+        // We have infinite time
+        shouldSearch = 0;
+        maxSearch = 0;
     } else {
 
         U64 panicTime = time / (movesToGo + 10) + 2 * inc;
         stabilityTime = time / 400;
 
-        shouldSearch = std::min(time - MOVE_OVERHEAD, time / (movesToGo + 5) + inc * 3 / 4 - MOVE_OVERHEAD);
+        shouldSearch = std::min(time - MOVE_OVERHEAD, time / (movesToGo + 1) + inc * 3 / 4 - MOVE_OVERHEAD);
         maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
     }
 
@@ -67,8 +65,10 @@ void startSearch(U64 time, U64 inc, U64 movesToGo, U64 moveTime) {
 }
 
 void stopSearch() {
-    stop = true;
+    stopping = true;
 }
+
+bool &searchStopped() { return stopped; }
 
 void allocateTime(int stability) {
     U64 newSearchTime = shouldSearch - stability * stabilityTime;
@@ -76,10 +76,10 @@ void allocateTime(int stability) {
 }
 
 bool shouldEnd() {
-    if ((nodeCount & mask) == 0 && maxSearch != 0 && !stop) {
-        stop = getSearchTime() >= searchTime;
+    if ((nodeCount & mask) == 0 && !stopping) {
+        stopping = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
     }
-    return stop;
+    return stopping;
 }
 
 U64 getSearchTime() {

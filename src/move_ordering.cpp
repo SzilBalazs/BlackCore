@@ -40,7 +40,7 @@ constexpr Score losingCapture[6][6] = {
         {0, 200000, 200100, 200200, 200300, 200400},  // QUEEN
 };
 
-Move killerMoves[101][2];
+Move killerMoves[MAX_PLY + 1][2];
 
 // TODO Counter move history
 Score historyTable[2][64][64];
