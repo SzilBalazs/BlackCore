@@ -71,6 +71,11 @@ constexpr int LMR_INDEX = 2;
 constexpr Depth LMP_DEPTH = 4;
 constexpr int LMP_MOVES = 5;
 
+constexpr Depth FUTILITY_DEPTH = 3;
+constexpr Score FUTILITY_MARGIN = 30;
+constexpr Score FUTILITY_MARGIN_DEPTH = 60;
+constexpr Score FUTILITY_MARGIN_IMPROVING = 80;
+
 constexpr Depth ASPIRATION_DEPTH = 9;
 constexpr Score ASPIRATION_DELTA = 28;
 constexpr Score ASPIRATION_BOUND = 3000;

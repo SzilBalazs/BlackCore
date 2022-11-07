@@ -71,7 +71,7 @@ void initLmr() {
 }
 
 Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
-    for (PieceType t : PIECE_TYPES_BY_VALUE) {
+    for (PieceType t: PIECE_TYPES_BY_VALUE) {
         Bitboard s = attackers & pos.pieces(stm, t);
         if (s) {
             type = t;
@@ -320,7 +320,13 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         // We can prune the move in some cases
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
 
+            if (depth <= FUTILITY_DEPTH && m.isQuiet() &&
+                staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving <
+                alpha)
+                continue;
+
             // Late move/movecount pruning
+            // This will also prune losing captures
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
                 break;
         }
