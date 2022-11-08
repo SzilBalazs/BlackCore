@@ -19,112 +19,112 @@
 #include <sstream>
 
 std::string formatSquare(Square square) {
-	return std::string() + (char) ('a' + (char) square % 8) + (char) ('1' + (char) (square / 8));
+    return std::string() + (char) ('a' + (char) square % 8) + (char) ('1' + (char) (square / 8));
 }
 
 char pieceToChar(Piece piece) {
-	char base;
-	switch (piece.type) {
-		case PAWN:
-			base = 'p';
-			break;
-		case ROOK:
-			base = 'r';
-			break;
-		case KNIGHT:
-			base = 'n';
-			break;
-		case BISHOP:
-			base = 'b';
-			break;
-		case QUEEN:
-			base = 'q';
-			break;
-		case KING:
-			base = 'k';
-			break;
-		default:
-			base = ' ';
-	}
-	if (base != ' ' && piece.color == WHITE)
-		base -= 32;
-	return base;
+    char base;
+    switch (piece.type) {
+        case PAWN:
+            base = 'p';
+            break;
+        case ROOK:
+            base = 'r';
+            break;
+        case KNIGHT:
+            base = 'n';
+            break;
+        case BISHOP:
+            base = 'b';
+            break;
+        case QUEEN:
+            base = 'q';
+            break;
+        case KING:
+            base = 'k';
+            break;
+        default:
+            base = ' ';
+    }
+    if (base != ' ' && piece.color == WHITE)
+        base -= 32;
+    return base;
 }
 
 std::string typeToString(PieceType type) {
-	switch (type) {
-		case KING:
-			return "king";
-		case PAWN:
-			return "pawn";
-		case KNIGHT:
-			return "knight";
-		case BISHOP:
-			return "bishop";
-		case ROOK:
-			return "rook";
-		case QUEEN:
-			return "queen";
-		default:
-			return "empty";
-	}
+    switch (type) {
+        case KING:
+            return "king";
+        case PAWN:
+            return "pawn";
+        case KNIGHT:
+            return "knight";
+        case BISHOP:
+            return "bishop";
+        case ROOK:
+            return "rook";
+        case QUEEN:
+            return "queen";
+        default:
+            return "empty";
+    }
 }
 
 Piece charToPiece(char c) {
-	Piece piece;
+    Piece piece;
 
-	if ('a' <= c && c <= 'z') {
-		piece.color = BLACK;
-	} else if ('A' <= c && c <= 'Z') {
-		piece.color = WHITE;
-		c += 32;
-	}
+    if ('a' <= c && c <= 'z') {
+        piece.color = BLACK;
+    } else if ('A' <= c && c <= 'Z') {
+        piece.color = WHITE;
+        c += 32;
+    }
 
-	switch (c) {
-		case 'p':
-			piece.type = PAWN;
-			break;
-		case 'r':
-			piece.type = ROOK;
-			break;
-		case 'n':
-			piece.type = KNIGHT;
-			break;
-		case 'b':
-			piece.type = BISHOP;
-			break;
-		case 'q':
-			piece.type = QUEEN;
-			break;
-		case 'k':
-			piece.type = KING;
-			break;
-	}
-	return piece;
+    switch (c) {
+        case 'p':
+            piece.type = PAWN;
+            break;
+        case 'r':
+            piece.type = ROOK;
+            break;
+        case 'n':
+            piece.type = KNIGHT;
+            break;
+        case 'b':
+            piece.type = BISHOP;
+            break;
+        case 'q':
+            piece.type = QUEEN;
+            break;
+        case 'k':
+            piece.type = KING;
+            break;
+    }
+    return piece;
 }
 
 void displayBB(Bitboard b) {
-	std::cout << "    A   B   C   D   E   F   G   H  \n";
-	for (int i = 8; i >= 1; i--) {
-		std::cout << "  +---+---+---+---+---+---+---+---+\n";
-		std::cout << i << " |";
-		for (int j = 1; j <= 8; j++) {
-			std::cout << " " << b.get(Square((i - 1) * 8 + (j - 1))) << " |";
-		}
-		std::cout << "\n";
-	}
-	std::cout << "  +---+---+---+---+---+---+---+---+\n\n"
-			  << std::endl;
+    std::cout << "    A   B   C   D   E   F   G   H  \n";
+    for (int i = 8; i >= 1; i--) {
+        std::cout << "  +---+---+---+---+---+---+---+---+\n";
+        std::cout << i << " |";
+        for (int j = 1; j <= 8; j++) {
+            std::cout << " " << b.get(Square((i - 1) * 8 + (j - 1))) << " |";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "  +---+---+---+---+---+---+---+---+\n\n"
+              << std::endl;
 }
 
 // source: https://web.archive.org/web/20071031100138/http://www.brucemo.com/compchess/programming/zobrist.htm
 Bitboard randBB() {
-	return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^
-		   ((U64) rand() << 45) ^ ((U64) rand() << 60);
+    return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^
+           ((U64) rand() << 45) ^ ((U64) rand() << 60);
 }
 
 std::string BBToHex(Bitboard bb) {
-	std::stringstream ss;
-	ss << std::hex << bb.bb;
-	return "0x" + ss.str() + "ULL";
+    std::stringstream ss;
+    ss << std::hex << bb.bb;
+    return "0x" + ss.str() + "ULL";
 }

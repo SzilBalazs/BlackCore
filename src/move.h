@@ -47,72 +47,72 @@ constexpr unsigned int QUEEN_CASTLE = SPECIAL1_FLAG | SPECIAL2_FLAG;
 
 class Move {
 public:
-	constexpr Move(Square from, Square to, unsigned int flags) {
-		data = (flags << 12) | (from << 6) | (to);
-	}
+    constexpr Move(Square from, Square to, unsigned int flags) {
+        data = (flags << 12) | (from << 6) | (to);
+    }
 
-	constexpr Move(Square from, Square to) {
-		data = (from << 6) | (to);
-	}
+    constexpr Move(Square from, Square to) {
+        data = (from << 6) | (to);
+    }
 
-	constexpr Move() = default;
+    constexpr Move() = default;
 
-	constexpr Square getTo() const {
-		return Square(data & 0x3f);
-	}
+    constexpr Square getTo() const {
+        return Square(data & 0x3f);
+    }
 
-	constexpr Square getFrom() const {
-		return Square((data >> 6) & 0x3f);
-	}
+    constexpr Square getFrom() const {
+        return Square((data >> 6) & 0x3f);
+    }
 
-	constexpr bool isFlag(unsigned int flag) const {
-		return (data >> 12) & flag;
-	}
+    constexpr bool isFlag(unsigned int flag) const {
+        return (data >> 12) & flag;
+    }
 
-	constexpr bool equalFlag(unsigned int flag) const {
-		return (data >> 12) == flag;
-	}
+    constexpr bool equalFlag(unsigned int flag) const {
+        return (data >> 12) == flag;
+    }
 
-	constexpr bool isNull() const {
-		return data == 0;
-	}
+    constexpr bool isNull() const {
+        return data == 0;
+    }
 
-	constexpr bool isCapture() const {
-		return isFlag(CAPTURE_FLAG);
-	}
+    constexpr bool isCapture() const {
+        return isFlag(CAPTURE_FLAG);
+    }
 
-	constexpr bool isPromo() const {
-		return isFlag(PROMO_FLAG);
-	}
+    constexpr bool isPromo() const {
+        return isFlag(PROMO_FLAG);
+    }
 
-	constexpr bool isSpecial1() const {
-		return isFlag(SPECIAL1_FLAG);
-	}
+    constexpr bool isSpecial1() const {
+        return isFlag(SPECIAL1_FLAG);
+    }
 
-	constexpr bool isSpecial2() const {
-		return isFlag(SPECIAL2_FLAG);
-	}
+    constexpr bool isSpecial2() const {
+        return isFlag(SPECIAL2_FLAG);
+    }
 
-	constexpr bool isQuiet() const {
-		return !isCapture();
-	}
+    constexpr bool isQuiet() const {
+        return !isCapture();
+    }
 
-	constexpr explicit operator bool() const {
-		return !isNull();
-	}
+    constexpr explicit operator bool() const {
+        return !isNull();
+    }
 
-	constexpr bool operator==(Move a) const {
-		return (data & 0xFFFF) == (a.data & 0xFFFF);
-	}
+    constexpr bool operator==(Move a) const {
+        return (data & 0xFFFF) == (a.data & 0xFFFF);
+    }
 
-	constexpr bool operator!=(Move a) const {
-		return (data & 0xFFFF) != (a.data & 0xFFFF);
-	}
+    constexpr bool operator!=(Move a) const {
+        return (data & 0xFFFF) != (a.data & 0xFFFF);
+    }
 
-	std::string str() const;
+    std::string str() const;
 
 private:
-	uint16_t data = 0;
+    uint16_t data = 0;
 };
 
 std::ostream &operator<<(std::ostream &os, const Move &move);

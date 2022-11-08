@@ -26,34 +26,34 @@ constexpr Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
 
 template<Color color>
 constexpr Color EnemyColor() {
-	if constexpr (color == WHITE)
-		return BLACK;
-	else
-		return WHITE;
+    if constexpr (color == WHITE)
+        return BLACK;
+    else
+        return WHITE;
 }
 
 inline Color EnemyColor(Color color) {
-	return color == WHITE ? BLACK : WHITE;
+    return color == WHITE ? BLACK : WHITE;
 }
 
 constexpr unsigned int squareToRank(Square square) {
-	return square >> 3;
+    return square >> 3;
 }
 
 constexpr unsigned int squareToFile(Square square) {
-	return square & 7;
+    return square & 7;
 }
 
 constexpr Square mirrorSquare(Square square) {
-	return Square(56 - square + squareToFile(square));
+    return Square(56 - square + squareToFile(square));
 }
 
 constexpr unsigned char encodePiece(Piece piece) {
-	return (piece.color << 3) | piece.type;
+    return (piece.color << 3) | piece.type;
 }
 
 constexpr Piece decodePiece(unsigned char encodedPiece) {
-	return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
+    return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
 }
 
 std::string formatSquare(Square square);

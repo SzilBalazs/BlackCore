@@ -85,16 +85,16 @@ constexpr Score SEE_MARGIN = 2;
 #endif
 
 struct SearchStack {
-	Move move;
-	Score eval = 0;
+    Move move;
+    Score eval = 0;
 };
 
 void initLmr();
 
 inline void initSearch() {
-	initBitboard();
-	initLmr();
-	NNUE::init();
+    initBitboard();
+    initLmr();
+    NNUE::init();
 }
 
 Score see(const Position &pos, Move move);

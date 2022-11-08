@@ -26,35 +26,35 @@
 int main(int argc, char **argv) {
 
 #ifdef TUNE
-	std::cout << "This build is for tuning only, please uncomment the TUNE define in constants.h for regular use!"
-			  << std::endl;
+    std::cout << "This build is for tuning only, please uncomment the TUNE define in constants.h for regular use!"
+              << std::endl;
 #endif
 
-	srand(RANDOM_SEED);
-	std::string mode;
-	if (argc >= 2) {
-		mode = std::string(argv[1]);
-	}
+    srand(RANDOM_SEED);
+    std::string mode;
+    if (argc >= 2) {
+        mode = std::string(argv[1]);
+    }
 
-	if (mode.empty()) {
-		std::cin >> mode;
-	}
+    if (mode.empty()) {
+        std::cin >> mode;
+    }
 
-	if (mode == "bench") {
-		testSearch();
-	} else if (mode == "perft") {
-		testPerft();
-	} else if (mode == "uci") {
-		uciLoop();
-	} else if (mode == "tune") {
+    if (mode == "bench") {
+        testSearch();
+    } else if (mode == "perft") {
+        testPerft();
+    } else if (mode == "uci") {
+        uciLoop();
+    } else if (mode == "tune") {
 #ifdef TUNE
-		tune("out.fen");
+        tune("out.fen");
 #else
-		std::cout << "This build doesn't support tuning!" << std::endl;
+        std::cout << "This build doesn't support tuning!" << std::endl;
 #endif
-	} else {
-		std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
-	}
+    } else {
+        std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
+    }
 
-	return 0;
+    return 0;
 }
