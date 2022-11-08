@@ -17,39 +17,39 @@
 #ifndef BLACKCORE_UCI_H
 #define BLACKCORE_UCI_H
 
-#include <iostream>
 #include "constants.h"
+#include <iostream>
 
 struct SearchInfo {
-    U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0, maxNodes = 0;
-    Depth maxDepth = MAX_PLY;
-    bool uciMode = true;
+	U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0, maxNodes = 0;
+	Depth maxDepth = MAX_PLY;
+	bool uciMode = true;
 };
 
 namespace BlackCore {
-    inline void _out() {
-        std::cout << std::endl;
-    }
+	inline void _out() {
+		std::cout << std::endl;
+	}
 
-    template<typename T, typename... Args>
-    inline void _out(T a, Args... args) {
-        std::cout << " " << a;
-        _out(args...);
-    }
-}
+	template<typename T, typename... Args>
+	inline void _out(T a, Args... args) {
+		std::cout << " " << a;
+		_out(args...);
+	}
+}// namespace BlackCore
 
 template<typename T, typename... Args>
 inline void out(T a, Args... args) {
-    std::cout << a;
-    BlackCore::_out(args...);
+	std::cout << a;
+	BlackCore::_out(args...);
 }
 
 inline void tuneOut(const std::string &name, int value, int min, int max) {
-    out("option", "name", name, "type", "spin", "default", value, "min", min, "max", max);
+	out("option", "name", name, "type", "spin", "default", value, "min", min, "max", max);
 
-    // std::cout << "else if (tokens[1] == \"" << name << "\") {\n" << name << " = std::stoi(tokens[3]);\n}";
+	// std::cout << "else if (tokens[1] == \"" << name << "\") {\n" << name << " = std::stoi(tokens[3]);\n}";
 }
 
 void uciLoop();
 
-#endif //BLACKCORE_UCI_H
+#endif//BLACKCORE_UCI_H

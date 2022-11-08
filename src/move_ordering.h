@@ -32,4 +32,4 @@ void recordKillerMove(Move m, Ply ply);
 
 void recordHHMove(Move move, Color color, Depth depth);
 
-#endif //BLACKCORE_MOVE_ORDERING_H
+#endif//BLACKCORE_MOVE_ORDERING_H

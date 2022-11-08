@@ -17,9 +17,9 @@
 #ifndef BLACKCORE_SEARCH_H
 #define BLACKCORE_SEARCH_H
 
-#include <atomic>
 #include "movegen.h"
 #include "uci.h"
+#include <atomic>
 
 #ifdef TUNE
 
@@ -85,16 +85,16 @@ constexpr Score SEE_MARGIN = 2;
 #endif
 
 struct SearchStack {
-    Move move;
-    Score eval = 0;
+	Move move;
+	Score eval = 0;
 };
 
 void initLmr();
 
 inline void initSearch() {
-    initBitboard();
-    initLmr();
-    NNUE::init();
+	initBitboard();
+	initLmr();
+	NNUE::init();
 }
 
 Score see(const Position &pos, Move move);
@@ -103,4 +103,4 @@ void joinThread(bool waitToFinish);
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 
-#endif //BLACKCORE_SEARCH_H
+#endif//BLACKCORE_SEARCH_H

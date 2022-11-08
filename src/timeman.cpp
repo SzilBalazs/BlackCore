@@ -28,65 +28,68 @@ bool stopping = true;
 bool stopped = true;
 
 U64 getTime() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(
+				   std::chrono::system_clock::now().time_since_epoch())
+			.count();
 }
 
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
-    nodeCount = 0;
+	nodeCount = 0;
 
-    movesToGo = movesToGo == 0 ? 15 : movesToGo;
+	movesToGo = movesToGo == 0 ? 15 : movesToGo;
 
-    startedSearch = getTime();
-    stabilityTime = 0;
-    stopping = false;
-    stopped = false;
+	startedSearch = getTime();
+	stabilityTime = 0;
+	stopping = false;
+	stopped = false;
 
-    maxNodes = nodes;
+	maxNodes = nodes;
 
-    if (moveTime != 0) {
-        // We are limited how much can we search
-        shouldSearch = moveTime - MOVE_OVERHEAD;
-        maxSearch = moveTime - MOVE_OVERHEAD;
-    } else if (time == 0) {
-        // We have infinite time
-        shouldSearch = 0;
-        maxSearch = 0;
-    } else {
+	if (moveTime != 0) {
+		// We are limited how much can we search
+		shouldSearch = moveTime - MOVE_OVERHEAD;
+		maxSearch = moveTime - MOVE_OVERHEAD;
+	} else if (time == 0) {
+		// We have infinite time
+		shouldSearch = 0;
+		maxSearch = 0;
+	} else {
 
-        U64 panicTime = time / (movesToGo + 10) + 2 * inc;
-        stabilityTime = time / 500;
+		U64 panicTime = time / (movesToGo + 10) + 2 * inc;
+		stabilityTime = time / 500;
 
-        shouldSearch = std::min(time - MOVE_OVERHEAD, time / (movesToGo + 1) + inc * 3 / 4 - MOVE_OVERHEAD);
-        maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
-    }
+		shouldSearch = std::min(time - MOVE_OVERHEAD, time / (movesToGo + 1) + inc * 3 / 4 - MOVE_OVERHEAD);
+		maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
+	}
 
-    searchTime = shouldSearch;
+	searchTime = shouldSearch;
 }
 
 void stopSearch() {
-    stopping = true;
+	stopping = true;
 }
 
-bool &searchStopped() { return stopped; }
+bool &searchStopped() {
+	return stopped;
+}
 
 void allocateTime(int stability) {
-    U64 newSearchTime = shouldSearch - stability * stabilityTime;
-    searchTime = std::min(maxSearch, newSearchTime);
+	U64 newSearchTime = shouldSearch - stability * stabilityTime;
+	searchTime = std::min(maxSearch, newSearchTime);
 }
 
 bool shouldEnd() {
-    if ((nodeCount & mask) == 0 && !stopping) {
-        stopping = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
-    }
-    return stopping;
+	if ((nodeCount & mask) == 0 && !stopping) {
+		stopping = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
+	}
+	return stopping;
 }
 
 U64 getSearchTime() {
-    return getTime() - startedSearch;
+	return getTime() - startedSearch;
 }
 
 U64 getNps() {
-    U64 millis = getSearchTime();
-    return millis == 0 ? 0 : nodeCount * 1000 / millis;
+	U64 millis = getSearchTime();
+	return millis == 0 ? 0 : nodeCount * 1000 / millis;
 }

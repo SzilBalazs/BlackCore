@@ -35,4 +35,4 @@ U64 getSearchTime();
 
 U64 getNps();
 
-#endif //BLACKCORE_TIMEMAN_H
+#endif//BLACKCORE_TIMEMAN_H

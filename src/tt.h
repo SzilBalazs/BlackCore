@@ -23,28 +23,31 @@
 extern uint16_t globalAge;
 
 enum EntryFlag : uint16_t {
-    NONE = 0, EXACT = 1, ALPHA = 2, BETA = 3
+	NONE = 0,
+	EXACT = 1,
+	ALPHA = 2,
+	BETA = 3
 };
 
-struct TTEntry {    // Total: 21 bytes -> compiler makes it 24
-    U64 hash;       // 8 bytes
-    Depth depth;    // 4 bytes
-    Score eval;     // 4 bytes
-    Move hashMove;  // 2 bytes
-    EntryFlag flag; // 1 bytes
-    uint16_t age;   // 2 bytes
+struct TTEntry {   // Total: 21 bytes -> compiler makes it 24
+	U64 hash;	   // 8 bytes
+	Depth depth;   // 4 bytes
+	Score eval;	   // 4 bytes
+	Move hashMove; // 2 bytes
+	EntryFlag flag;// 1 bytes
+	uint16_t age;  // 2 bytes
 };
 
-struct TTBucket {               // 64 bytes
-    TTEntry entryA;             // 24 bytes
-    TTEntry entryB;             // 24 bytes
-    U64 _padding1, _padding2;   // 16 bytes
+struct TTBucket {			 // 64 bytes
+	TTEntry entryA;			 // 24 bytes
+	TTEntry entryB;			 // 24 bytes
+	U64 _padding1, _padding2;// 16 bytes
 };
 
 struct TTable {
-    TTBucket *table;
-    unsigned int bucketCount;
-    U64 mask;
+	TTBucket *table;
+	unsigned int bucketCount;
+	U64 mask;
 };
 
 void ttResize(unsigned int MBSize);
@@ -61,4 +64,4 @@ Move getHashMove(U64 hash);
 
 void ttPrefetch(U64 hash);
 
-#endif //BLACKCORE_TT_H
+#endif//BLACKCORE_TT_H

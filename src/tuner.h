@@ -17,23 +17,23 @@
 #ifndef BLACKCORE_TUNER_H
 #define BLACKCORE_TUNER_H
 
-#include <string>
-#include <vector>
+#include "position.h"
 #include <fstream>
 #include <iostream>
-#include "position.h"
+#include <string>
+#include <vector>
 
 struct DataEntry {
-    RawState pos;
-    double result;
+	RawState pos;
+	double result;
 };
 
 struct EvalParameter {
-    const std::string name;
-    Score &mgScore;
-    Score &egScore;
+	const std::string name;
+	Score &mgScore;
+	Score &egScore;
 };
 
 void tune(const std::string &inputFile);
 
-#endif //BLACKCORE_TUNER_H
+#endif//BLACKCORE_TUNER_H
