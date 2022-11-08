@@ -95,7 +95,7 @@ Score see(const Position &pos, Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    e[0] = PIECE_VALUES[pos.pieceAt(to).type];
+    e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
