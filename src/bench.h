@@ -20,6 +20,8 @@
 
 #include "movegen.h"
 
+#include <iostream>
+
 template<bool output>
 U64 perft(Position &position, Depth depth) {
 	Move moves[200];
