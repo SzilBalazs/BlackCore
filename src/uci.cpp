@@ -67,12 +67,16 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v2-1");
+#ifdef VERSION
+    out("id", "name", "BlackCore", VERSION);
+#else
+    out("id", "name", "BlackCore");
+#endif
 
     out("id", "author", "SzilBalazs");
 
     // We tell the GUI what options we have
-    out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
+    out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
@@ -102,7 +106,7 @@ void uciLoop() {
     tuneOut("LMR_SCALE", 17, 10, 40);
 #endif
 
-    ttResize(16);
+    ttResize(32);
 
     // We have sent all the parameters
     out("uciok");
