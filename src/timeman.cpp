@@ -36,7 +36,7 @@ U64 getTime() {
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
     nodeCount = 0;
 
-    movesToGo = movesToGo == 0 ? 15 : movesToGo;
+    movesToGo = movesToGo == 0 ? 20 : movesToGo + 1;
 
     startedSearch = getTime();
     stabilityTime = 0;
@@ -58,7 +58,7 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
         U64 panicTime = time / (movesToGo + 10) + 2 * inc;
         stabilityTime = time / 500;
 
-        shouldSearch = std::min(time - MOVE_OVERHEAD, time / (movesToGo + 1) + inc * 3 / 4 - MOVE_OVERHEAD);
+        shouldSearch = std::min(time - MOVE_OVERHEAD, time / movesToGo + inc * 3 / 4 - MOVE_OVERHEAD);
         maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
     }
 
