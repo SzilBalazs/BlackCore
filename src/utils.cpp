@@ -14,9 +14,9 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "utils.h"
 #include <iostream>
 #include <sstream>
-#include "utils.h"
 
 std::string formatSquare(Square square) {
     return std::string() + (char) ('a' + (char) square % 8) + (char) ('1' + (char) (square / 8));
@@ -46,7 +46,8 @@ char pieceToChar(Piece piece) {
         default:
             base = ' ';
     }
-    if (base != ' ' && piece.color == WHITE) base -= 32;
+    if (base != ' ' && piece.color == WHITE)
+        base -= 32;
     return base;
 }
 
@@ -112,7 +113,8 @@ void displayBB(Bitboard b) {
         }
         std::cout << "\n";
     }
-    std::cout << "  +---+---+---+---+---+---+---+---+\n\n" << std::endl;
+    std::cout << "  +---+---+---+---+---+---+---+---+\n\n"
+              << std::endl;
 }
 
 // source: https://web.archive.org/web/20071031100138/http://www.brucemo.com/compchess/programming/zobrist.htm

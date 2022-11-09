@@ -27,13 +27,12 @@ extern Score PIECE_VALUES[6];
 #else
 
 constexpr Score PIECE_VALUES[6] = {
-        0, 150, 762, 892, 1254, 1651
-};
+        0, 156, 561, 608, 736, 1022};
 
 #endif
 
-constexpr Score TEMPO_SCORE = 10;
+inline Score eval(const Position &pos) {
+    return pos.getState()->accumulator.forward(pos.getSideToMove());
+}
 
-Score eval(const Position &pos);
-
-#endif //BLACKCORE_EVAL_H
+#endif//BLACKCORE_EVAL_H

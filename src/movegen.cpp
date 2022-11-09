@@ -78,7 +78,6 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
     }
 
     return moves;
-
 }
 
 template<Color color, bool capturesOnly>
@@ -287,7 +286,6 @@ inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboa
     moves = generateMovesFromPieces<capturesOnly, false, true>(pos, moves, pinnedDA, checkMask & pinDA, occupied, empty,
                                                                enemy);
 
-
     return moves;
 }
 
@@ -327,7 +325,8 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard possiblePinners = (pieceAttacks<QUEEN>(king, occupied) ^ seenSquares) & enemy;
     Bitboard pinners = ((pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
                         (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
-                        (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) & possiblePinners;
+                        (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) &
+                       possiblePinners;
 
     Bitboard pinH, pinV, pinD, pinA, pinHV, pinDA, moveH, moveV, moveD, moveA;
 

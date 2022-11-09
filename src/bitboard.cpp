@@ -14,13 +14,15 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <cstring>
 #include "bitboard.h"
 #include "utils.h"
+#include <cstring>
+#include <iostream>
 
-Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64], diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64],
-        rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64], adjacentSouthMasks[64];
+Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64],
+        diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64],
+        rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64],
+        adjacentSouthMasks[64];
 LineType lineType[64][64];
 
 void initBitboard() {
@@ -67,7 +69,8 @@ void initBitboard() {
                 ~fileMask(sq) & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
 
         for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
-            if (sq == sq2) continue;
+            if (sq == sq2)
+                continue;
             for (Direction dir : DIRECTIONS) {
                 Bitboard value = slide(dir, sq) & slide(-dir, sq2);
 
@@ -101,7 +104,6 @@ void initBitboard() {
 
     initMagic(rookMagics, ROOK);
     initMagic(bishopMagics, BISHOP);
-
 }
 
 Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
@@ -160,8 +162,10 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
         magic.mask = slidingAttacks(square, 0, type) & ~edge;
         magic.shift = magic.mask.popCount();
 
-        if (square == A1) magic.ptr = attackTable;
-        else magic.ptr = magics[square - 1].ptr + length;
+        if (square == A1)
+            magic.ptr = attackTable;
+        else
+            magic.ptr = magics[square - 1].ptr + length;
 
         // Carry-Ripler trick for reference check out: https://www.chessprogramming.org/Traversing_Subsets_of_a_Set
         length = 0;
@@ -178,7 +182,8 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
 
         while (true) {
             magic.magic = randBB() & randBB() & randBB();
-            if (((magic.magic * magic.mask) >> 56).popCount() < 6) continue;
+            if (((magic.magic * magic.mask) >> 56).popCount() < 6)
+                continue;
 
             std::memset(used, 0, sizeof(used));
 
@@ -204,7 +209,6 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
             std::cout << "  {bishopAttackTable + " << magic.ptr - bishopAttackTable << ", " << BBToHex(magic.mask)
                       << ", "
                       << BBToHex(magic.magic) << ", " << magic.shift << "},\n";
-
     }
 
     std::cout << "};\n";

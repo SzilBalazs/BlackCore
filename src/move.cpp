@@ -20,10 +20,14 @@
 std::string Move::str() const {
     std::string token;
     if (isPromo()) {
-        if (!isSpecial1() && !isSpecial2()) token += "n";
-        else if (!isSpecial1() && isSpecial2()) token += "b";
-        else if (isSpecial1() && !isSpecial2()) token += "r";
-        else token += "q";
+        if (!isSpecial1() && !isSpecial2())
+            token += "n";
+        else if (!isSpecial1() && isSpecial2())
+            token += "b";
+        else if (isSpecial1() && !isSpecial2())
+            token += "r";
+        else
+            token += "q";
     }
     return formatSquare(getFrom()) + formatSquare(getTo()) + token;
 }
@@ -32,4 +36,3 @@ std::ostream &operator<<(std::ostream &os, const Move &move) {
     os << move.str();
     return os;
 }
-

@@ -17,11 +17,11 @@
 #ifndef BLACKCORE_POSITION_H
 #define BLACKCORE_POSITION_H
 
-#include <vector>
 #include "bitboard.h"
-#include "utils.h"
 #include "move.h"
 #include "nnue.h"
+#include "utils.h"
+#include <vector>
 
 extern U64 nodeCount;
 
@@ -69,72 +69,116 @@ struct StateStack {
         currState--;
     }
 
-    inline BoardState *top() const { return currState; }
+    inline BoardState *top() const {
+        return currState;
+    }
 
     inline void clear() {
         currState = stateStart;
         *currState = {};
     }
 
-    inline Ply getMove50() const { return currState - currState->lastIrreversibleMove; }
-
+    inline Ply getMove50() const {
+        return currState - currState->lastIrreversibleMove;
+    }
 };
 
 #define state states.top()
 
 class Position {
 public:
-
-    constexpr Piece pieceAt(Square square) const { return board[square]; }
+    constexpr Piece pieceAt(Square square) const {
+        return board[square];
+    }
 
     // This will be mostly used with constant color and type so this will result a nicer code
     // pieces<{ROOK, WHITE}>() --> pieces<WHITE, ROOK>()
     template<Color color, PieceType type>
-    constexpr Bitboard pieces() const { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces() const {
+        return pieceBB[type] & allPieceBB[color];
+    }
 
     template<Color color>
-    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces(PieceType type) const {
+        return pieceBB[type] & allPieceBB[color];
+    }
 
     template<PieceType type>
-    constexpr Bitboard pieces(Color color) const { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces(Color color) const {
+        return pieceBB[type] & allPieceBB[color];
+    }
 
-    constexpr Bitboard pieces(Color color, PieceType type) const { return pieceBB[type] & allPieceBB[color]; }
+    constexpr Bitboard pieces(Color color, PieceType type) const {
+        return pieceBB[type] & allPieceBB[color];
+    }
 
     template<PieceType type>
-    constexpr Bitboard pieces() const { return pieceBB[type]; }
+    constexpr Bitboard pieces() const {
+        return pieceBB[type];
+    }
 
-    constexpr Bitboard pieces(PieceType type) const { return pieceBB[type]; }
-
-    template<Color color>
-    constexpr Bitboard friendly() const { return allPieceBB[color]; }
-
-    constexpr Bitboard friendly(Color color) const { return allPieceBB[color]; }
-
-    template<Color color>
-    constexpr Bitboard enemy() const { return allPieceBB[EnemyColor<color>()]; }
+    constexpr Bitboard pieces(PieceType type) const {
+        return pieceBB[type];
+    }
 
     template<Color color>
-    constexpr Bitboard enemyOrEmpty() const { return ~friendly<color>(); }
+    constexpr Bitboard friendly() const {
+        return allPieceBB[color];
+    }
 
-    inline Bitboard occupied() const { return allPieceBB[WHITE] | allPieceBB[BLACK]; }
+    constexpr Bitboard friendly(Color color) const {
+        return allPieceBB[color];
+    }
 
-    inline Bitboard empty() const { return ~occupied(); }
+    template<Color color>
+    constexpr Bitboard enemy() const {
+        return allPieceBB[EnemyColor<color>()];
+    }
 
-    inline Color getSideToMove() const { return state->stm; }
+    template<Color color>
+    constexpr Bitboard enemyOrEmpty() const {
+        return ~friendly<color>();
+    }
 
-    inline Square getEpSquare() const { return state->epSquare; }
+    inline Bitboard occupied() const {
+        return allPieceBB[WHITE] | allPieceBB[BLACK];
+    }
 
-    inline bool getCastleRight(unsigned char castleRight) const { return castleRight & state->castlingRights; }
+    inline Bitboard empty() const {
+        return ~occupied();
+    }
 
-    inline unsigned char getCastlingRights() const { return state->castlingRights; }
+    inline Color getSideToMove() const {
+        return state->stm;
+    }
 
-    inline BoardState *getState() { return state; }
+    inline Square getEpSquare() const {
+        return state->epSquare;
+    }
 
-    inline BoardState *getState() const { return state; }
+    inline bool getCastleRight(unsigned char castleRight) const {
+        return castleRight & state->castlingRights;
+    }
 
-    inline U64 getHash() const { return state->hash; }
+    inline unsigned char getCastlingRights() const {
+        return state->castlingRights;
+    }
 
-    inline Ply getMove50() const { return states.getMove50(); }
+    inline BoardState *getState() {
+        return state;
+    }
+
+    inline BoardState *getState() const {
+        return state;
+    }
+
+    inline U64 getHash() const {
+        return state->hash;
+    }
+
+    inline Ply getMove50() const {
+        return states.getMove50();
+    }
 
     inline void makeMove(Move move);
 
@@ -161,7 +205,6 @@ public:
     Position(const std::string &fen);
 
 private:
-
     template<bool updateAccumulator>
     void clearSquare(Square square);
 
@@ -171,9 +214,13 @@ private:
     template<bool updateAccumulator>
     void movePiece(Square from, Square to);
 
-    inline void setCastleRight(unsigned char castleRight) { state->castlingRights |= castleRight; }
+    inline void setCastleRight(unsigned char castleRight) {
+        state->castlingRights |= castleRight;
+    }
 
-    inline void removeCastleRight(unsigned char castleRight) { state->castlingRights &= ~castleRight; }
+    inline void removeCastleRight(unsigned char castleRight) {
+        state->castlingRights &= ~castleRight;
+    }
 
     void clearPosition();
 
@@ -205,7 +252,7 @@ void Position::clearSquare(Square square) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.removeFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+        state->accumulator.removeFeature(piece.color, piece.type, square);
     }
 }
 
@@ -220,7 +267,7 @@ void Position::setSquare(Square square, Piece piece) {
         state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
 
         if constexpr (updateAccumulator) {
-            state->accumulator.removeFeature(NNUE::getAccumulatorIndex(p.color, p.type, square));
+            state->accumulator.removeFeature(p.color, p.type, square);
         }
     }
 
@@ -231,7 +278,7 @@ void Position::setSquare(Square square, Piece piece) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.addFeature(NNUE::getAccumulatorIndex(piece.color, piece.type, square));
+        state->accumulator.addFeature(piece.color, piece.type, square);
     }
 }
 
@@ -345,7 +392,6 @@ void Position::undoMove(Move move) {
 
     movePiece<false>(to, from);
 
-
     if (move.equalFlag(KING_CASTLE)) {
         if constexpr (enemyColor == WHITE) {
             movePiece<false>(F1, H1);
@@ -372,15 +418,19 @@ void Position::undoMove(Move move) {
 }
 
 inline void Position::makeMove(Move move) {
-    if (getSideToMove() == WHITE) makeMove<WHITE>(move);
-    else makeMove<BLACK>(move);
+    if (getSideToMove() == WHITE)
+        makeMove<WHITE>(move);
+    else
+        makeMove<BLACK>(move);
 }
 
 inline void Position::undoMove(Move move) {
-    if (getSideToMove() == WHITE) undoMove<WHITE>(move);
-    else undoMove<BLACK>(move);
+    if (getSideToMove() == WHITE)
+        undoMove<WHITE>(move);
+    else
+        undoMove<BLACK>(move);
 }
 
 #undef state
 
-#endif //BLACKCORE_POSITION_H
+#endif//BLACKCORE_POSITION_H

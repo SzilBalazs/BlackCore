@@ -17,9 +17,9 @@
 #include "position.h"
 #include "eval.h"
 
+#include <iomanip>
 #include <iostream>
 #include <vector>
-#include <iomanip>
 
 #define state states.top()
 
@@ -73,17 +73,22 @@ bool Position::isRepetition() {
 }
 
 void Position::display() const {
-    state->accumulator.forward();
+
     std::vector<string> text;
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
     if (getEpSquare() != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
     string cr;
-    if (getCastleRight(WK_MASK)) cr += 'K';
-    if (getCastleRight(WQ_MASK)) cr += 'Q';
-    if (getCastleRight(BK_MASK)) cr += 'k';
-    if (getCastleRight(BQ_MASK)) cr += 'q';
-    if (cr.empty()) cr = "None";
+    if (getCastleRight(WK_MASK))
+        cr += 'K';
+    if (getCastleRight(WQ_MASK))
+        cr += 'Q';
+    if (getCastleRight(BK_MASK))
+        cr += 'k';
+    if (getCastleRight(BQ_MASK))
+        cr += 'q';
+    if (cr.empty())
+        cr = "None";
     text.emplace_back(string("Castling rights: ") + cr);
     text.emplace_back(string("Side to move: ") + string(getSideToMove() == WHITE ? "White" : "Black"));
     // TODO FEN, full-half move counter
@@ -105,7 +110,8 @@ void Position::display() const {
         }
         cout << "\n";
     }
-    cout << "   +---+---+---+---+---+---+---+---+\n\n" << std::endl;
+    cout << "   +---+---+---+---+---+---+---+---+\n\n"
+         << std::endl;
 }
 
 void Position::displayEval() {
@@ -134,7 +140,8 @@ void Position::displayEval() {
         }
         cout << "\n";
     }
-    cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+\n" << std::endl;
+    cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+\n"
+         << std::endl;
 
     cout << "Eval: " << score << std::endl;
 }

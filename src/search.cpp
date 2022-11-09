@@ -15,22 +15,23 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "search.h"
+#include "eval.h"
 #include "timeman.h"
 #include "tt.h"
-#include "eval.h"
 #include "uci.h"
 
+#include <algorithm>
 #include <cmath>
 
 #ifdef TUNE
 
-Score DELTA_MARGIN = 307;
+Score DELTA_MARGIN = 252;
 
-Score RAZOR_MARGIN = 146;
+Score RAZOR_MARGIN = 155;
 
 Depth RFP_DEPTH = 8;
-Score RFP_DEPTH_MULTIPLIER = 60;
-Score RFP_IMPROVING_MULTIPLIER = 56;
+Score RFP_DEPTH_MULTIPLIER = 56;
+Score RFP_IMPROVING_MULTIPLIER = 46;
 
 Depth NULL_MOVE_DEPTH = 2;
 Depth NULL_MOVE_BASE_R = 3;
@@ -38,9 +39,8 @@ Depth NULL_MOVE_R_SCALE = 3;
 
 Depth LMR_DEPTH = 3;
 double LMR_BASE = 1;
-double LMR_SCALE = 1.75;
-int LMR_MIN_I = 2;
-int LMR_PVNODE_I = 1;
+double LMR_SCALE = 1.65;
+int LMR_INDEX = 2;
 
 Depth LMP_DEPTH = 4;
 int LMP_MOVES = 5;
@@ -50,7 +50,6 @@ Score ASPIRATION_DELTA = 28;
 Score ASPIRATION_BOUND = 3000;
 
 Score SEE_MARGIN = 2;
-Depth SEE_DEPTH = 4;
 
 #endif
 
@@ -58,15 +57,13 @@ Ply selectiveDepth = 0;
 Move bestPV;
 
 // Move index -> depth
-Depth reductions[200][64];
+Depth reductions[200][MAX_PLY + 1];
 
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
-        for (Depth depth = 0; depth < 64; depth++) {
+        for (Depth depth = 0; depth < MAX_PLY; depth++) {
 
-            reductions[moveIndex][depth] = std::max(2, Depth(
-                    LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
-
+            reductions[moveIndex][depth] = std::max(2, Depth(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
         }
     }
 }
@@ -87,7 +84,8 @@ Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
             (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
             (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
             (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) & occ;
+            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) &
+           occ;
 }
 
 Score see(const Position &pos, Move move) {
@@ -96,7 +94,7 @@ Score see(const Position &pos, Move move) {
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    e[0] = PIECE_VALUES[pos.pieceAt(to).type];
+    e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
@@ -111,7 +109,8 @@ Score see(const Position &pos, Move move) {
         d++;
         e[d] = PIECE_VALUES[type] - e[d - 1];
 
-        if (std::max(-e[d - 1], e[d]) < 0) break;
+        if (std::max(-e[d - 1], e[d]) < 0)
+            break;
 
         occ ^= attacker;
         attackers ^= attacker;
@@ -131,20 +130,30 @@ Score see(const Position &pos, Move move) {
     return e[0];
 }
 
-
+template<NodeType type>
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
-    if (shouldEnd()) return UNKNOWN_SCORE;
+    constexpr bool pvNode = type != NON_PV_NODE;
+    constexpr bool nonPvNode = !pvNode;
+
+    if (shouldEnd())
+        return UNKNOWN_SCORE;
 
     if (ply > selectiveDepth) {
         selectiveDepth = ply;
     }
 
-    bool ttHit;
-    Score ttScore = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
-    if (ttScore != UNKNOWN_SCORE) return ttScore;
+    bool ttHit = false;
+    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+    if (ttHit && nonPvNode && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
+        return ttEntry->eval;
+    }
 
     Score staticEval = eval(pos);
+
+    if (ply >= MAX_PLY) {
+        return staticEval;
+    }
 
     if (staticEval >= beta) {
         return beta;
@@ -164,7 +173,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         // Delta pruning
         if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
-            staticEval + DELTA_MARGIN < alpha)
+                    staticEval + DELTA_MARGIN <
+            alpha)
             continue;
 
         // SEE pruning
@@ -173,11 +183,12 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         pos.makeMove(m);
 
-        Score score = -quiescence(pos, -beta, -alpha, ply + 1);
+        Score score = -quiescence<type>(pos, -beta, -alpha, ply + 1);
 
         pos.undoMove(m);
 
-        if (shouldEnd()) return UNKNOWN_SCORE;
+        if (shouldEnd())
+            return UNKNOWN_SCORE;
 
         if (score >= beta) {
             ttSave(pos.getHash(), 0, score, BETA, m);
@@ -189,40 +200,112 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
             ttFlag = EXACT;
             bestMove = m;
         }
-
     }
 
-    // TODO elo test storing null move instead of bestMove
     ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
 
-Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score beta, Ply ply) {
+template<NodeType type>
+Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score beta, Ply ply) {
 
-    if (shouldEnd()) return UNKNOWN_SCORE;
+    constexpr bool rootNode = type == ROOT_NODE;
+    constexpr bool pvNode = type != NON_PV_NODE;
+    constexpr bool notRootNode = !rootNode;
+    constexpr bool nonPvNode = !pvNode;
+    constexpr NodeType nextPv = rootNode ? PV_NODE : type;
 
-    if (pos.getMove50() >= 4 && ply > 0 && pos.isRepetition()) return DRAW_VALUE;
+    if (shouldEnd())
+        return UNKNOWN_SCORE;
 
-    bool ttHit = false;
-    bool pvNode = beta - alpha > 1;
-    Score matePly = MATE_VALUE - ply;
-    Score ttScore = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
-    if (!pvNode && ttScore != UNKNOWN_SCORE) return ttScore;
-
-    // Mate distance pruning
-    if (ply > 0) {
-        if (alpha < -matePly) alpha = -matePly;
-        if (beta > matePly - 1) beta = matePly - 1;
-        if (alpha >= beta) return alpha;
+    if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
+        alpha = DRAW_VALUE;
+        if (alpha >= beta)
+            return alpha;
     }
 
-    if (depth <= 0) return quiescence(pos, alpha, beta, ply);
+    bool ttHit = false;
+    Score matePly = MATE_VALUE - ply;
+    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
 
-    MoveList moves = {pos, ply, false};
+    if (ttHit && nonPvNode &&
+        ttEntry->depth >= depth && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
+        return ttEntry->eval;
+    }
+
+    // Mate distance pruning
+    if (notRootNode) {
+        if (alpha < -matePly)
+            alpha = -matePly;
+        if (beta > matePly - 1)
+            beta = matePly - 1;
+        if (alpha >= beta)
+            return alpha;
+    }
+
+    if (ply >= MAX_PLY) {
+        return eval(pos);
+    }
+
+    if (depth <= 0)
+        return quiescence<nextPv>(pos, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
 
+    Score staticEval = stack->eval = eval(pos);
+
+    bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
+
+    if (notRootNode && !inCheck) {
+
+        // Razoring
+        if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
+            return quiescence<NON_PV_NODE>(pos, alpha, beta, ply);
+        }
+
+        // Reverse futility pruning
+        if (depth <= RFP_DEPTH &&
+            staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
+            std::abs(beta) < WORST_MATE)
+            return beta;
+
+        // Null move pruning
+        if (nonPvNode && !(stack - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+            // We don't want to make a null move in a Zugzwang position
+            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
+                pos.pieces<QUEEN>(color)) {
+
+                Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
+
+                stack->move = Move();
+                pos.makeNullMove();
+                Score score = -search<NON_PV_NODE>(pos, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
+                pos.undoNullMove();
+
+                if (score >= beta) {
+                    if (std::abs(score) > WORST_MATE)
+                        return beta;
+                    return score;
+                }
+            }
+        }
+
+        // Internal iterative deepening
+        if (!ttHit && pvNode)
+            depth--;
+        if (!ttHit && depth >= 5)
+            depth--;
+
+        if (depth <= 0)
+            return quiescence<nextPv>(pos, alpha, beta, ply);
+    }
+
+    // Check extension
+    if (inCheck)
+        depth++;
+
+    MoveList moves = {pos, ply, false};
     if (moves.count == 0) {
         if (inCheck) {
             return -matePly;
@@ -231,53 +314,6 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
         }
     }
 
-    Score staticEval = state->eval = eval(pos);
-
-    if (ply > 0 && !inCheck) {
-
-        bool improving = ply >= 2 && staticEval >= (state - 2)->eval;
-
-        // Razoring
-        if (depth == 1 && !pvNode && staticEval + RAZOR_MARGIN < alpha) {
-            return quiescence(pos, alpha, beta, ply);
-        }
-
-        // Reverse futility pruning
-        if (depth <= RFP_DEPTH &&
-            staticEval - RFP_DEPTH_MULTIPLIER * (int) depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
-            std::abs(beta) < WORST_MATE)
-            return beta;
-
-        // Null move pruning
-        if (!pvNode && !(state - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
-            // We don't want to make a null move in a Zugzwang position
-            if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
-                pos.pieces<QUEEN>(color)) {
-
-                Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
-
-                state->move = Move();
-                pos.makeNullMove();
-                Score score = -search(pos, state + 1, depth - R, -beta, -beta + 1, ply + 1);
-                pos.undoNullMove();
-
-                if (score >= beta) {
-                    if (std::abs(score) > WORST_MATE) return beta;
-                    return score;
-                }
-            }
-        }
-
-        // Internal iterative deepening
-        if (!ttHit && !pvNode) depth--;
-
-        if (depth <= 0) return quiescence(pos, alpha, beta, ply);
-    }
-
-    // Check extension
-    if (inCheck)
-        depth++;
-
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
     int index = 0;
@@ -285,14 +321,20 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
-        state->move = m;
+        stack->move = m;
 
         Score score;
 
         // We can prune the move in some cases
-        if (ply > 0 && !pvNode && !inCheck && alpha > -WORST_MATE) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
+
+            if (depth <= FUTILITY_DEPTH && m.isQuiet() &&
+                staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving <
+                        alpha)
+                continue;
 
             // Late move/movecount pruning
+            // This will also prune losing captures
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
                 break;
         }
@@ -301,32 +343,36 @@ Score search(Position &pos, SearchState *state, Depth depth, Score alpha, Score 
 
         ttPrefetch(pos.getHash());
 
-        if (index == 0) {
-            score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
-        } else {
-            // Late move reduction
-            if (!inCheck && depth >= LMR_DEPTH && index >= LMR_MIN_I + pvNode * LMR_PVNODE_I && !m.isPromo() &&
-                m.isQuiet() && m != killerMoves[ply][0] && m != killerMoves[ply][1]) {
+        // Late move reduction
+        if (!inCheck && depth >= LMR_DEPTH && index >= LMR_INDEX && !m.isPromo() &&
+            m.isQuiet()) {
 
-                score = -search(pos, state + 1, depth - reductions[index][depth], -alpha - 1, -alpha,
-                                ply + 1);
-            } else score = alpha + 1;
+            Depth R = reductions[index][depth];
 
+            R += improving;
+            R -= pvNode;
 
-            // Principal variation search
-            if (score > alpha) {
-                score = -search(pos, state + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+            Depth newDepth = std::clamp(depth - R, 1, depth - 1);
 
-                if (score > alpha) {
-                    score = -search(pos, state + 1, depth - 1, -beta, -alpha, ply + 1);
-                }
+            score = -search<NON_PV_NODE>(pos, stack + 1, newDepth,
+                                         -alpha - 1, -alpha, ply + 1);
+
+            if (score > alpha && R > 1) {
+                score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
             }
 
+        } else if (nonPvNode || index != 0) {
+            score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+        }
+
+        if (pvNode && (index == 0 || (score > alpha && score < beta))) {
+            score = -search<nextPv>(pos, stack + 1, depth - 1, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
 
-        if (shouldEnd()) return UNKNOWN_SCORE;
+        if (shouldEnd())
+            return UNKNOWN_SCORE;
 
         if (score >= beta) {
 
@@ -370,7 +416,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     globalAge++;
     clearTables();
     selectiveDepth = 0;
-    SearchState stateStack[100];
+    SearchStack stateStack[MAX_PLY + 1];
     Score alpha = -INF_SCORE;
     Score beta = INF_SCORE;
 
@@ -381,14 +427,18 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 
     int iter = 1;
     while (true) {
-        if (shouldEnd()) return UNKNOWN_SCORE;
+        if (shouldEnd())
+            return UNKNOWN_SCORE;
 
-        if (alpha < -ASPIRATION_BOUND) alpha = -INF_SCORE;
-        if (beta > ASPIRATION_BOUND) beta = INF_SCORE;
+        if (alpha < -ASPIRATION_BOUND)
+            alpha = -INF_SCORE;
+        if (beta > ASPIRATION_BOUND)
+            beta = INF_SCORE;
 
-        Score score = search(pos, stateStack + 1, depth, alpha, beta, 0);
+        Score score = search<ROOT_NODE>(pos, stateStack + 1, depth, alpha, beta, 0);
 
-        if (score == UNKNOWN_SCORE) return UNKNOWN_SCORE;
+        if (score == UNKNOWN_SCORE)
+            return UNKNOWN_SCORE;
 
         if (score <= alpha) {
             alpha = std::max(alpha - iter * iter * ASPIRATION_DELTA, -INF_SCORE);
@@ -426,11 +476,9 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     }
 }
 
-void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &searchRunning) {
+void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     pos.getState()->accumulator.refresh(pos);
-
-    searchRunning = true;
 
     Score prevScore;
     Move bestMove;
@@ -439,12 +487,13 @@ void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         Score score = searchRoot(pos, prevScore, currDepth, uci);
-        if (score == UNKNOWN_SCORE) break;
+        if (score == UNKNOWN_SCORE)
+            break;
 
         // We only care about stability if we searched enough depth
-        if (currDepth >= 12) {
+        if (currDepth >= 16) {
             if (bestMove != bestPV) {
-                stability -= 6;
+                stability -= 10;
             } else {
                 if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
                     stability -= 4;
@@ -464,5 +513,31 @@ void iterativeDeepening(Position pos, Depth depth, bool uci, std::atomic<bool> &
         out("bestmove", bestMove);
     }
 
-    searchRunning = false;
+    searchStopped() = true;
+}
+
+#include <thread>
+
+std::thread th;
+
+void joinThread(bool waitToFinish) {
+    if (!waitToFinish)
+        stopSearch();
+
+    if (th.joinable())
+        th.join();
+}
+
+void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
+
+    joinThread(false);
+
+    Color stm = pos.getSideToMove();
+    if (stm == WHITE) {
+        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    } else {
+        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    }
+
+    th = std::thread(iterativeDeepening, pos, searchInfo.maxDepth, searchInfo.uciMode);
 }

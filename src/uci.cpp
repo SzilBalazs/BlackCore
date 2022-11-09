@@ -14,15 +14,15 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <sstream>
-#include <vector>
-#include <thread>
 #include "uci.h"
-#include "tt.h"
+#include "bench.h"
+#include "eval.h"
+#include "position.h"
 #include "search.h"
 #include "timeman.h"
-#include "position.h"
-#include "bench.h"
+#include "tt.h"
+#include <sstream>
+#include <vector>
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -67,12 +67,16 @@ Move stringToMove(const Position &pos, const std::string &s) {
 
 void uciLoop() {
     // Identifying ourselves
-    out("id", "name", "BlackCore_v2-0-H1");
+#ifdef VERSION
+    out("id", "name", "BlackCore", VERSION);
+#else
+    out("id", "name", "BlackCore");
+#endif
 
     out("id", "author", "SzilBalazs");
 
     // We tell the GUI what options we have
-    out("option", "name", "Hash", "type", "spin", "default", 16, "min", 1, "max", 1024);
+    out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
@@ -80,28 +84,29 @@ void uciLoop() {
 #ifdef TUNE
     tuneOut("DELTA_MARGIN", 400, 200, 500);
     tuneOut("RAZOR_MARGIN", 130, 50, 200);
-    tuneOut("RFP_DEPTH", 5, 3, 8);
+    tuneOut("RFP_DEPTH", 5, 3, 10);
     tuneOut("RFP_DEPTH_MULTIPLIER", 70, 30, 200);
     tuneOut("RFP_IMPROVING_MULTIPLIER", 80, 30, 200);
     tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
     tuneOut("NULL_MOVE_BASE_R", 4, 2, 6);
     tuneOut("NULL_MOVE_R_SCALE", 5, 2, 10);
     tuneOut("LMR_DEPTH", 4, 2, 10);
-    tuneOut("LMR_MIN_I", 3, 1, 10);
-    tuneOut("LMR_PVNODE_I", 2, 1, 10);
+    tuneOut("LMR_INDEX", 3, 1, 10);
     tuneOut("LMP_DEPTH", 4, 1, 10);
     tuneOut("LMP_MOVES", 5, 1, 10);
     tuneOut("ASPIRATION_DEPTH", 9, 5, 20);
     tuneOut("ASPIRATION_DELTA", 30, 10, 100);
     tuneOut("SEE_MARGIN", 0, 0, 200);
     tuneOut("PAWN_VALUE", 150, 100, 200);
-    tuneOut("KNIGHT_VALUE", 750, 500, 1000);
-    tuneOut("BISHOP_VALUE", 850, 500, 1000);
-    tuneOut("ROOK_VALUE", 1250, 1000, 1500);
-    tuneOut("QUEEN_VALUE", 1600, 1200, 2000);
+    tuneOut("KNIGHT_VALUE", 750, 300, 1000);
+    tuneOut("BISHOP_VALUE", 850, 300, 1000);
+    tuneOut("ROOK_VALUE", 800, 300, 1000);
+    tuneOut("QUEEN_VALUE", 1000, 500, 1500);
+    tuneOut("LMR_BASE", 10, 1, 30);
+    tuneOut("LMR_SCALE", 17, 10, 40);
 #endif
 
-    ttResize(16);
+    ttResize(32);
 
     // We have sent all the parameters
     out("uciok");
@@ -110,9 +115,7 @@ void uciLoop() {
     initSearch();
 
     Position pos = {STARTING_FEN};
-    std::thread searchThread;
-
-    std::atomic<bool> searchRunning(false);
+    int threadCount = 1;
 
     while (true) {
         std::string line, command, token;
@@ -130,10 +133,10 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
-            stopSearch();
+            joinThread(false);
             break;
         } else if (command == "stop") {
-            stopSearch();
+            joinThread(false);
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -164,10 +167,8 @@ void uciLoop() {
                         NULL_MOVE_R_SCALE = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMR_DEPTH") {
                         LMR_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_MIN_I") {
-                        LMR_MIN_I = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_PVNODE_I") {
-                        LMR_PVNODE_I = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_INDEX") {
+                        LMR_INDEX = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMP_DEPTH") {
                         LMP_DEPTH = std::stoi(tokens[3]);
                     } else if (tokens[1] == "LMP_MOVES") {
@@ -188,6 +189,10 @@ void uciLoop() {
                         PIECE_VALUES[ROOK] = std::stoi(tokens[3]);
                     } else if (tokens[1] == "QUEEN_VALUE") {
                         PIECE_VALUES[QUEEN] = std::stoi(tokens[3]);
+                    } else if (tokens[1] == "LMR_BASE") {
+                        LMR_BASE = double(std::stoi(tokens[3])) / 10;
+                    } else if (tokens[1] == "LMR_SCALE") {
+                        LMR_SCALE = double(std::stoi(tokens[3])) / 10;
                     }
 #endif
                 }
@@ -208,7 +213,8 @@ void uciLoop() {
                 unsigned int i = 0;
                 bool move = false;
                 while (i < tokens.size()) {
-                    if (tokens[i] == "moves") move = true;
+                    if (tokens[i] == "moves")
+                        move = true;
                     else if (move) {
                         pos.makeMove(stringToMove(pos, tokens[i]));
                     }
@@ -220,41 +226,30 @@ void uciLoop() {
 
         } else if (command == "go") {
 
-            if (searchRunning) {
-                out("Search is already running!", "To stop it use the \"stop\" command.");
-                continue;
-            }
-
-            U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0;
-            Depth depth = 64;
+            SearchInfo searchInfo;
 
             for (unsigned int i = 0; i < tokens.size(); i += 2) {
                 if (tokens[i] == "wtime") {
-                    wtime = std::stoi(tokens[i + 1]);
+                    searchInfo.wtime = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "btime") {
-                    btime = std::stoi(tokens[i + 1]);
+                    searchInfo.btime = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "winc") {
-                    winc = std::stoi(tokens[i + 1]);
+                    searchInfo.winc = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "binc") {
-                    binc = std::stoi(tokens[i + 1]);
+                    searchInfo.binc = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "movestogo") {
-                    movestogo = std::stoi(tokens[i + 1]);
+                    searchInfo.movestogo = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "depth") {
-                    depth = std::stoi(tokens[i + 1]);
+                    searchInfo.maxDepth = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "movetime") {
-                    movetime = std::stoi(tokens[i + 1]);
+                    searchInfo.movetime = std::stoi(tokens[i + 1]);
+                } else if (tokens[i] == "nodes") {
+                    searchInfo.maxNodes = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "infinite") {
-                    depth = 64;
                 }
             }
 
-            if (pos.getSideToMove() == WHITE)
-                startSearch(wtime, winc, movestogo, movetime);
-            else
-                startSearch(btime, binc, movestogo, movetime);
-
-            searchThread = std::thread(iterativeDeepening, pos, depth, true, std::ref(searchRunning));
-            searchThread.detach();
+            startSearch(searchInfo, pos, threadCount);
 
         } else if (command == "d" || command == "display") {
             pos.display();

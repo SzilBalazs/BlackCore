@@ -14,8 +14,8 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <cstring>
 #include "tt.h"
+#include <cstring>
 
 #ifdef __linux__
 
@@ -45,11 +45,11 @@ void ttResize(unsigned int MBSize) {
         ttFree();
 
     unsigned int i = 10;
-    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket)) i++;
+    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket))
+        i++;
 
     tt.bucketCount = (1ULL << (i - 1));
     tt.mask = tt.bucketCount - 1ULL;
-
 
 #ifdef __linux__
     // Allocate memory with 1MB alignment
@@ -58,14 +58,13 @@ void ttResize(unsigned int MBSize) {
     // For reference see https://man7.org/linux/man-pages/man2/madvise.2.html on MADV HUGEPAGE
     madvise(tt.table, tt.bucketCount * sizeof(TTBucket), MADV_HUGEPAGE);
 #else
-    tt.table = (TTBucket*)malloc(tt.bucketCount * sizeof(TTBucket));
+    tt.table = (TTBucket *) malloc(tt.bucketCount * sizeof(TTBucket));
 #endif
 
     ttClear();
-
 }
 
-Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
+TTEntry *ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
     TTBucket *bucket = getBucket(hash);
     TTEntry *entry;
     if (bucket->entryA.hash == hash) {
@@ -74,25 +73,14 @@ Score ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
     } else if (bucket->entryB.hash == hash) {
         entry = &bucket->entryB;
     } else {
-        return UNKNOWN_SCORE;
+        return nullptr;
     }
+
+    if (std::abs(entry->eval) > MATE_VALUE - 100)
+        return nullptr;
+
     ttHit = true;
-
-    if (std::abs(entry->eval) > MATE_VALUE - 100) return UNKNOWN_SCORE;
-
-    if (entry->depth >= depth) {
-        if (entry->flag == EXACT) {
-            return entry->eval;
-        }
-        if (entry->flag == ALPHA && entry->eval <= alpha) {
-            return alpha;
-        }
-        if (entry->flag == BETA && entry->eval >= beta) {
-            return beta;
-        }
-    }
-
-    return UNKNOWN_SCORE;
+    return entry;
 }
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
@@ -114,13 +102,14 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
         entry->hashMove = bestMove;
         entry->age = globalAge;
     }
-
 }
 
 Move getHashMove(U64 hash) {
     TTBucket *bucket = getBucket(hash);
-    if (bucket->entryA.hash == hash) return bucket->entryA.hashMove;
-    else if (bucket->entryB.hash == hash) return bucket->entryB.hashMove;
+    if (bucket->entryA.hash == hash)
+        return bucket->entryA.hashMove;
+    else if (bucket->entryB.hash == hash)
+        return bucket->entryB.hashMove;
     return {};
 }
 

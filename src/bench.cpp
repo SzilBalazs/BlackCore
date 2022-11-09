@@ -14,14 +14,14 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <string>
-#include <chrono>
-#include <iostream>
-#include <functional>
 #include "bench.h"
-#include "tt.h"
 #include "search.h"
 #include "timeman.h"
+#include "tt.h"
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <string>
 
 struct TestPosition {
     std::string fen;
@@ -31,25 +31,24 @@ struct TestPosition {
 
 const unsigned int posCount = 10;
 
-const unsigned int searchTestHashSize = 16;
+const unsigned int searchTestHashSize = 32;
 
-const Depth SEARCH_DEPTH = 13;
+const Depth SEARCH_DEPTH = 15;
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
-        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",                 6, 119060324},
-        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ",         5, 193690690},
-        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -",                                     7, 178633661},
-        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",          5, 15833292},
-        {"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ",         5, 15833292},
-        {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ",                5, 89941194},
+        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ", 6, 119060324},
+        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ", 5, 193690690},
+        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", 7, 178633661},
+        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 5, 15833292},
+        {"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ", 5, 15833292},
+        {"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8 ", 5, 89941194},
         {"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10 ", 5, 164075551},
 
         // Own positions
-        {"r3kb1r/1p3ppp/pqn1pn2/1Bpp1b2/3P1B2/1QP1PN2/PP1N1PPP/R3K2R w KQkq - 0 9",   5, 140824446},
-        {"rnb1k2r/pppp1ppp/5q2/2b5/2BNP3/2N5/PPP2KPP/R1BQ3R w kq - 1 8",              5, 19782759},
-        {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32",                              7, 13312960}
-};
+        {"r3kb1r/1p3ppp/pqn1pn2/1Bpp1b2/3P1B2/1QP1PN2/PP1N1PPP/R3K2R w KQkq - 0 9", 5, 140824446},
+        {"rnb1k2r/pppp1ppp/5q2/2b5/2BNP3/2N5/PPP2KPP/R1BQ3R w kq - 1 8", 5, 19782759},
+        {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32", 7, 13312960}};
 
 void testPerft() {
     initSearch();
@@ -71,7 +70,8 @@ void testPerft() {
     U64 nps = totalNodes * 1000 / elapsedTime;
 
     if (ok) {
-        std::cout << "PERFT OK\n" << totalNodes << " nodes " << nps << " nps" << std::endl;
+        std::cout << "PERFT OK\n"
+                  << totalNodes << " nodes " << nps << " nps" << std::endl;
     } else {
         std::cout << "PERFT FAILED" << std::endl;
         exit(1);
@@ -82,13 +82,20 @@ void testSearch() {
     initSearch();
     ttResize(searchTestHashSize);
 
-    startSearch(0, 0, 0, 0);
+    U64 totalNodes = 0;
+    U64 nps;
+
     for (const TestPosition &tPos : testPositions) {
         ttClear();
         Position pos = {tPos.fen};
-        std::atomic<bool> a;
-        iterativeDeepening(pos, SEARCH_DEPTH, false, std::ref(a));
+        SearchInfo info;
+        info.maxDepth = SEARCH_DEPTH;
+        info.uciMode = false;
+        startSearch(info, pos, 1);
+        joinThread(true);
+        totalNodes += nodeCount;
+        nps += getNps();
     }
 
-    std::cout << nodeCount << " nodes " << getNps() << " nps" << std::endl;
+    std::cout << totalNodes << " nodes " << nps / posCount << " nps" << std::endl;
 }

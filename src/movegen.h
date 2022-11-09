@@ -17,9 +17,9 @@
 #ifndef BLACKCORE_MOVEGEN_H
 #define BLACKCORE_MOVEGEN_H
 
-#include "position.h"
 #include "move.h"
 #include "move_ordering.h"
+#include "position.h"
 
 template<Color color>
 inline Bitboard getAttackers(const Position &pos, Square square) {
@@ -29,7 +29,8 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
             (pieceAttacks<KNIGHT>(square, occupied) & pos.pieces<KNIGHT>()) |
             (pieceAttacks<BISHOP>(square, occupied) & pos.pieces<BISHOP>()) |
             (pieceAttacks<ROOK>(square, occupied) & pos.pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(square, occupied) & pos.pieces<QUEEN>())) & enemy;
+            (pieceAttacks<QUEEN>(square, occupied) & pos.pieces<QUEEN>())) &
+           enemy;
 }
 
 inline Bitboard getAttackers(const Position &pos, Square square) {
@@ -85,5 +86,4 @@ struct MoveList {
     }
 };
 
-
-#endif //BLACKCORE_MOVEGEN_H
+#endif//BLACKCORE_MOVEGEN_H

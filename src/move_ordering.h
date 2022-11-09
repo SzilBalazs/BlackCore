@@ -20,7 +20,7 @@
 #include "move.h"
 #include "position.h"
 
-extern Move killerMoves[101][2];
+extern Move killerMoves[MAX_PLY + 1][2];
 
 Score scoreMove(const Position &pos, Move m, Ply ply);
 
@@ -32,4 +32,4 @@ void recordKillerMove(Move m, Ply ply);
 
 void recordHHMove(Move move, Color color, Depth depth);
 
-#endif //BLACKCORE_MOVE_ORDERING_H
+#endif//BLACKCORE_MOVE_ORDERING_H

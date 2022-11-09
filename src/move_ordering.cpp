@@ -15,32 +15,25 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "move_ordering.h"
-#include "tt.h"
 #include "search.h"
+#include "tt.h"
 
 #include <cstring>
 
-constexpr Score winningCapture[6][6] = {
-//    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
-        {0, 0,      0,      0,      0,      0},       // KING
-        {0, 800004, 800104, 800204, 800304, 800404},  // PAWN
-        {0, 800003, 800103, 800203, 800303, 800403},  // KNIGHT
-        {0, 800002, 800102, 800202, 800302, 800402},  // BISHOP
-        {0, 800001, 800101, 800201, 800301, 800401},  // ROOK
-        {0, 800000, 800100, 800200, 800300, 800400},  // QUEEN
+constexpr Score MVV_LVA[6][6] = {
+        //    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
+        {0, 0, 0, 0, 0, 0},                         // KING
+        {0, 800004, 800104, 800204, 800304, 800404},// PAWN
+        {0, 800003, 800103, 800203, 800303, 800403},// KNIGHT
+        {0, 800002, 800102, 800202, 800302, 800402},// BISHOP
+        {0, 800001, 800101, 800201, 800301, 800401},// ROOK
+        {0, 800000, 800100, 800200, 800300, 800400},// QUEEN
 };
 
-constexpr Score losingCapture[6][6] = {
-//    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
-        {0, 0,      0,      0,      0,      0},       // KING
-        {0, 200004, 200104, 200204, 200304, 200404},  // PAWN
-        {0, 200003, 200103, 200203, 200303, 200403},  // KNIGHT
-        {0, 200002, 200102, 200202, 200302, 200402},  // BISHOP
-        {0, 200001, 200101, 200201, 200301, 200401},  // ROOK
-        {0, 200000, 200100, 200200, 200300, 200400},  // QUEEN
-};
+constexpr Score winningCapture = 800000;
+constexpr Score losingCapture = 200000;
 
-Move killerMoves[101][2];
+Move killerMoves[MAX_PLY + 1][2];
 
 // TODO Counter move history
 Score historyTable[2][64][64];
@@ -63,17 +56,18 @@ Score scoreQMove(const Position &pos, Move m) {
     if (m == getHashMove(pos.getHash())) {
         return 1000000;
     } else if (m.isPromo()) {
-        if (m.isSpecial1() && m.isSpecial2()) { // Queen promo
+        if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
             return 900000;
-        } else { // Anything else, under promotions should only be played in really few cases
+        } else {// Anything else, under promotions should only be played in really few cases
             return -100000;
         }
     } else {
         Score seeScore = see(pos, m);
+
         if (seeScore >= 0)
-            return 800000 + seeScore;
+            return winningCapture + seeScore;
         else
-            return seeScore;
+            return losingCapture + seeScore;
     }
 }
 
@@ -81,19 +75,18 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
     if (m == getHashMove(pos.getHash())) {
         return 1000000;
     } else if (m.isPromo()) {
-        if (m.isSpecial1() && m.isSpecial2()) { // Queen promo
+        if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
             return 900000;
-        } else { // Anything else, under promotions should only be played in really few cases
+        } else {// Anything else, under promotions should only be played in really few cases
             return -100000;
         }
     } else if (m.isCapture()) {
-        Square from = m.getFrom();
-        Square to = m.getTo();
+        Score seeScore = see(pos, m);
 
         if (see(pos, m) >= 0)
-            return winningCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+            return winningCapture + seeScore;
         else
-            return losingCapture[pos.pieceAt(from).type][pos.pieceAt(to).type];
+            return losingCapture + seeScore;
     } else if (killerMoves[ply][0] == m) {
         return 750000;
     } else if (killerMoves[ply][1] == m) {

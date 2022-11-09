@@ -20,11 +20,14 @@
 
 #include "movegen.h"
 
+#include <iostream>
+
 template<bool output>
 U64 perft(Position &position, Depth depth) {
     Move moves[200];
     Move *movesEnd = generateMoves(position, moves, false);
-    if (depth == 1) return movesEnd - moves;
+    if (depth == 1)
+        return movesEnd - moves;
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);
@@ -42,4 +45,4 @@ void testPerft();
 
 void testSearch();
 
-#endif //BLACKCORE_BENCH_H
+#endif//BLACKCORE_BENCH_H

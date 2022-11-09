@@ -14,14 +14,14 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include "bitboard.h"
 #include "bench.h"
-#include "uci.h"
-#include "search.h"
+#include "bitboard.h"
 #include "eval.h"
-#include "tuner.h"
 #include "nnue.h"
+#include "search.h"
+#include "tuner.h"
+#include "uci.h"
+#include <iostream>
 
 int main(int argc, char **argv) {
 

@@ -19,13 +19,6 @@
 #ifdef TUNE
 
 Score PIECE_VALUES[6] = {
-        0, 150, 762, 892, 1254, 1651
-};
+        0, 170, 610, 660, 780, 1200};
 
 #endif
-
-Score eval(const Position &pos) {
-
-    Score score = pos.getState()->accumulator.forward();
-    return (pos.getSideToMove() == WHITE ? score : -score) + TEMPO_SCORE;
-}

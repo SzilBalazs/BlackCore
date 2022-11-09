@@ -17,30 +17,40 @@
 #ifndef BLACKCORE_UTILS_H
 #define BLACKCORE_UTILS_H
 
-#include <string>
-#include "constants.h"
 #include "bitboard.h"
+#include "constants.h"
+#include <string>
 
 constexpr PieceType indexToType[7] = {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, PIECE_EMPTY};
 constexpr Color indexToColor[3] = {WHITE, BLACK, COLOR_EMPTY};
 
 template<Color color>
 constexpr Color EnemyColor() {
-    if constexpr (color == WHITE) return BLACK;
-    else return WHITE;
+    if constexpr (color == WHITE)
+        return BLACK;
+    else
+        return WHITE;
 }
 
-inline Color EnemyColor(Color color) { return color == WHITE ? BLACK : WHITE; }
+inline Color EnemyColor(Color color) {
+    return color == WHITE ? BLACK : WHITE;
+}
 
-constexpr unsigned int squareToRank(Square square) { return square >> 3; }
+constexpr unsigned int squareToRank(Square square) {
+    return square >> 3;
+}
 
-constexpr unsigned int squareToFile(Square square) { return square & 7; }
+constexpr unsigned int squareToFile(Square square) {
+    return square & 7;
+}
 
 constexpr Square mirrorSquare(Square square) {
     return Square(56 - square + squareToFile(square));
 }
 
-constexpr unsigned char encodePiece(Piece piece) { return (piece.color << 3) | piece.type; }
+constexpr unsigned char encodePiece(Piece piece) {
+    return (piece.color << 3) | piece.type;
+}
 
 constexpr Piece decodePiece(unsigned char encodedPiece) {
     return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
@@ -60,4 +70,4 @@ Bitboard randBB();
 
 std::string BBToHex(Bitboard bb);
 
-#endif //BLACKCORE_UTILS_H
+#endif//BLACKCORE_UTILS_H

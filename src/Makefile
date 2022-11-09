@@ -2,7 +2,7 @@ CXX = g++
 TARGET_FLAGS = -static -static-libgcc -static-libstdc++
 ARCH=native
 NAME = BlackCore
-VERSION_MAJOR = 2
+VERSION_MAJOR = 3
 VERSION_MINOR = 0
 OBJECT_DIR = objects
 SOURCES := $(wildcard *.cpp)
@@ -13,7 +13,6 @@ ifeq ($(OS),Windows_NT)
 else
     uname_S := $(shell uname -s)
 endif
-
 
 ifeq ($(uname_S), Windows)
 	SUFFIX = .exe
@@ -44,8 +43,8 @@ ifeq ($(ARCH), popcnt)
     ARCH_FLAGS = -march=x86-64 -mpopcnt
 endif
 
-CXXFLAGS = -std=c++20 -O3 -flto -pthread -Wall -Wno-class-memaccess $(DEFINE_FLAGS) $(ARCH_FLAGS)
-EXE = $(NAME)_v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
+CXXFLAGS = -std=c++20 -O3 -flto -pthread -Wall -Wno-class-memaccess -DVERSION=\"v$(VERSION_MAJOR).$(VERSION_MINOR)\" $(DEFINE_FLAGS) $(ARCH_FLAGS)
+EXE = $(NAME)-v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
 

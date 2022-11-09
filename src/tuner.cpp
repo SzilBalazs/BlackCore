@@ -14,11 +14,11 @@
 //     You should have received a copy of the GNU General Public License
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <sstream>
-#include <iomanip>
-#include <valarray>
 #include "tuner.h"
 #include "eval.h"
+#include <iomanip>
+#include <sstream>
+#include <valarray>
 
 double K = 0.2;
 
@@ -37,13 +37,11 @@ double E(const std::vector<DataEntry> &data) {
         double predicted = 1 / double(1 + pow(10, -K * score / 400));
 
         error += (entry.result - predicted) * (entry.result - predicted);
-
     }
 
     error /= double(data.size());
 
     return error;
-
 }
 
 void saveResults(const unsigned int paramCnt, EvalParameter *evalParameters) {
@@ -83,7 +81,6 @@ void saveResults(const unsigned int paramCnt, EvalParameter *evalParameters) {
                     params << "\t";
                 }
             }
-
         }
         params << "};\n";
     }
@@ -135,8 +132,7 @@ void tune(const std::string &inputFile) {
     const unsigned int PSQTparamCnt = 768;
     const unsigned int paramCnt = 0;
 
-    EvalParameter params[paramCnt] = {
-    };
+    EvalParameter params[paramCnt] = {};
 
 
     while (improved) {
