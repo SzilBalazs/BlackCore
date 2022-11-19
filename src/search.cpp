@@ -292,8 +292,6 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
-        if (!ttHit && pvNode)
-            depth--;
         if (!ttHit && depth >= 5)
             depth--;
 
