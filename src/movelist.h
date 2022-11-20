@@ -113,6 +113,10 @@ private:
     inline Move sortBestMove() {
         Score best = leftMoveIndex;
         for (int index = leftMoveIndex + 1; index < rightMoveIndex; index++) {
+            if (moves[index] == hashMove) {
+                std::swap(moves[index], moves[rightMoveIndex - 1]);
+                rightMoveIndex--;
+            }
             if (scores[index] > scores[best]) {
                 best = index;
             }
@@ -159,8 +163,7 @@ public:
 
             case STAGE_PLAY_PROMOTIONS:
                 if (leftMoveIndex < rightMoveIndex) {
-                    Move move = sortBestMove();
-                    return move == hashMove ? nextMove() : move;
+                    return sortBestMove();
                 }
 
                 stage = STAGE_GEN_CAPTURES;
@@ -171,8 +174,7 @@ public:
 
             case STAGE_PLAY_CAPTURES:
                 if (leftMoveIndex < rightMoveIndex) {
-                    Move move = sortBestMove();
-                    return move == hashMove ? nextMove() : move;
+                    return sortBestMove();
                 }
 
                 if constexpr (type == TACTICAL) {
@@ -188,8 +190,7 @@ public:
 
             case STAGE_PLAY_QUIETS:
                 if (leftMoveIndex < rightMoveIndex) {
-                    Move move = sortBestMove();
-                    return move == hashMove ? nextMove() : move;
+                    return sortBestMove();
                 }
 
                 stage = STAGE_FINISHED;
