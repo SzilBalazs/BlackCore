@@ -47,12 +47,7 @@ bool isPseudoLegal(const Position &pos, Move move) {
     if (pos.friendly(piece.color).get(to))
         return true;
 
-    if (piece.type == PAWN)
-        return move.isPromo() || pawnMask(from, piece.color).get(to);
-
-    Bitboard attacks = pieceAttacks(piece.type, from, pos.occupied());
-
-    return attacks.get(to);
+    return true;
 }
 
 template<Color color>
