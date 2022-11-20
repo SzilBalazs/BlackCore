@@ -21,6 +21,7 @@
 #include "position.h"
 
 extern Move killerMoves[MAX_PLY + 1][2];
+extern Score historyTable[2][64][64];
 
 Score scoreMove(const Position &pos, Move m, Ply ply);
 

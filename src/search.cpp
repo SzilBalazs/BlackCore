@@ -16,6 +16,7 @@
 
 #include "search.h"
 #include "eval.h"
+#include "movelist.h"
 #include "timeman.h"
 #include "tt.h"
 #include "uci.h"
@@ -68,68 +69,6 @@ void initLmr() {
     }
 }
 
-Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
-    for (PieceType t : PIECE_TYPES_BY_VALUE) {
-        Bitboard s = attackers & pos.pieces(stm, t);
-        if (s) {
-            type = t;
-            return s & -s.bb;
-        }
-    }
-    return 0;
-}
-
-Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
-    return (((pawnMask(square, WHITE) | pawnMask(square, BLACK)) & pos.pieces<PAWN>()) |
-            (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
-            (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
-            (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) &
-           occ;
-}
-
-Score see(const Position &pos, Move move) {
-    Score e[32];
-    Depth d = 0;
-    Square from = move.getFrom();
-    Square to = move.getTo();
-
-    e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
-
-    Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
-    Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
-    Bitboard occ = pos.occupied() ^ Bitboard(to);
-    Bitboard attacker = from;
-    Bitboard attackers = getAllAttackers(pos, to, occ);
-
-    Color stm = pos.pieceAt(to).color;
-    PieceType type = pos.pieceAt(from).type;
-
-    do {
-        d++;
-        e[d] = PIECE_VALUES[type] - e[d - 1];
-
-        if (std::max(-e[d - 1], e[d]) < 0)
-            break;
-
-        occ ^= attacker;
-        attackers ^= attacker;
-        if (type == ROOK || type == QUEEN)
-            attackers |= rookAttacks(to, occ) & rooks & occ;
-        if (type == PAWN || type == BISHOP || type == QUEEN)
-            attackers |= bishopAttacks(to, occ) & bishops & occ;
-        attacker = leastValuablePiece(pos, attackers, stm, type);
-        stm = EnemyColor(stm);
-
-    } while (attacker);
-
-    while (--d) {
-        e[d - 1] = -std::max(-e[d - 1], e[d]);
-    }
-
-    return e[0];
-}
-
 template<NodeType type>
 Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
@@ -163,13 +102,15 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, ply, true};
+    auto moves = MoveList<TACTICAL>(pos, 0);
     EntryFlag ttFlag = ALPHA;
     Move bestMove;
 
-    while (!moves.empty()) {
+    while (!moves.isDone()) {
 
         Move m = moves.nextMove();
+
+        if (moves.isDone()) break;
 
         // Delta pruning
         if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
@@ -292,6 +233,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         // Internal iterative deepening
+        if (!ttHit && pvNode)
+            depth--;
         if (!ttHit && depth >= 5)
             depth--;
 
@@ -303,24 +246,20 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     if (inCheck)
         depth++;
 
-    MoveList moves = {pos, ply, false};
-    if (moves.count == 0) {
-        if (inCheck) {
-            return -matePly;
-        } else {
-            return DRAW_VALUE;
-        }
-    }
+    auto moves = MoveList<NORMAL>(pos, ply);
 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
-    int index = 0;
+    int index = 0, moveCount = 0;
 
-    while (!moves.empty()) {
+    while (!moves.isDone()) {
 
         Move m = moves.nextMove();
-        stack->move = m;
 
+        if (moves.isDone()) break;
+
+        moveCount++;
+        stack->move = m;
         Score score;
 
         // We can prune the move in some cases
@@ -390,6 +329,14 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         index++;
+    }
+
+    if (moveCount == 0) {
+        if (inCheck) {
+            return -matePly;
+        } else {
+            return DRAW_VALUE;
+        }
     }
 
     ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
@@ -475,7 +422,6 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 }
 
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
-
     pos.getState()->accumulator.refresh(pos);
 
     Score prevScore;

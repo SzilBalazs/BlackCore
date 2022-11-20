@@ -438,7 +438,6 @@ constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
             return kingMask(square);
         default:
             assert(0);
-            return 0;
     }
 }
 

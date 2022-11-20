@@ -19,26 +19,29 @@
 
 #include "movegen.h"
 
-template <bool output> U64 perft(Position &position, Depth depth) {
-  Move moves[200];
-  Move *movesEnd = generateAllMoves(position, moves);
-  if (depth == 1)
-    return movesEnd - moves;
-  U64 nodes = 0;
-  for (Move *it = moves; it != movesEnd; it++) {
-    position.makeMove(*it);
-    U64 a = perft<false>(position, depth - 1);
-    if constexpr (output) {
-      std::cout << *it << ": " << a << std::endl;
+#include <iostream>
+
+template<bool output>
+U64 perft(Position &position, Depth depth) {
+    Move moves[200];
+    Move *movesEnd = generateAllMoves(position, moves);
+    if (depth == 1)
+        return movesEnd - moves;
+    U64 nodes = 0;
+    for (Move *it = moves; it != movesEnd; it++) {
+        position.makeMove(*it);
+        U64 a = perft<false>(position, depth - 1);
+        if constexpr (output) {
+            std::cout << *it << ": " << a << std::endl;
+        }
+        nodes += a;
+        position.undoMove(*it);
     }
-    nodes += a;
-    position.undoMove(*it);
-  }
-  return nodes;
+    return nodes;
 }
 
 void testPerft();
 
 void testSearch();
 
-#endif // BLACKCORE_BENCH_H
+#endif// BLACKCORE_BENCH_H
