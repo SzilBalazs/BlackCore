@@ -113,10 +113,6 @@ private:
     inline Move sortBestMove() {
         Score best = leftMoveIndex;
         for (int index = leftMoveIndex + 1; index < rightMoveIndex; index++) {
-            if (moves[index] == hashMove) {
-                std::swap(moves[index], moves[rightMoveIndex - 1]);
-                rightMoveIndex--;
-            }
             if (scores[index] > scores[best]) {
                 best = index;
             }
@@ -135,6 +131,10 @@ private:
         rightMoveIndex = endMove - moves;
 
         for (int index = leftMoveIndex; index < rightMoveIndex; index++) {
+            if (moves[index] == hashMove) {
+                std::swap(moves[index], moves[rightMoveIndex - 1]);
+                rightMoveIndex--;
+            }
             scores[index] = scoreMove(moves[index]);
         }
     }
