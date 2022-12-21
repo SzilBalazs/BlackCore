@@ -219,9 +219,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         return UNKNOWN_SCORE;
 
     if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
-        alpha = DRAW_VALUE;
-        if (alpha >= beta)
-            return alpha;
+        return DRAW_VALUE;
     }
 
     bool ttHit = false;

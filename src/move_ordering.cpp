@@ -93,11 +93,11 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
         else
             return losingCapture + seeScore;
     } else if (killerMoves[ply][0] == m) {
-        return 750000;
+        return 650000;
     } else if (killerMoves[ply][1] == m) {
-        return 700000;
-    } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
         return 600000;
+    } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
+        return 700000;
     }
     return historyTable[pos.getSideToMove()][m.getFrom()][m.getTo()];
 }
