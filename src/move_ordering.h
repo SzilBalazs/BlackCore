@@ -20,15 +20,15 @@
 #include "move.h"
 #include "position.h"
 
-extern Move killerMoves[MAX_PLY + 1][2];
-
-Score scoreMove(const Position &pos, Move m, Ply ply);
+Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply);
 
 Score scoreQMove(const Position &pos, Move m);
 
 void clearTables();
 
 void recordKillerMove(Move m, Ply ply);
+
+void recordCounterMove(Move prevMove, Move move);
 
 void recordHHMove(Move move, Color color, Depth depth);
 

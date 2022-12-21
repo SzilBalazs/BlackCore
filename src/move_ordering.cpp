@@ -34,6 +34,7 @@ constexpr Score winningCapture = 800000;
 constexpr Score losingCapture = 200000;
 
 Move killerMoves[MAX_PLY + 1][2];
+Move counterMoves[64][64];
 
 // TODO Counter move history
 Score historyTable[2][64][64];
@@ -46,6 +47,10 @@ void clearTables() {
 void recordKillerMove(Move m, Ply ply) {
     killerMoves[ply][1] = killerMoves[ply][0];
     killerMoves[ply][0] = m;
+}
+
+void recordCounterMove(Move prevMove, Move move) {
+    counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
 }
 
 void recordHHMove(Move move, Color color, Depth depth) {
@@ -71,7 +76,7 @@ Score scoreQMove(const Position &pos, Move m) {
     }
 }
 
-Score scoreMove(const Position &pos, Move m, Ply ply) {
+Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
     if (m == getHashMove(pos.getHash())) {
         return 1000000;
     } else if (m.isPromo()) {
@@ -91,6 +96,8 @@ Score scoreMove(const Position &pos, Move m, Ply ply) {
         return 750000;
     } else if (killerMoves[ply][1] == m) {
         return 700000;
+    } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
+        return 600000;
     }
     return historyTable[pos.getSideToMove()][m.getFrom()][m.getTo()];
 }

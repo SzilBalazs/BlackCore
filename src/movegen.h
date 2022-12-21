@@ -51,7 +51,7 @@ struct MoveList {
 
     unsigned int count;
 
-    MoveList(const Position &pos, Ply ply, bool capturesOnly) {
+    MoveList(const Position &pos, Ply ply, Move prevMove, bool capturesOnly) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
@@ -63,7 +63,7 @@ struct MoveList {
             }
         } else {
             for (unsigned int i = 0; i < count; i++) {
-                scores[i] = scoreMove(pos, moves[i], ply);
+                scores[i] = scoreMove(pos, prevMove, moves[i], ply);
             }
         }
     }

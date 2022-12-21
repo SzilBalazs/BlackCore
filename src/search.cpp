@@ -163,7 +163,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, ply, true};
+    MoveList moves = {pos, ply, Move(), true};
     EntryFlag ttFlag = ALPHA;
     Move bestMove;
 
@@ -305,7 +305,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     if (inCheck)
         depth++;
 
-    MoveList moves = {pos, ply, false};
+    MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false};
     if (moves.count == 0) {
         if (inCheck) {
             return -matePly;
@@ -378,6 +378,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             if (m.isQuiet()) {
                 recordKillerMove(m, ply);
+                if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
                 recordHHMove(m, color, depth);
             }
 
