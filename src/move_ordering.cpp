@@ -53,8 +53,9 @@ void recordCounterMove(Move prevMove, Move move) {
     counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
 }
 
-void recordHHMove(Move move, Color color, Depth depth) {
-    historyTable[color][move.getFrom()][move.getTo()] += depth * depth;
+void recordHHMove(Move move, Color color, Score bonus) {
+    historyTable[color][move.getFrom()][move.getTo()] += bonus;
+    historyTable[color][move.getFrom()][move.getTo()] = std::max(0, historyTable[color][move.getFrom()][move.getTo()]);
 }
 
 Score scoreQMove(const Position &pos, Move m) {
