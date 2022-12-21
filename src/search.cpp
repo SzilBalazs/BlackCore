@@ -334,7 +334,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             // Late move/movecount pruning
             // This will also prune losing captures
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
-                break;
+                continue;
         }
 
         pos.makeMove(m);
