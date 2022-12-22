@@ -315,7 +315,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     Move bestMove;
     EntryFlag ttFlag = ALPHA;
     int index = 0;
-
+    std::vector<Move> quiets;
     while (!moves.empty()) {
 
         Move m = moves.nextMove();
@@ -377,7 +377,11 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             if (m.isQuiet()) {
                 recordKillerMove(m, ply);
                 if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
-                recordHHMove(m, color, depth);
+                recordHHMove(m, color, depth * 10);
+                
+                for (Move move : quiets) {
+                    recordHHMove(move, color, -depth * 10);
+                }
             }
 
             ttSave(pos.getHash(), depth, beta, BETA, m);
@@ -389,7 +393,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             bestMove = m;
             ttFlag = EXACT;
         }
-
+        
+        if (m.isQuiet()) quiets.push_back(m);
         index++;
     }
 

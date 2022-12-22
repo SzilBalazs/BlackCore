@@ -30,6 +30,6 @@ void recordKillerMove(Move m, Ply ply);
 
 void recordCounterMove(Move prevMove, Move move);
 
-void recordHHMove(Move move, Color color, Depth depth);
+void recordHHMove(Move move, Color color, Score bonus);
 
 #endif//BLACKCORE_MOVE_ORDERING_H
