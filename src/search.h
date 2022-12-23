@@ -82,7 +82,7 @@ constexpr Score ASPIRATION_BOUND = 3000;
 
 constexpr Score SEE_MARGIN = 2;
 
-constexpr Depth SINGULAR_DEPTH = 9;
+constexpr Depth SINGULAR_DEPTH = 7;
 
 #endif
 

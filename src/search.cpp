@@ -302,6 +302,9 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
     MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
     if (moves.count == 0) {
+        if (isSingularRoot)
+            return alpha;
+
         if (inCheck) {
             return -matePly;
         } else {
@@ -357,8 +360,11 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             if (score < singularBeta) {
                 extensions = 1;
-            } else if (singularBeta >= beta)
+            } else if (singularBeta >= beta) {
                 return singularBeta;
+            } else if (ttEntry->eval >= beta) {
+                extensions = -1;
+            }
         }
 
         pos.makeMove(m);
