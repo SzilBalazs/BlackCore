@@ -379,6 +379,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             R += improving;
             R -= pvNode;
+            R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
             Depth newDepth = std::clamp(depth - R + extensions, 1, depth - 1);
 

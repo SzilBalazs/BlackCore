@@ -20,6 +20,9 @@
 #include "move.h"
 #include "position.h"
 
+extern Move killerMoves[MAX_PLY + 1][2];
+extern Move counterMoves[64][64];
+
 Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply);
 
 Score scoreRootNode(Move m);
