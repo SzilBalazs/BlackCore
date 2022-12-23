@@ -22,14 +22,18 @@
 
 Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply);
 
-Score scoreQMove(const Position &pos, Move m);
+Score scoreRootNode(Move m);
 
 void clearTables();
+
+void clearNodesSearchedTable();
 
 void recordKillerMove(Move m, Ply ply);
 
 void recordCounterMove(Move prevMove, Move move);
 
 void recordHHMove(Move move, Color color, Score bonus);
+
+void recordNodesSearched(Move m, U64 nodes);
 
 #endif//BLACKCORE_MOVE_ORDERING_H

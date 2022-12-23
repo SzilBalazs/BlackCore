@@ -35,13 +35,17 @@ constexpr Score losingCapture = 200000;
 
 Move killerMoves[MAX_PLY + 1][2];
 Move counterMoves[64][64];
-
-// TODO Counter move history
 Score historyTable[2][64][64];
+U64 nodesSearched[64][64];
 
 void clearTables() {
     std::memset(killerMoves, 0, sizeof(killerMoves));
+    std::memset(counterMoves, 0, sizeof(counterMoves));
     std::memset(historyTable, 0, sizeof(historyTable));
+}
+
+void clearNodesSearchedTable() {
+    std::memset(nodesSearched, 0, sizeof(nodesSearched));
 }
 
 void recordKillerMove(Move m, Ply ply) {
@@ -58,23 +62,12 @@ void recordHHMove(Move move, Color color, Score bonus) {
     historyTable[color][move.getFrom()][move.getTo()] = std::max(0, historyTable[color][move.getFrom()][move.getTo()]);
 }
 
-Score scoreQMove(const Position &pos, Move m) {
-    if (m == getHashMove(pos.getHash())) {
-        return 1000000;
-    } else if (m.isPromo()) {
-        if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
-            return 900000;
-        } else {// Anything else, under promotions should only be played in really few cases
-            return -100000;
-        }
-    } else {
-        Score seeScore = see(pos, m);
+void recordNodesSearched(Move m, U64 nodes) {
+    nodesSearched[m.getFrom()][m.getTo()] = nodes;
+}
 
-        if (seeScore >= 0)
-            return winningCapture + seeScore;
-        else
-            return losingCapture + seeScore;
-    }
+Score scoreRootNode(Move m) {
+    return nodesSearched[m.getFrom()][m.getTo()];
 }
 
 Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
