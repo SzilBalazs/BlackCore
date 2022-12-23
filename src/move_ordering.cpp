@@ -20,16 +20,6 @@
 
 #include <cstring>
 
-constexpr Score MVV_LVA[6][6] = {
-        //    KING  PAWN    KNIGHT  BISHOP  ROOK    QUEEN
-        {0, 0, 0, 0, 0, 0},                         // KING
-        {0, 800004, 800104, 800204, 800304, 800404},// PAWN
-        {0, 800003, 800103, 800203, 800303, 800403},// KNIGHT
-        {0, 800002, 800102, 800202, 800302, 800402},// BISHOP
-        {0, 800001, 800101, 800201, 800301, 800401},// ROOK
-        {0, 800000, 800100, 800200, 800300, 800400},// QUEEN
-};
-
 constexpr Score winningCapture = 800000;
 constexpr Score losingCapture = 200000;
 

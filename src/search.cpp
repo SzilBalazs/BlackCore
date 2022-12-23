@@ -214,6 +214,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     constexpr bool notRootNode = !rootNode;
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
+    const bool isSingularRoot = !stack->excludedMove.isNull();
 
     if (shouldEnd())
         return UNKNOWN_SCORE;
@@ -224,7 +225,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
-    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
+    TTEntry *ttEntry = isSingularRoot ? nullptr : ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
 
     if (ttHit && nonPvNode &&
         ttEntry->depth >= depth && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
@@ -255,7 +256,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
     bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
 
-    if (notRootNode && !inCheck) {
+    if (notRootNode && !inCheck && !isSingularRoot) {
 
         // Razoring
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
@@ -299,12 +300,11 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             return quiescence<nextPv>(pos, alpha, beta, ply);
     }
 
-    // Check extension
-    if (inCheck)
-        depth++;
-
     MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
     if (moves.count == 0) {
+        if (isSingularRoot)
+            return alpha;
+
         if (inCheck) {
             return -matePly;
         } else {
@@ -320,6 +320,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         Move m = moves.nextMove();
         stack->move = m;
+
+        if (m == stack->excludedMove) continue;
 
         U64 nodesBefore = nodeCount;
 
@@ -343,6 +345,28 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
                 continue;
         }
 
+        // Extensions
+        Depth extensions = 0;
+
+        if (inCheck) extensions = 1;
+        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && m == ttEntry->hashMove && !isSingularRoot && ttEntry->flag == BETA && ttEntry->depth >= depth - 3) {
+            // This implementation is heavily inspired by StockFish & Alexandria
+            Score singularBeta = ttEntry->eval - depth * 3;
+            Depth singularDepth = (depth - 1) / 2;
+
+            stack->excludedMove = m;
+            score = search<NON_PV_NODE>(pos, stack, singularDepth, singularBeta - 1, singularBeta, ply);
+            stack->excludedMove = Move();
+
+            if (score < singularBeta) {
+                extensions = 1;
+            } else if (singularBeta >= beta) {
+                return singularBeta;
+            } else if (ttEntry->eval >= beta) {
+                extensions = -1;
+            }
+        }
+
         pos.makeMove(m);
 
         ttPrefetch(pos.getHash());
@@ -356,21 +380,21 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             R += improving;
             R -= pvNode;
 
-            Depth newDepth = std::clamp(depth - R, 1, depth - 1);
+            Depth newDepth = std::clamp(depth - R + extensions, 1, depth - 1);
 
             score = -search<NON_PV_NODE>(pos, stack + 1, newDepth,
                                          -alpha - 1, -alpha, ply + 1);
 
             if (score > alpha && R > 1) {
-                score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+                score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1 + extensions, -alpha - 1, -alpha, ply + 1);
             }
 
         } else if (nonPvNode || index != 0) {
-            score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1, -alpha - 1, -alpha, ply + 1);
+            score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1 + extensions, -alpha - 1, -alpha, ply + 1);
         }
 
         if (pvNode && (index == 0 || (score > alpha && score < beta))) {
-            score = -search<nextPv>(pos, stack + 1, depth - 1, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, stack + 1, depth - 1 + extensions, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
@@ -384,17 +408,20 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         if (score >= beta) {
 
-            if (m.isQuiet()) {
-                recordKillerMove(m, ply);
-                if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
-                recordHHMove(m, color, depth * 10);
+            if (!isSingularRoot) {
+                if (m.isQuiet()) {
+                    recordKillerMove(m, ply);
+                    if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
+                    recordHHMove(m, color, depth * 10);
 
-                for (Move move : quiets) {
-                    recordHHMove(move, color, -depth * 10);
+                    for (Move move : quiets) {
+                        recordHHMove(move, color, -depth * 10);
+                    }
                 }
+
+                ttSave(pos.getHash(), depth, beta, BETA, m);
             }
 
-            ttSave(pos.getHash(), depth, beta, BETA, m);
             return beta;
         }
 
@@ -408,7 +435,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         index++;
     }
 
-    ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
+    if (!isSingularRoot)
+        ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
 
     return alpha;
 }
