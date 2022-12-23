@@ -367,6 +367,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             }
         }
 
+        Depth newDepth = depth - 1 + extensions;
+
         pos.makeMove(m);
 
         ttPrefetch(pos.getHash());
@@ -381,21 +383,21 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             R -= pvNode;
             R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
-            Depth newDepth = std::clamp(depth - R + extensions, 1, depth - 1);
+            Depth D = std::clamp(newDepth - R + 1, 1, newDepth);
 
-            score = -search<NON_PV_NODE>(pos, stack + 1, newDepth,
+            score = -search<NON_PV_NODE>(pos, stack + 1, D,
                                          -alpha - 1, -alpha, ply + 1);
 
             if (score > alpha && R > 1) {
-                score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1 + extensions, -alpha - 1, -alpha, ply + 1);
+                score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
             }
 
         } else if (nonPvNode || index != 0) {
-            score = -search<NON_PV_NODE>(pos, stack + 1, depth - 1 + extensions, -alpha - 1, -alpha, ply + 1);
+            score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
         }
 
         if (pvNode && (index == 0 || (score > alpha && score < beta))) {
-            score = -search<nextPv>(pos, stack + 1, depth - 1 + extensions, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, stack + 1, newDepth, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
