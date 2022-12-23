@@ -163,7 +163,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, ply, Move(), true};
+    MoveList moves = {pos, ply, Move(), true, false};
     EntryFlag ttFlag = ALPHA;
     Move bestMove;
 
@@ -303,7 +303,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     if (inCheck)
         depth++;
 
-    MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false};
+    MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
     if (moves.count == 0) {
         if (inCheck) {
             return -matePly;
@@ -320,6 +320,12 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         Move m = moves.nextMove();
         stack->move = m;
+
+        U64 nodesBefore = nodeCount;
+
+        if (rootNode) {
+            if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", m, "currmovenumber", index + 1);
+        }
 
         Score score;
 
@@ -369,6 +375,10 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         pos.undoMove(m);
 
+        if (rootNode) {
+            recordNodesSearched(m, nodeCount - nodesBefore);
+        }
+
         if (shouldEnd())
             return UNKNOWN_SCORE;
 
@@ -378,7 +388,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
                 recordKillerMove(m, ply);
                 if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
                 recordHHMove(m, color, depth * 10);
-                
+
                 for (Move move : quiets) {
                     recordHHMove(move, color, -depth * 10);
                 }
@@ -393,7 +403,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             bestMove = m;
             ttFlag = EXACT;
         }
-        
+
         if (m.isQuiet()) quiets.push_back(m);
         index++;
     }
@@ -483,6 +493,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
 void iterativeDeepening(Position pos, Depth depth, bool uci) {
 
     pos.getState()->accumulator.refresh(pos);
+    clearNodesSearchedTable();
 
     Score prevScore;
     Move bestMove;

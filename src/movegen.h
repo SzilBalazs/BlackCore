@@ -51,20 +51,13 @@ struct MoveList {
 
     unsigned int count;
 
-    MoveList(const Position &pos, Ply ply, Move prevMove, bool capturesOnly) {
+    MoveList(const Position &pos, Ply ply, Move prevMove, bool capturesOnly, bool rootNode) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
 
-        // Scoring moves
-        if (capturesOnly) {
-            for (unsigned int i = 0; i < count; i++) {
-                scores[i] = scoreQMove(pos, moves[i]);
-            }
-        } else {
-            for (unsigned int i = 0; i < count; i++) {
-                scores[i] = scoreMove(pos, prevMove, moves[i], ply);
-            }
+        for (unsigned int i = 0; i < count; i++) {
+            scores[i] = rootNode ? scoreRootNode(moves[i]) : scoreMove(pos, prevMove, moves[i], ply);
         }
     }
 
