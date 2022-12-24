@@ -26,16 +26,26 @@ constexpr Score losingCapture = 200000;
 Move killerMoves[MAX_PLY + 1][2];
 Move counterMoves[64][64];
 Score historyTable[2][64][64];
+Bitboard historyDiff[2][64][64];
 U64 nodesSearched[64][64];
 
 void clearTables() {
     std::memset(killerMoves, 0, sizeof(killerMoves));
     std::memset(counterMoves, 0, sizeof(counterMoves));
     std::memset(historyTable, 0, sizeof(historyTable));
+    std::memset(historyDiff, 0, sizeof(historyDiff));
 }
 
 void clearNodesSearchedTable() {
     std::memset(nodesSearched, 0, sizeof(nodesSearched));
+}
+
+int getHistoryDifference(Color stm, Move move, Bitboard pieces) {
+    return (historyDiff[stm][move.getFrom()][move.getTo()] ^ pieces).popCount();
+}
+
+void recordHistoryDifference(Color stm, Move move, Bitboard pieces) {
+    historyDiff[stm][move.getFrom()][move.getTo()] = pieces;
 }
 
 void recordKillerMove(Move m, Ply ply) {
@@ -83,5 +93,11 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
     } else if (killerMoves[ply][1] == m) {
         return 600000;
     }
-    return historyTable[pos.getSideToMove()][m.getFrom()][m.getTo()];
+    Color stm = pos.getSideToMove();
+    Bitboard occ = pos.occupied();
+    int diff = getHistoryDifference(stm, m, occ);
+    if (diff <= occ.popCount() / 8)
+        return 500000 - diff;
+    else
+        return historyTable[stm][m.getFrom()][m.getTo()];
 }

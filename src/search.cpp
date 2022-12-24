@@ -413,6 +413,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             if (!isSingularRoot) {
                 if (m.isQuiet()) {
+
+                    recordHistoryDifference(color, m, pos.occupied());
                     recordKillerMove(m, ply);
                     if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
                     recordHHMove(m, color, depth * 10);

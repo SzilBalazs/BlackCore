@@ -31,6 +31,8 @@ void clearTables();
 
 void clearNodesSearchedTable();
 
+void recordHistoryDifference(Color stm, Move move, Bitboard pieces);
+
 void recordKillerMove(Move m, Ply ply);
 
 void recordCounterMove(Move prevMove, Move move);
