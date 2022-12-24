@@ -20,16 +20,20 @@
 
 #include <cstring>
 
+const int HISTORY_DIFF_SLOTS = 4;
+
 Move killerMoves[MAX_PLY + 1][2];
 Move counterMoves[64][64];
 Score historyTable[2][64][64];
-Bitboard historyDiff[2][64][64];
+Bitboard historyDiff[2][64][64][HISTORY_DIFF_SLOTS];
+int historyDiffReplace[2][64][64];
 U64 nodesSearched[64][64];
 
 void clearTables() {
     std::memset(killerMoves, 0, sizeof(killerMoves));
     std::memset(counterMoves, 0, sizeof(counterMoves));
     std::memset(historyTable, 0, sizeof(historyTable));
+    std::memset(historyDiffReplace, 0, sizeof(historyDiffReplace));
     std::memset(historyDiff, 0, sizeof(historyDiff));
 }
 
@@ -38,11 +42,19 @@ void clearNodesSearchedTable() {
 }
 
 int getHistoryDifference(Color stm, Move move, Bitboard pieces) {
-    return (historyDiff[stm][move.getFrom()][move.getTo()] ^ pieces).popCount();
+    int diff = 100;
+    for (int idx = 0; idx < HISTORY_DIFF_SLOTS; idx++) {
+        diff = std::min(diff, (historyDiff[stm][move.getFrom()][move.getTo()][idx] ^ pieces).popCount());
+    }
+    return diff;
 }
 
 void recordHistoryDifference(Color stm, Move move, Bitboard pieces) {
-    historyDiff[stm][move.getFrom()][move.getTo()] = pieces;
+    Square from = move.getFrom();
+    Square to = move.getTo();
+    historyDiff[stm][from][to][historyDiffReplace[stm][from][to]] = pieces;
+    historyDiffReplace[stm][from][to]++;
+    historyDiffReplace[stm][from][to] %= HISTORY_DIFF_SLOTS;
 }
 
 void recordKillerMove(Move m, Ply ply) {
@@ -84,7 +96,7 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
         else
             return 2000000 + seeScore;
     } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
-        return 5500000;
+        return 5000000;
     }
     Color stm = pos.getSideToMove();
     Bitboard occ = pos.occupied();
@@ -93,8 +105,8 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
     if (diff == 0)
         diffBonus = 5600000;
     else if (diff == 1)
-        diffBonus = 5100000;
+        diffBonus = 5500000;
     else if (diff == 2)
-        diffBonus = 5000000;
+        diffBonus = 5400000;
     return diffBonus + historyTable[stm][m.getFrom()][m.getTo()];
 }
