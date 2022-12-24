@@ -330,6 +330,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         Score score;
+        Score history = historyTable[color][m.getFrom()][m.getTo()];
 
         // We can prune the move in some cases
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
@@ -381,14 +382,15 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             R += improving;
             R -= pvNode;
+            R -= std::clamp(history / 3000, -1, 1);
             R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
-            Depth D = std::clamp(newDepth - R + 1, 1, newDepth);
+            Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
             score = -search<NON_PV_NODE>(pos, stack + 1, D,
                                          -alpha - 1, -alpha, ply + 1);
 
-            if (score > alpha && R > 1) {
+            if (score > alpha && R > 0) {
                 score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
             }
 
@@ -413,12 +415,14 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             if (!isSingularRoot) {
                 if (m.isQuiet()) {
+
+                    recordHistoryDifference(color, m, pos.occupied());
                     recordKillerMove(m, ply);
                     if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
-                    recordHHMove(m, color, depth * 10);
+                    recordHHMove(m, color, depth * depth);
 
                     for (Move move : quiets) {
-                        recordHHMove(move, color, -depth * 10);
+                        recordHHMove(move, color, -depth * depth);
                     }
                 }
 

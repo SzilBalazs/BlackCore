@@ -22,6 +22,7 @@
 
 extern Move killerMoves[MAX_PLY + 1][2];
 extern Move counterMoves[64][64];
+extern Score historyTable[2][64][64];
 
 Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply);
 
@@ -30,6 +31,8 @@ Score scoreRootNode(Move m);
 void clearTables();
 
 void clearNodesSearchedTable();
+
+void recordHistoryDifference(Color stm, Move move, Bitboard pieces);
 
 void recordKillerMove(Move m, Ply ply);
 
