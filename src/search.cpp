@@ -330,6 +330,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
         }
 
         Score score;
+        Score history = historyTable[color][m.getFrom()][m.getTo()];
 
         // We can prune the move in some cases
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
@@ -381,7 +382,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             R += improving;
             R -= pvNode;
-            R -= std::clamp(historyTable[color][m.getFrom()][m.getTo()] / 3000, -1, 1);
+            R -= std::clamp(history / 3000, -1, 1);
             R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
