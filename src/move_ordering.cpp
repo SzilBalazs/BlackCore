@@ -20,9 +20,6 @@
 
 #include <cstring>
 
-constexpr Score winningCapture = 800000;
-constexpr Score losingCapture = 200000;
-
 Move killerMoves[MAX_PLY + 1][2];
 Move counterMoves[64][64];
 Score historyTable[2][64][64];
@@ -72,32 +69,29 @@ Score scoreRootNode(Move m) {
 
 Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
     if (m == getHashMove(pos.getHash())) {
-        return 1000000;
+        return 10000000;
     } else if (m.isPromo()) {
         if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
-            return 900000;
+            return 9000000;
         } else {// Anything else, under promotions should only be played in really few cases
-            return -100000;
+            return -1000000;
         }
     } else if (m.isCapture()) {
         Score seeScore = see(pos, m);
 
         if (see(pos, m) >= 0)
-            return winningCapture + seeScore;
+            return 8000000 + seeScore;
         else
-            return losingCapture + seeScore;
+            return 2000000 + seeScore;
     } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
-        return 700000;
+        return 7000000;
     } else if (killerMoves[ply][0] == m) {
-        return 650000;
+        return 6500000;
     } else if (killerMoves[ply][1] == m) {
-        return 600000;
+        return 6000000;
     }
     Color stm = pos.getSideToMove();
     Bitboard occ = pos.occupied();
     int diff = getHistoryDifference(stm, m, occ);
-    if (diff <= occ.popCount() / 8)
-        return 500000 - diff;
-    else
-        return historyTable[stm][m.getFrom()][m.getTo()];
+    return historyTable[stm][m.getFrom()][m.getTo()] / (diff + 1);
 }

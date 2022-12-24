@@ -417,10 +417,10 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
                     recordHistoryDifference(color, m, pos.occupied());
                     recordKillerMove(m, ply);
                     if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
-                    recordHHMove(m, color, depth * 10);
+                    recordHHMove(m, color, depth * depth);
 
                     for (Move move : quiets) {
-                        recordHHMove(move, color, -depth * 10);
+                        recordHHMove(move, color, -depth * depth);
                     }
                 }
 
