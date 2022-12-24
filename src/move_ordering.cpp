@@ -84,14 +84,21 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
         else
             return 2000000 + seeScore;
     } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
-        return 7000000;
-    } else if (killerMoves[ply][0] == m) {
-        return 6500000;
-    } else if (killerMoves[ply][1] == m) {
         return 6000000;
+    } else if (killerMoves[ply][0] == m) {
+        return 5500000;
+    } else if (killerMoves[ply][1] == m) {
+        return 5000000;
     }
     Color stm = pos.getSideToMove();
     Bitboard occ = pos.occupied();
     int diff = getHistoryDifference(stm, m, occ);
-    return historyTable[stm][m.getFrom()][m.getTo()] / (diff + 1);
+    Score diffBonus = 0;
+    if (diff == 0)
+        diffBonus = 7500000;
+    else if (diff == 1)
+        diffBonus = 7400000;
+    else if (diff == 2)
+        diffBonus = 7300000;
+    return diffBonus + historyTable[stm][m.getFrom()][m.getTo()];
 }
