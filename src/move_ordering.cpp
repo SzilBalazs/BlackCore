@@ -72,7 +72,7 @@ void recordHHMove(Move move, Color color, Score bonus) {
 }
 
 void recordNodesSearched(Move m, U64 nodes) {
-    nodesSearched[m.getFrom()][m.getTo()] = nodes;
+    nodesSearched[m.getFrom()][m.getTo()] = (nodesSearched[m.getFrom()][m.getTo()] + 3 * nodes) / 4;
 }
 
 Score scoreRootNode(Move m) {
@@ -86,7 +86,7 @@ Score scoreMove(const Position &pos, Move prevMove, Move m, Ply ply) {
         if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
             return 9000000;
         } else {// Anything else, under promotions should only be played in really few cases
-            return -1000000;
+            return -3000000;
         }
     } else if (m.isCapture()) {
         Score seeScore = see(pos, m);
