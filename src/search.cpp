@@ -389,7 +389,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             score = -search<NON_PV_NODE>(pos, stack + 1, D,
                                          -alpha - 1, -alpha, ply + 1);
 
-            if (score > alpha && R > 1) {
+            if (score > alpha && R > 0) {
                 score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
             }
 
