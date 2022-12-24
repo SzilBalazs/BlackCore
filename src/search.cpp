@@ -381,9 +381,10 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             R += improving;
             R -= pvNode;
+            R -= std::clamp(historyTable[color][m.getFrom()][m.getTo()] / 3000, -1, 1);
             R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
-            Depth D = std::clamp(newDepth - R + 1, 1, newDepth);
+            Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
             score = -search<NON_PV_NODE>(pos, stack + 1, D,
                                          -alpha - 1, -alpha, ply + 1);

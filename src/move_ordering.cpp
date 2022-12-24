@@ -68,7 +68,7 @@ void recordCounterMove(Move prevMove, Move move) {
 
 void recordHHMove(Move move, Color color, Score bonus) {
     historyTable[color][move.getFrom()][move.getTo()] += bonus;
-    historyTable[color][move.getFrom()][move.getTo()] = std::max(0, historyTable[color][move.getFrom()][move.getTo()]);
+    // historyTable[color][move.getFrom()][move.getTo()] = std::max(0, historyTable[color][move.getFrom()][move.getTo()]);
 }
 
 void recordNodesSearched(Move m, U64 nodes) {
