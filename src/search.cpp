@@ -454,16 +454,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     return alpha;
 }
 
-std::string getPvLine(Position &pos) {
-    Move m = getHashMove(pos.getHash());
-    if (!pos.isRepetition() && !m.isNull()) {
-        pos.makeMove(m);
-        std::string str = m.str() + " " + getPvLine(pos);
-        pos.undoMove(m);
-        return str;
-    } else {
-        return "";
+std::string getPvLine(ThreadData &td) {
+    std::string pv;
+
+    for (int i = 0; i < td.pvLength[0]; i++) {
+        pv += td.pvArray[0][i].str() + " ";
     }
+
+    return pv;
 }
 
 Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
@@ -502,7 +500,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
             beta = std::min(beta + iter * iter * ASPIRATION_DELTA, INF_SCORE);
         } else {
 
-            std::string pvLine = getPvLine(pos);
+            std::string pvLine = getPvLine(td);
             if (td.uciMode) {
                 Score absScore = std::abs(score);
                 int mateDepth = MATE_VALUE - absScore;
@@ -585,6 +583,8 @@ void joinThread(bool waitToFinish) {
         th.join();
 }
 
+ThreadData td;
+
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThread(false);
@@ -596,8 +596,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
-    ThreadData td;
     td.threadId = 0;
-
     th = std::thread(iterativeDeepening, pos, std::ref(td), searchInfo.maxDepth);
 }

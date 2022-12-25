@@ -9,10 +9,10 @@ struct ThreadData {
 
     int threadId;
 
-    U64 nodes;
-    Depth selectiveDepth;
+    U64 nodes = 0;
+    Depth selectiveDepth = 0;
 
-    bool uciMode;
+    bool uciMode = false;
 
     Move pvArray[MAX_PLY + 1][MAX_PLY + 1];
     int pvLength[MAX_PLY + 1];
