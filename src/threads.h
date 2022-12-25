@@ -86,16 +86,17 @@ struct ThreadData {
     }
 
     void updateNodesSearched(Move m, U64 totalNodes) {
+        if (threadId & 1) return;
         mNodesSearched.lock();
         nodesSearched[m.getFrom()][m.getTo()] += totalNodes;
         mNodesSearched.unlock();
     }
 
     Score scoreRootNode(Move m) {
-        if (threadId == 0)
-            return nodesSearched[m.getFrom()][m.getTo()] / 1000;
+        if (threadId & 1)
+            return rand();
         else
-            return rand();// TODO experiment with other techniques
+            return nodesSearched[m.getFrom()][m.getTo()] / 1000;
     }
 
     Score scoreMove(const Position &pos, Move prevMove, Move m) {
