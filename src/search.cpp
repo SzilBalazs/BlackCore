@@ -58,6 +58,9 @@ Score SEE_MARGIN = 2;
 // Move index -> depth
 Depth reductions[200][MAX_PLY + 1];
 
+std::mutex mNodesSearched;
+U64 nodesSearched[64][64];
+
 std::vector<ThreadData> tds;
 std::vector<std::thread> ths;
 
@@ -173,7 +176,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, ply, Move(), true, false};
+    MoveList moves = {pos, td, Move(), true, false};
     EntryFlag ttFlag = ALPHA;
     Move bestMove;
 
@@ -313,7 +316,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             return quiescence<nextPv>(pos, td, alpha, beta, ply);
     }
 
-    MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
+    MoveList moves = {pos, td, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
     if (moves.count == 0) {
         if (isSingularRoot)
             return alpha;
@@ -343,7 +346,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = historyTable[color][m.getFrom()][m.getTo()];
+        Score history = td.historyTable[color][m.getFrom()][m.getTo()];
 
         // We can prune the move in some cases
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
@@ -397,7 +400,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             R += !improving;
             R -= pvNode;
             R -= std::clamp(history / 3000, -1, 1);
-            R -= (killerMoves[ply][0] == m || killerMoves[ply][1] == m) || (ply >= 1 && counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
+            R -= (td.killerMoves[ply][0] == m || td.killerMoves[ply][1] == m) || (ply >= 1 && td.counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
@@ -419,7 +422,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         pos.undoMove(m);
 
         if (rootNode) {
-            recordNodesSearched(m, td.nodes - nodesBefore);
+            td.updateNodesSearched(m, td.nodes - nodesBefore);
         }
 
         if (shouldEnd(td.nodes, getTotalNodes()))
@@ -430,13 +433,13 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             if (!isSingularRoot) {
                 if (m.isQuiet()) {
 
-                    recordHistoryDifference(color, m, pos.occupied());
-                    recordKillerMove(m, ply);
-                    if (ply >= 1 && !(stack - 1)->move.isNull()) recordCounterMove((stack - 1)->move, m);
-                    recordHHMove(m, color, depth * depth);
+                    td.updateHistoryDifference(color, m, pos.occupied());
+                    td.updateKillerMoves(m, ply);
+                    if (ply >= 1 && !(stack - 1)->move.isNull()) td.updateCounterMoves((stack - 1)->move, m);
+                    td.updateHH(m, color, depth * depth);
 
                     for (Move move : quiets) {
-                        recordHHMove(move, color, -depth * depth);
+                        td.updateHH(move, color, -depth * depth);
                     }
                 }
 
@@ -480,8 +483,7 @@ std::string getPvLine(ThreadData &td) {
 
 Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
-    globalAge++;
-    clearTables();
+    if (td.threadId == 0) globalAge++;
     td.clear();
 
     SearchStack stateStack[MAX_PLY + 1];
@@ -547,7 +549,6 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
 
     td.reset();
     pos.getState()->accumulator.refresh(pos);
-    clearNodesSearchedTable();
 
     Score prevScore;
     Move bestMove;
@@ -585,7 +586,7 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
     stopped = true;
 }
 
-void joinThread(bool waitToFinish) {
+void joinThreads(bool waitToFinish) {
     if (!waitToFinish)
         stopped = true;
 
@@ -600,7 +601,7 @@ void joinThread(bool waitToFinish) {
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
-    joinThread(false);
+    joinThreads(false);
 
     for (int idx = 0; idx < threadCount; idx++) {
         ThreadData td;

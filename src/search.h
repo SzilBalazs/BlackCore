@@ -103,7 +103,7 @@ inline void initSearch() {
 
 Score see(const Position &pos, Move move);
 
-void joinThread(bool waitToFinish);
+void joinThreads(bool waitToFinish);
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 

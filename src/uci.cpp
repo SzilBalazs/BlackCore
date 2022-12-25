@@ -133,10 +133,10 @@ void uciLoop() {
         if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
-            joinThread(false);
+            joinThreads(false);
             break;
         } else if (command == "stop") {
-            joinThread(false);
+            joinThreads(false);
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {

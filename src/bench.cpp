@@ -96,8 +96,8 @@ void testSearch() {
         while (!stopped) {}
         totalNodes += getTotalNodes();
         nps += getNps(getTotalNodes());
-    
-        joinThread(true);
+
+        joinThreads(true);
     }
 
     std::cout << totalNodes << " nodes " << nps / posCount << " nps" << std::endl;
