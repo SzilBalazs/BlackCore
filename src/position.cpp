@@ -250,7 +250,3 @@ Position::Position() {
 Position::Position(const std::string &fen) {
     loadPositionFromFen(fen);
 }
-
-Position::Position(const Position &position) {
-    loadPositionFromRawState(position.getRawState());
-}

@@ -556,12 +556,12 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
     int stability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, td, prevScore, currDepth);
+        Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 7));
         if (score == UNKNOWN_SCORE)
             break;
 
         // We only care about stability if we searched enough depth
-        if (currDepth >= 16) {
+        if (currDepth >= 16 && td.threadId == 0) {
             if (bestMove != td.pvArray[0][0]) {
                 stability -= 10;
             } else {

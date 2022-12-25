@@ -202,8 +202,6 @@ public:
 
     Position(const std::string &fen);
 
-    Position(const Position &position);
-
 private:
     template<bool updateAccumulator>
     void clearSquare(Square square);
