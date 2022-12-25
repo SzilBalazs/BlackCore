@@ -196,11 +196,13 @@ public:
 
     void loadPositionFromRawState(const RawState &rawState);
 
-    RawState getRawState();
+    RawState getRawState() const;
 
     Position();
 
     Position(const std::string &fen);
+
+    Position(const Position &position);
 
 private:
     template<bool updateAccumulator>
