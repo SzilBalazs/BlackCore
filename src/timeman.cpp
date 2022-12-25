@@ -24,8 +24,7 @@ constexpr U64 mask = 1023;
 
 U64 startedSearch, shouldSearch, searchTime, maxSearch, stabilityTime, maxNodes;
 
-bool stopping = true;
-bool stopped = true;
+std::atomic<bool> stopped = true;
 
 U64 getTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -40,7 +39,6 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
 
     startedSearch = getTime();
     stabilityTime = 0;
-    stopping = false;
     stopped = false;
 
     maxNodes = nodes;
@@ -65,24 +63,16 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
     searchTime = shouldSearch;
 }
 
-void stopSearch() {
-    stopping = true;
-}
-
-bool &searchStopped() {
-    return stopped;
-}
-
 void allocateTime(int stability) {
     U64 newSearchTime = shouldSearch - stability * stabilityTime;
     searchTime = std::min(maxSearch, newSearchTime);
 }
 
 bool shouldEnd() {
-    if ((nodeCount & mask) == 0 && !stopping) {
-        stopping = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
+    if ((nodeCount & mask) == 0 && !stopped) {
+        stopped = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
     }
-    return stopping;
+    return stopped;
 }
 
 U64 getSearchTime() {

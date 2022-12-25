@@ -147,6 +147,8 @@ void uciLoop() {
                     MOVE_OVERHEAD = std::stoi(tokens[4]);
                 } else if (tokens[1] == "Ponder") {
 
+                } else if (tokens[1] == "Threads") {
+                    threadCount = std::stoi(tokens[3]);
                 } else {
 #ifdef TUNE
                     if (tokens[1] == "DELTA_MARGIN") {

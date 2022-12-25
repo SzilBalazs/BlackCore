@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <thread>
 
 #ifdef TUNE
 
@@ -56,6 +57,9 @@ Score SEE_MARGIN = 2;
 
 // Move index -> depth
 Depth reductions[200][MAX_PLY + 1];
+
+std::vector<ThreadData> tds;
+std::vector<std::thread> ths;
 
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
@@ -568,26 +572,32 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
         out("bestmove", bestMove);
     }
 
-    searchStopped() = true;
+    stopped = true;
 }
-
-#include <thread>
-
-std::thread th;
 
 void joinThread(bool waitToFinish) {
     if (!waitToFinish)
-        stopSearch();
+        stopped = true;
 
-    if (th.joinable())
-        th.join();
+    for (std::thread &th : ths) {
+        if (th.joinable())
+            th.join();
+    }
+
+    ths.clear();
+    tds.clear();
 }
-
-ThreadData td;
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThread(false);
+
+    for (int idx = 0; idx < threadCount; idx++) {
+        ThreadData td;
+        td.threadId = idx;
+        td.uciMode = searchInfo.uciMode && idx == 0;
+        tds.emplace_back(td);
+    }
 
     Color stm = pos.getSideToMove();
     if (stm == WHITE) {
@@ -596,8 +606,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
-    td.threadId = 0;
-    td.uciMode = searchInfo.uciMode;
-
-    th = std::thread(iterativeDeepening, pos, std::ref(td), searchInfo.maxDepth);
+    for (int idx = 0; idx < threadCount; idx++) {
+        ths.emplace_back(iterativeDeepening, pos, std::ref(tds[idx]), searchInfo.maxDepth);
+    }
 }
