@@ -19,7 +19,6 @@ struct ThreadData {
 
     inline void clear() {
         selectiveDepth = 0;
-        uciMode = false;
 
         std::memset(pvArray, 0, sizeof(pvArray));
         std::memset(pvLength, 0, sizeof(pvLength));

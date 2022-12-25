@@ -597,5 +597,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     }
 
     td.threadId = 0;
+    td.uciMode = searchInfo.uciMode;
+
     th = std::thread(iterativeDeepening, pos, std::ref(td), searchInfo.maxDepth);
 }
