@@ -622,6 +622,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     }
 
     for (int idx = 0; idx < threadCount; idx++) {
-        ths.emplace_back(iterativeDeepening, tds[idx].position, std::ref(tds[idx]), searchInfo.maxDepth);
+        ths.emplace_back(iterativeDeepening, pos, std::ref(tds[idx]), searchInfo.maxDepth);
     }
 }
