@@ -91,6 +91,8 @@ struct SearchStack {
     Score eval = 0;
 };
 
+U64 getTotalNodes();
+
 void initLmr();
 
 inline void initSearch() {

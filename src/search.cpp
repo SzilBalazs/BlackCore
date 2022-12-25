@@ -61,6 +61,14 @@ Depth reductions[200][MAX_PLY + 1];
 std::vector<ThreadData> tds;
 std::vector<std::thread> ths;
 
+U64 getTotalNodes() {
+    U64 totalNodes = 0;
+    for (ThreadData &td : tds) {
+        totalNodes += td.nodes;
+    }
+    return totalNodes;
+}
+
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < MAX_PLY; depth++) {
@@ -138,7 +146,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     constexpr bool pvNode = type != NON_PV_NODE;
     constexpr bool nonPvNode = !pvNode;
 
-    if (shouldEnd())
+    if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
     if (ply > td.selectiveDepth) {
@@ -183,13 +191,14 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         if (alpha > -WORST_MATE && see(pos, m) < -SEE_MARGIN)
             continue;
 
+        td.nodes++;
         pos.makeMove(m);
 
         Score score = -quiescence<type>(pos, td, -beta, -alpha, ply + 1);
 
         pos.undoMove(m);
 
-        if (shouldEnd())
+        if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
         if (score >= beta) {
@@ -220,7 +229,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     td.pvLength[ply] = ply;
 
-    if (shouldEnd())
+    if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
     if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
@@ -327,7 +336,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
         if (m == stack->excludedMove) continue;
 
-        U64 nodesBefore = nodeCount;
+        U64 nodesBefore = td.nodes;
 
         if (rootNode && td.uciMode) {
             if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", m, "currmovenumber", index + 1);
@@ -374,6 +383,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
         Depth newDepth = depth - 1 + extensions;
 
+        td.nodes++;
         pos.makeMove(m);
 
         ttPrefetch(pos.getHash());
@@ -409,10 +419,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         pos.undoMove(m);
 
         if (rootNode) {
-            recordNodesSearched(m, nodeCount - nodesBefore);
+            recordNodesSearched(m, td.nodes - nodesBefore);
         }
 
-        if (shouldEnd())
+        if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
         if (score >= beta) {
@@ -485,7 +495,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     int iter = 1;
     while (true) {
-        if (shouldEnd())
+        if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
         if (alpha < -ASPIRATION_BOUND)
@@ -522,8 +532,8 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                     scoreStr = "mate " + std::to_string(matePly);
                 }
 
-                out("info", "depth", depth, "seldepth", td.selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
-                    getSearchTime(), "nps", getNps(), "pv", pvLine);
+                out("info", "depth", depth, "seldepth", td.selectiveDepth, "nodes", getTotalNodes(), "score", scoreStr, "time",
+                    getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
             }
 
             return score;

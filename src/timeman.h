@@ -25,12 +25,12 @@ extern std::atomic<bool> stopped;
 
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes);
 
-bool shouldEnd();
+bool shouldEnd(U64 nodes, U64 totalNodes);
 
 void allocateTime(int stability);
 
 U64 getSearchTime();
 
-U64 getNps();
+U64 getNps(U64 nodes);
 
 #endif//BLACKCORE_TIMEMAN_H

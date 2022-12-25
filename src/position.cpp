@@ -25,8 +25,6 @@
 
 using std::cout, std::string;
 
-U64 nodeCount = 0;
-
 void Position::clearPosition() {
     for (auto &i : pieceBB) {
         i = 0;

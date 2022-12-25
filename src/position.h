@@ -23,8 +23,6 @@
 #include "utils.h"
 #include <vector>
 
-extern U64 nodeCount;
-
 struct BoardState {
     Color stm = COLOR_EMPTY;
     Square epSquare = NULL_SQUARE;
@@ -290,7 +288,6 @@ void Position::movePiece(Square from, Square to) {
 
 template<Color color>
 void Position::makeMove(Move move) {
-    nodeCount++;
 
     BoardState newState;
 

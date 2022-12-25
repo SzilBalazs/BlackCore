@@ -15,12 +15,11 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "timeman.h"
-#include "position.h"
 #include <chrono>
 
 unsigned int MOVE_OVERHEAD = 10;
 
-constexpr U64 mask = 1023;
+constexpr U64 mask = 2047;
 
 U64 startedSearch, shouldSearch, searchTime, maxSearch, stabilityTime, maxNodes;
 
@@ -33,7 +32,6 @@ U64 getTime() {
 }
 
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
-    nodeCount = 0;
 
     movesToGo = movesToGo == 0 ? 20 : movesToGo + 1;
 
@@ -68,9 +66,9 @@ void allocateTime(int stability) {
     searchTime = std::min(maxSearch, newSearchTime);
 }
 
-bool shouldEnd() {
-    if ((nodeCount & mask) == 0 && !stopped) {
-        stopped = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && nodeCount > maxNodes);
+bool shouldEnd(U64 nodes, U64 totalNodes) {
+    if ((nodes & mask) == 0 && !stopped) {
+        stopped = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && totalNodes > maxNodes);
     }
     return stopped;
 }
@@ -79,7 +77,7 @@ U64 getSearchTime() {
     return getTime() - startedSearch;
 }
 
-U64 getNps() {
+U64 getNps(U64 nodes) {
     U64 millis = getSearchTime();
-    return millis == 0 ? 0 : nodeCount * 1000 / millis;
+    return millis == 0 ? 0 : nodes * 1000 / millis;
 }
