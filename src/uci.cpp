@@ -77,7 +77,7 @@ void uciLoop() {
 
     // We tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
-    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
+    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
