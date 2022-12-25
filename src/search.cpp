@@ -16,6 +16,7 @@
 
 #include "search.h"
 #include "eval.h"
+#include "threads.h"
 #include "timeman.h"
 #include "tt.h"
 #include "uci.h"
@@ -52,9 +53,6 @@ Score ASPIRATION_BOUND = 3000;
 Score SEE_MARGIN = 2;
 
 #endif
-
-Ply selectiveDepth = 0;
-Move bestPV;
 
 // Move index -> depth
 Depth reductions[200][MAX_PLY + 1];
@@ -131,7 +129,7 @@ Score see(const Position &pos, Move move) {
 }
 
 template<NodeType type>
-Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
+Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply) {
 
     constexpr bool pvNode = type != NON_PV_NODE;
     constexpr bool nonPvNode = !pvNode;
@@ -139,8 +137,8 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
     if (shouldEnd())
         return UNKNOWN_SCORE;
 
-    if (ply > selectiveDepth) {
-        selectiveDepth = ply;
+    if (ply > td.selectiveDepth) {
+        td.selectiveDepth = ply;
     }
 
     bool ttHit = false;
@@ -183,7 +181,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 
         pos.makeMove(m);
 
-        Score score = -quiescence<type>(pos, -beta, -alpha, ply + 1);
+        Score score = -quiescence<type>(pos, td, -beta, -alpha, ply + 1);
 
         pos.undoMove(m);
 
@@ -207,7 +205,7 @@ Score quiescence(Position &pos, Score alpha, Score beta, Ply ply) {
 }
 
 template<NodeType type>
-Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Score alpha, Score beta, Ply ply) {
 
     constexpr bool rootNode = type == ROOT_NODE;
     constexpr bool pvNode = type != NON_PV_NODE;
@@ -215,6 +213,8 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
     const bool isSingularRoot = !stack->excludedMove.isNull();
+
+    td.pvLength[ply] = ply;
 
     if (shouldEnd())
         return UNKNOWN_SCORE;
@@ -247,7 +247,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
     }
 
     if (depth <= 0)
-        return quiescence<nextPv>(pos, alpha, beta, ply);
+        return quiescence<nextPv>(pos, td, alpha, beta, ply);
 
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
@@ -260,7 +260,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         // Razoring
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
-            return quiescence<NON_PV_NODE>(pos, alpha, beta, ply);
+            return quiescence<NON_PV_NODE>(pos, td, alpha, beta, ply);
         }
 
         // Reverse futility pruning
@@ -279,7 +279,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
                 stack->move = Move();
                 pos.makeNullMove();
-                Score score = -search<NON_PV_NODE>(pos, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
+                Score score = -search<NON_PV_NODE>(pos, td, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
                 if (score >= beta) {
@@ -297,7 +297,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             depth--;
 
         if (depth <= 0)
-            return quiescence<nextPv>(pos, alpha, beta, ply);
+            return quiescence<nextPv>(pos, td, alpha, beta, ply);
     }
 
     MoveList moves = {pos, ply, (ply >= 1 ? (stack - 1)->move : Move()), false, rootNode && depth >= 3};
@@ -325,7 +325,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
         U64 nodesBefore = nodeCount;
 
-        if (rootNode) {
+        if (rootNode && td.uciMode) {
             if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", m, "currmovenumber", index + 1);
         }
 
@@ -356,7 +356,7 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             Depth singularDepth = (depth - 1) / 2;
 
             stack->excludedMove = m;
-            score = search<NON_PV_NODE>(pos, stack, singularDepth, singularBeta - 1, singularBeta, ply);
+            score = search<NON_PV_NODE>(pos, td, stack, singularDepth, singularBeta - 1, singularBeta, ply);
             stack->excludedMove = Move();
 
             if (score < singularBeta) {
@@ -387,19 +387,19 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
-            score = -search<NON_PV_NODE>(pos, stack + 1, D,
+            score = -search<NON_PV_NODE>(pos, td, stack + 1, D,
                                          -alpha - 1, -alpha, ply + 1);
 
             if (score > alpha && R > 0) {
-                score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
+                score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
             }
 
         } else if (nonPvNode || index != 0) {
-            score = -search<NON_PV_NODE>(pos, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
+            score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
         }
 
         if (pvNode && (index == 0 || (score > alpha && score < beta))) {
-            score = -search<nextPv>(pos, stack + 1, newDepth, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, td, stack + 1, newDepth, -beta, -alpha, ply + 1);
         }
 
         pos.undoMove(m);
@@ -436,6 +436,12 @@ Score search(Position &pos, SearchStack *stack, Depth depth, Score alpha, Score 
             alpha = score;
             bestMove = m;
             ttFlag = EXACT;
+
+            td.pvArray[ply][ply] = m;
+            for (int i = ply + 1; i < td.pvLength[ply + 1]; i++) {
+                td.pvArray[ply][i] = td.pvArray[ply + 1][i];
+            }
+            td.pvLength[ply] = td.pvLength[ply + 1];
         }
 
         if (m.isQuiet()) quiets.push_back(m);
@@ -460,11 +466,12 @@ std::string getPvLine(Position &pos) {
     }
 }
 
-Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
+Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     globalAge++;
     clearTables();
-    selectiveDepth = 0;
+    td.clear();
+
     SearchStack stateStack[MAX_PLY + 1];
     Score alpha = -INF_SCORE;
     Score beta = INF_SCORE;
@@ -484,7 +491,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
         if (beta > ASPIRATION_BOUND)
             beta = INF_SCORE;
 
-        Score score = search<ROOT_NODE>(pos, stateStack + 1, depth, alpha, beta, 0);
+        Score score = search<ROOT_NODE>(pos, td, stateStack + 1, depth, alpha, beta, 0);
 
         if (score == UNKNOWN_SCORE)
             return UNKNOWN_SCORE;
@@ -494,10 +501,9 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
         } else if (score >= beta) {
             beta = std::min(beta + iter * iter * ASPIRATION_DELTA, INF_SCORE);
         } else {
-            bestPV = getHashMove(pos.getHash());
 
             std::string pvLine = getPvLine(pos);
-            if (uci) {
+            if (td.uciMode) {
                 Score absScore = std::abs(score);
                 int mateDepth = MATE_VALUE - absScore;
                 std::string scoreStr = "cp " + std::to_string(score);
@@ -514,7 +520,7 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
                     scoreStr = "mate " + std::to_string(matePly);
                 }
 
-                out("info", "depth", depth, "seldepth", selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
+                out("info", "depth", depth, "seldepth", td.selectiveDepth, "nodes", nodeCount, "score", scoreStr, "time",
                     getSearchTime(), "nps", getNps(), "pv", pvLine);
             }
 
@@ -525,8 +531,9 @@ Score searchRoot(Position &pos, Score prevScore, Depth depth, bool uci) {
     }
 }
 
-void iterativeDeepening(Position pos, Depth depth, bool uci) {
+void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
 
+    td.reset();
     pos.getState()->accumulator.refresh(pos);
     clearNodesSearchedTable();
 
@@ -536,13 +543,13 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
     int stability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, prevScore, currDepth, uci);
+        Score score = searchRoot(pos, td, prevScore, currDepth);
         if (score == UNKNOWN_SCORE)
             break;
 
         // We only care about stability if we searched enough depth
         if (currDepth >= 16) {
-            if (bestMove != bestPV) {
+            if (bestMove != td.pvArray[0][0]) {
                 stability -= 10;
             } else {
                 if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
@@ -556,10 +563,10 @@ void iterativeDeepening(Position pos, Depth depth, bool uci) {
         }
 
         prevScore = score;
-        bestMove = bestPV;
+        bestMove = td.pvArray[0][0];
     }
 
-    if (uci) {
+    if (td.uciMode) {
         out("bestmove", bestMove);
     }
 
@@ -589,5 +596,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
-    th = std::thread(iterativeDeepening, pos, searchInfo.maxDepth, searchInfo.uciMode);
+    ThreadData td;
+    td.threadId = 0;
+    th = std::thread(iterativeDeepening, pos, std::ref(td), searchInfo.maxDepth);
 }
