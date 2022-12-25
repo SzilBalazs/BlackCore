@@ -17,6 +17,7 @@ Score see(const Position &pos, Move move);
 struct ThreadData {
 
     int threadId;
+    Position position;
 
     U64 nodes = 0;
     Depth selectiveDepth = 0;
@@ -86,12 +87,15 @@ struct ThreadData {
 
     void updateNodesSearched(Move m, U64 totalNodes) {
         mNodesSearched.lock();
-        nodesSearched[m.getFrom()][m.getTo()] = (nodesSearched[m.getFrom()][m.getTo()] + 3 * totalNodes) / 4;
+        nodesSearched[m.getFrom()][m.getTo()] += totalNodes;
         mNodesSearched.unlock();
     }
 
     Score scoreRootNode(Move m) {
-        return nodesSearched[m.getFrom()][m.getTo()];
+        if (threadId == 0)
+            return nodesSearched[m.getFrom()][m.getTo()] / 1000;
+        else
+            return rand();// TODO experiment with other techniques
     }
 
     Score scoreMove(const Position &pos, Move prevMove, Move m) {

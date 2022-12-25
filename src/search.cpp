@@ -316,7 +316,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             return quiescence<nextPv>(pos, td, alpha, beta, ply);
     }
 
-    MoveList moves = {pos, td, (ply >= 1 ? (stack - 1)->move : Move()), false, (rootNode && depth >= 3 && td.threadId == 0)};
+    MoveList moves = {pos, td, (ply >= 1 ? (stack - 1)->move : Move()), false, (rootNode && depth >= 6)};
     if (moves.count == 0) {
         if (isSingularRoot)
             return alpha;
@@ -556,7 +556,7 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
     int stability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 7));
+        Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 15));
         if (score == UNKNOWN_SCORE)
             break;
 
@@ -610,6 +610,10 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         tds.emplace_back(td);
     }
 
+    for (int idx = 0; idx < threadCount; idx++) {
+        tds[idx].position.loadPositionFromRawState(pos.getRawState());
+    }
+
     Color stm = pos.getSideToMove();
     if (stm == WHITE) {
         initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
@@ -618,6 +622,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     }
 
     for (int idx = 0; idx < threadCount; idx++) {
-        ths.emplace_back(iterativeDeepening, pos, std::ref(tds[idx]), searchInfo.maxDepth);
+        ths.emplace_back(iterativeDeepening, tds[idx].position, std::ref(tds[idx]), searchInfo.maxDepth);
     }
 }
