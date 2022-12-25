@@ -556,12 +556,12 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
     int stability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 7));
+        Score score = searchRoot(pos, td, prevScore, currDepth);
         if (score == UNKNOWN_SCORE)
             break;
 
         // We only care about stability if we searched enough depth
-        if (currDepth >= 16 && td.threadId == 0) {
+        if (currDepth >= 16) {
             if (bestMove != td.pvArray[0][0]) {
                 stability -= 10;
             } else {
@@ -618,6 +618,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     }
 
     for (int idx = 0; idx < threadCount; idx++) {
-        ths.emplace_back(iterativeDeepening, Position(pos), std::ref(tds[idx]), searchInfo.maxDepth);
+        ths.emplace_back(iterativeDeepening, pos, std::ref(tds[idx]), searchInfo.maxDepth);
     }
 }
