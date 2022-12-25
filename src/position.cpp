@@ -212,9 +212,10 @@ void Position::loadPositionFromRawState(const RawState &rawState) {
     state->stm = rawState.stm;
     state->epSquare = rawState.epSquare;
     state->castlingRights = rawState.castlingRights;
+    state->hash = rawState.hash;
     allPieceBB[WHITE] = rawState.allPieceBB[WHITE];
     allPieceBB[BLACK] = rawState.allPieceBB[BLACK];
-
+    
     for (int i = 0; i < 6; i++) {
         pieceBB[i] = rawState.pieceBB[i];
     }
@@ -222,6 +223,8 @@ void Position::loadPositionFromRawState(const RawState &rawState) {
     for (Square sq = A1; sq < 64; sq += 1) {
         board[sq] = rawState.board[sq];
     }
+
+    state->accumulator.refresh(*this);
 }
 
 RawState Position::getRawState() const {
@@ -229,9 +232,10 @@ RawState Position::getRawState() const {
     rawState.stm = getSideToMove();
     rawState.epSquare = getEpSquare();
     rawState.castlingRights = getCastlingRights();
+    rawState.hash = getHash();
     rawState.allPieceBB[WHITE] = allPieceBB[WHITE];
     rawState.allPieceBB[BLACK] = allPieceBB[BLACK];
-
+    
     for (int i = 0; i < 6; i++) {
         rawState.pieceBB[i] = pieceBB[i];
     }

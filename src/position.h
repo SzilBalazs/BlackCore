@@ -44,6 +44,7 @@ struct RawState {
     Color stm = COLOR_EMPTY;
     Square epSquare = NULL_SQUARE;
     unsigned char castlingRights = 0;
+    U64 hash = 0;
 };
 
 struct StateStack {
