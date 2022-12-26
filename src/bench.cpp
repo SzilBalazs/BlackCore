@@ -23,16 +23,18 @@
 #include <iostream>
 #include <string>
 
+// Struct for storing positions for perft and benchmarking tests
 struct TestPosition {
     std::string fen;
     Depth perftDepth;
     U64 perftResult;
 };
 
+// Number of test positions
 const unsigned int posCount = 10;
-
+// Transposition table size for benchmarking
 const unsigned int searchTestHashSize = 32;
-
+// Depth used in benchmarks
 const Depth SEARCH_DEPTH = 15;
 
 const TestPosition testPositions[posCount] = {
@@ -50,21 +52,32 @@ const TestPosition testPositions[posCount] = {
         {"rnb1k2r/pppp1ppp/5q2/2b5/2BNP3/2N5/PPP2KPP/R1BQ3R w kq - 1 8", 5, 19782759},
         {"8/pp5p/8/2p2kp1/2Pp4/3P1KPP/PP6/8 w - - 0 32", 7, 13312960}};
 
+// Function that exits the program with exit code -1, if the movegen produces an
+// illegal move. Outputs a nodes per second value, which can be used to determine
+// the speed of the move generator.
 void testPerft() {
+
+    // Initialize values
     initSearch();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     U64 totalNodes = 0;
     bool ok = true;
+
+    // Iterating over the positions
     for (const TestPosition &tPos : testPositions) {
+
         Position pos = {tPos.fen};
         U64 nodes = perft<false>(pos, tPos.perftDepth);
         totalNodes += nodes;
+
+        // If the node count doesn't match with recorded value we notify the user about it.
         if (nodes != tPos.perftResult) {
             ok = false;
             std::cout << tPos.fen << " failed! Result: " << nodes << " Expected: " << tPos.perftResult << std::endl;
         }
     }
 
+    // Stopping the clock and calculating the nps
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     U64 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
     U64 nps = totalNodes * 1000 / elapsedTime;
@@ -78,6 +91,8 @@ void testPerft() {
     }
 }
 
+// Function that outputs a node count for identifying the binary, and a nodes per second,
+// which shows the speed of the search.
 void testSearch() {
     initSearch();
     ttResize(searchTestHashSize);
@@ -86,13 +101,17 @@ void testSearch() {
     U64 nps;
 
     for (const TestPosition &tPos : testPositions) {
+        // We clear the transposition table for a deterministic behaviour.
         ttClear();
+
         Position pos = {tPos.fen};
         SearchInfo info;
         info.maxDepth = SEARCH_DEPTH;
         info.uciMode = false;
+
         startSearch(info, pos, 1);
-        
+
+        // We wait the search to finish, to record the node count and the nps.
         while (!stopped) {}
         totalNodes += getTotalNodes();
         nps += getNps(getTotalNodes());

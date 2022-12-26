@@ -19,12 +19,15 @@
 #include <cstring>
 #include <iostream>
 
+// Lookup tables generated, when the initBitboard() function gets called.
 Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64],
         diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64],
         rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64],
         adjacentSouthMasks[64];
 LineType lineType[64][64];
 
+// Function that initializes values, regarding bitboard. Must be called
+// before calling the move generator.
 void initBitboard() {
 
     for (Square sq = A1; sq < 64; sq += 1) {
@@ -68,6 +71,7 @@ void initBitboard() {
         adjacentFileMasks[sq] =
                 ~fileMask(sq) & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
 
+        // Calculates the common ray and the line type of the shortest path between sq and sq2.
         for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
             if (sq == sq2)
                 continue;
@@ -102,11 +106,15 @@ void initBitboard() {
         }
     }
 
+    // Initializes magic bitboards, which are used for generating sliding moves.
+    // For more information: https://www.chessprogramming.org/Magic_Bitboards
     initMagic(rookMagics, ROOK);
     initMagic(bishopMagics, BISHOP);
 }
 
+// Slow naive function of getting the attacked squares of a sliding piece.
 Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
+    assert((type == ROOK) || (type == BISHOP));
     switch (type) {
         case ROOK:
             return slide<NORTH>(square, occupied) | slide<SOUTH>(square, occupied) | slide<WEST>(square, occupied) |
@@ -115,12 +123,13 @@ Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
             return slide<NORTH_WEST>(square, occupied) | slide<NORTH_EAST>(square, occupied) |
                    slide<SOUTH_WEST>(square, occupied) | slide<SOUTH_EAST>(square, occupied);
         default:
-            assert(0);
+            return {};
     }
 }
 
+// Function that initializes magic bitboards.
 void initMagic(const Magic *magics, PieceType type) {
-    assert((type == ROOK) | (type == BISHOP));
+    assert((type == ROOK) || (type == BISHOP));
     Bitboard occupied[4096], attacked[4096];
 
     for (Square square = A1; square < 64; square += 1) {
@@ -144,8 +153,9 @@ void initMagic(const Magic *magics, PieceType type) {
     }
 }
 
+// Function used for finding magic bitboards.
 void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
-    assert((type == ROOK) | (type == BISHOP));
+    assert((type == ROOK) || (type == BISHOP));
     Bitboard occupied[4096], attacked[4096];
 
     if (type == ROOK)

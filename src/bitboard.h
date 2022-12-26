@@ -26,6 +26,7 @@
 #include <nmmintrin.h>
 #endif
 
+// Struct for referencing the 64 squares of a board using a 64-bit number
 struct Bitboard {
 
     U64 bb = 0;
@@ -38,18 +39,22 @@ struct Bitboard {
 
     constexpr Bitboard() = default;
 
+    // Function that returns the square's value.
     constexpr bool get(Square square) const {
         return (bb >> square) & 1;
     }
 
+    // Function that sets the square's value.
     constexpr void set(Square square) {
         bb |= 1ULL << square;
     }
 
+    // Function that clears the square's value.
     constexpr void clear(Square square) {
         bb &= ~(1ULL << square);
     }
 
+    // Function that returns the number of bits set to 1.
     constexpr int popCount() const {
 
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
@@ -59,6 +64,7 @@ struct Bitboard {
 #endif
     }
 
+    // Function that returns the square with the lowest index, that is set to 1.
     constexpr Square lsb() const {
 
 #ifdef __GNUC__
@@ -72,6 +78,7 @@ struct Bitboard {
 #endif
     }
 
+    // Function that clears the square with the lowest index, that is set to 1.
     constexpr Square popLsb() {
         Square square = lsb();
         bb &= bb - 1;
@@ -151,6 +158,7 @@ struct Bitboard {
     }
 };
 
+// Struct for storing a magic entry.
 struct Magic {
     Bitboard *ptr;
     Bitboard mask;
