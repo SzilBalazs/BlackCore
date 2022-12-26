@@ -64,7 +64,7 @@ constexpr Depth NULL_MOVE_BASE_R = 4;
 constexpr Depth NULL_MOVE_R_SCALE = 2;
 
 constexpr Depth LMR_DEPTH = 3;
-constexpr double LMR_BASE = 1;
+constexpr double LMR_BASE = 0;
 constexpr double LMR_SCALE = 1.65;
 constexpr int LMR_INDEX = 2;
 
@@ -82,12 +82,16 @@ constexpr Score ASPIRATION_BOUND = 3000;
 
 constexpr Score SEE_MARGIN = 2;
 
+constexpr Depth SINGULAR_DEPTH = 7;
+
 #endif
 
 struct SearchStack {
-    Move move;
+    Move move, excludedMove;
     Score eval = 0;
 };
+
+U64 getTotalNodes();
 
 void initLmr();
 
@@ -99,7 +103,7 @@ inline void initSearch() {
 
 Score see(const Position &pos, Move move);
 
-void joinThread(bool waitToFinish);
+void joinThreads(bool waitToFinish);
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 

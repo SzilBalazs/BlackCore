@@ -23,8 +23,6 @@
 #include "utils.h"
 #include <vector>
 
-extern U64 nodeCount;
-
 struct BoardState {
     Color stm = COLOR_EMPTY;
     Square epSquare = NULL_SQUARE;
@@ -46,11 +44,12 @@ struct RawState {
     Color stm = COLOR_EMPTY;
     Square epSquare = NULL_SQUARE;
     unsigned char castlingRights = 0;
+    U64 hash = 0;
 };
 
 struct StateStack {
 
-    BoardState stateStart[1000];
+    BoardState stateStart[500];
     BoardState *currState;
 
     StateStack() {
@@ -198,7 +197,7 @@ public:
 
     void loadPositionFromRawState(const RawState &rawState);
 
-    RawState getRawState();
+    RawState getRawState() const;
 
     Position();
 
@@ -290,7 +289,6 @@ void Position::movePiece(Square from, Square to) {
 
 template<Color color>
 void Position::makeMove(Move move) {
-    nodeCount++;
 
     BoardState newState;
 

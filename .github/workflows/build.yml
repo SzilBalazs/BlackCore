@@ -13,47 +13,33 @@ jobs:
     strategy:
       matrix:
         config:
-          #- {
-          #  name: "Ubuntu g++ popcnt",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: popcnt,
-          #  target: BlackCore-popcnt-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ modern",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: modern,
-          #  target: BlackCore-modern-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ avx2",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: avx2,
-          #  target: BlackCore-avx2-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ bmi2",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: bmi2,
-          #  target: BlackCore-bmi2-linux,
-          #}
+          - {
+            name: "Ubuntu g++ popcnt",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: popcnt,
+            target: BlackCore-popcnt-linux,
+          }
+          - {
+            name: "Ubuntu g++ avx2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: avx2,
+            target: BlackCore-avx2-linux,
+          }
+          - {
+            name: "Ubuntu g++ bmi2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: bmi2,
+            target: BlackCore-bmi2-linux,
+          }
           - {
             name: "Windows g++ popcnt",
             os: windows-latest,
             compiler: g++,
             arch: popcnt,
             target: BlackCore-popcnt-win.exe,
-          }
-          - {
-            name: "Windows g++ modern",
-            os: windows-latest,
-            compiler: g++,
-            arch: popcnt,
-            target: BlackCore-modern-win.exe,
           }
           - {
             name: "Windows g++ avx2",
@@ -96,3 +82,4 @@ jobs:
         with:
           name: BlackCore
           path: src/${{matrix.config.target}}
+

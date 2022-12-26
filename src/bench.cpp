@@ -92,9 +92,12 @@ void testSearch() {
         info.maxDepth = SEARCH_DEPTH;
         info.uciMode = false;
         startSearch(info, pos, 1);
-        joinThread(true);
-        totalNodes += nodeCount;
-        nps += getNps();
+        
+        while (!stopped) {}
+        totalNodes += getTotalNodes();
+        nps += getNps(getTotalNodes());
+
+        joinThreads(true);
     }
 
     std::cout << totalNodes << " nodes " << nps / posCount << " nps" << std::endl;

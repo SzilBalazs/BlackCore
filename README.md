@@ -5,9 +5,61 @@
 
 ## Overview
 
-BlackCore is a grandmaster level UCI compatible c++ chess engine written from scratch.
+BlackCore is a UCI compatible c++ chess engine written from scratch.
 Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
 move generator.
+
+## Playing strength - Last updated 2022. dec. 26.
+
+| Version   |   CCRL Blitz elo   |               CCRL 40/15 elo |
+|:----------|:------------------:|-----------------------------:|
+| v4.0 4CPU | ~3200 (estiamtion) |           ~3200 (estiamtion) |
+| v4.0 1CPU | ~3100 (estiamtion) |           ~3100 (estiamtion) |
+| v3.0 1CPU |        3069        |                         3035 |
+| v2.0 1CPU |        N/A         |                         2982 |
+| v1.0 1CPU |        2134        |                          N/A |
+
+## Installation
+
+### Downloading prebuilt binary
+
+You can download the latest release <a href="https://github.com/SzilBalazs/BlackCore/releases/latest">here</a> both for
+Windows and Linux.
+To select the right binary use the first instruction set that your CPU supports (doesn't crash), in the order of BMI2 ->
+AVX2 -> popcnt
+
+### Building from source (recommended)
+
+After downloading the source, you can run the following commands, to build
+a native binary.
+This option gives the best performance.
+**Please update your compiler before building!**
+
+With any questions or problems feel free to create a github issue.
+
+```
+cd src
+make clean build CXX=g++ ARCH=native
+```
+
+ARCH = popcnt/avx2/bmi2/native
+
+CXX = the compiler of your choice (I recommend using g++, as it gives the best performance)
+
+## Usage
+
+BlackCore in itself is a command line program, and requires a UCI compatible
+Chess GUI (like <a href="https://github.com/cutechess/cutechess">Cute Chess</a>
+or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experience.
+
+### UCI Options
+
+- **Hash** - The size of the Hash table in MB.
+- **Threads** - The amount of threads that can be used in the search
+- **Move Overhead** - The delay (in ms) between finding the best move and the GUI reacting to it. You may want to make
+  this
+  higher if you notice that the engine often runs out of time.
+
 
 ## Files
 
@@ -42,9 +94,12 @@ This project contains the following files:
                 * Entry aging
                 * Bucket system
             * Principal variation search
-                * Late move reduction
+                * Late move reduction/extension
                     * R = max(2, LMR_BASE + (ln(moveIndex) * ln(depth) / LMR_SCALE)));
                 * Move count/late move pruning
+                * Futility pruning
+                * Singular extension
+                * Check extension
             * Razoring
             * Reverse futility pruning
             * Null move pruning
@@ -55,55 +110,16 @@ This project contains the following files:
         * Move ordering
             * Hash move
             * MVV-LVA and SEE
-            * Killer and history heuristics
-        * Fast repetition detection
+            * Killer, counter and history heuristics
+            * History difference - killer move replacement
+        * Multithreading support
+          * Lazy SMP
     * Time management based on search stability
     * NNUE evaluation
         * Trained using <a href="https://github.com/SzilBalazs/CoreTrainer">CoreTrainer</a>
         * Training data was generated using <a href="https://github.com/jhonnold/berserk">Berserk</a> data
         * Support for AVX2 architecture for vectorized accumulator updates
         * Net embedded using incbin (for license see /src/incbin/UNLICENSE)
-
-## Installation
-
-### Building from source (recommended)
-
-After downloading the source, you can run the following commands, to build
-a native binary.
-This option gives the best performance.
-**Please update your compiler before building!**
-
-With any questions or problems feel free to create a github issue.
-
-```
-cd src
-make clean build CXX=g++ ARCH=native
-```
-
-ARCH = popcnt/modern/avx2/bmi2/native
-
-CXX = the compiler of your choice (I recommend using g++, as it gives the best performance)
-
-### Downloading prebuilt binary
-
-You can download the latest release <a href="https://github.com/SzilBalazs/BlackCore/releases/latest">here</a> both for
-Windows and Linux.
-To select the right binary use the first instruction set that your CPU supports (doesn't crash), in the order of BMI2 ->
-AVX2 -> modern -> popcnt
-
-## Usage
-
-BlackCore in itself is a command line program, and requires a UCI compatible
-Chess GUI (like <a href="https://github.com/cutechess/cutechess">Cute Chess</a>
-or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experience.
-
-### UCI Options
-
-- **Hash** - The size of the Hash table in MB.
-- **Threads** - Currently BlackCore only supports single threaded search, but this will probably change in the future.
-- **Move Overhead** - The delay (in ms) between finding the best move and the GUI reacting to it. You may want to make
-  this
-  higher if you notice that the engine often runs out of time.
 
 ## Special thanks to
 

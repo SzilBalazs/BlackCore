@@ -18,8 +18,8 @@
 #define BLACKCORE_MOVEGEN_H
 
 #include "move.h"
-#include "move_ordering.h"
 #include "position.h"
+#include "threads.h"
 
 template<Color color>
 inline Bitboard getAttackers(const Position &pos, Square square) {
@@ -51,20 +51,13 @@ struct MoveList {
 
     unsigned int count;
 
-    MoveList(const Position &pos, Ply ply, bool capturesOnly) {
+    MoveList(const Position &pos, ThreadData &td, Move prevMove, bool capturesOnly, bool rootNode) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
 
-        // Scoring moves
-        if (capturesOnly) {
-            for (unsigned int i = 0; i < count; i++) {
-                scores[i] = scoreQMove(pos, moves[i]);
-            }
-        } else {
-            for (unsigned int i = 0; i < count; i++) {
-                scores[i] = scoreMove(pos, moves[i], ply);
-            }
+        for (unsigned int i = 0; i < count; i++) {
+            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(pos, prevMove, moves[i]);
         }
     }
 
