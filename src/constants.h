@@ -135,6 +135,7 @@ inline Square operator-=(Square &a, int b) {
     return a = a - b;
 }
 
+// Function that converts an uci format square string into an actual square.
 inline Square stringToSquare(std::string s) {
     if (s[0] == '-') {
         return NULL_SQUARE;

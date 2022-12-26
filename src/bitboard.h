@@ -409,6 +409,7 @@ inline Bitboard bishopMask(Square square) {
     return bishopMasks[square];
 }
 
+// Function that converts the magic and the occupancy bitboard into an index in the lookup table
 inline unsigned int getMagicIndex(const Magic &m, Bitboard occ) {
 #ifdef BMI2
     return _pext_u64(occ.bb, m.mask.bb);
@@ -433,6 +434,7 @@ inline Bitboard queenAttacks(Square square, Bitboard occ) {
 
 template<PieceType type>
 constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
+    assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case KNIGHT:
             return knightMask(square);
@@ -445,12 +447,12 @@ constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(0);
             return 0;
     }
 }
 
 inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
+    assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case KNIGHT:
             return knightMask(square);
@@ -463,12 +465,13 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(0);
+            return 0;
     }
 }
 
 template<Color color>
 inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
+    assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case PAWN:
             return pawnMask(square, color);
@@ -483,7 +486,6 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case KING:
             return kingMask(square);
         default:
-            assert(0);
             return 0;
     }
 }

@@ -31,6 +31,7 @@ constexpr Score PIECE_VALUES[6] = {
 
 #endif
 
+// Returns the score of a position using NNUE.
 inline Score eval(const Position &pos) {
     return pos.getState()->accumulator.forward(pos.getSideToMove());
 }
