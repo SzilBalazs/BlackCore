@@ -49,7 +49,7 @@ struct RawState {
 
 struct StateStack {
 
-    BoardState stateStart[1000];
+    BoardState stateStart[500];
     BoardState *currState;
 
     StateStack() {

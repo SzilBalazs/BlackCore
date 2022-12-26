@@ -13,34 +13,34 @@ jobs:
     strategy:
       matrix:
         config:
-          #- {
-          #  name: "Ubuntu g++ popcnt",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: popcnt,
-          #  target: BlackCore-popcnt-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ modern",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: modern,
-          #  target: BlackCore-modern-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ avx2",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: avx2,
-          #  target: BlackCore-avx2-linux,
-          #}
-          #- {
-          #  name: "Ubuntu g++ bmi2",
-          #  os: ubuntu-latest,
-          #  compiler: g++-11,
-          #  arch: bmi2,
-          #  target: BlackCore-bmi2-linux,
-          #}
+          - {
+            name: "Ubuntu g++ popcnt",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: popcnt,
+            target: BlackCore-popcnt-linux,
+          }
+          - {
+            name: "Ubuntu g++ modern",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: modern,
+            target: BlackCore-modern-linux,
+          }
+          - {
+            name: "Ubuntu g++ avx2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: avx2,
+            target: BlackCore-avx2-linux,
+          }
+          - {
+            name: "Ubuntu g++ bmi2",
+            os: ubuntu-latest,
+            compiler: g++-11,
+            arch: bmi2,
+            target: BlackCore-bmi2-linux,
+          }
           - {
             name: "Windows g++ popcnt",
             os: windows-latest,
@@ -83,11 +83,6 @@ jobs:
         run: |
           cd src
           make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}} ARCH=${{matrix.config.target}}
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: BlackCore
-          path: src/${{matrix.config.target}}
       - name: Running perft
         run: |
           cd src
@@ -96,4 +91,9 @@ jobs:
         run: |
           cd src
           ./${{matrix.config.target}} bench
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: BlackCore
+          path: src/${{matrix.config.target}}
 
