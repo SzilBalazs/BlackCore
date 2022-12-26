@@ -22,12 +22,20 @@
 
 #include <iostream>
 
+// Function that outputs the number of positions which can be got into,
+// in depth number of legal moves. Used for validating the move generator.
+// For more information: https://www.chessprogramming.org/Perft
 template<bool output>
 U64 perft(Position &position, Depth depth) {
+
     Move moves[200];
     Move *movesEnd = generateMoves(position, moves, false);
+
+    // Bulk counting the number of moves at depth 1.
     if (depth == 1)
         return movesEnd - moves;
+
+    // DFS like routine, calling itself recursively with lowered depth.
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);

@@ -218,7 +218,7 @@ void uciLoop() {
                     if (tokens[i] == "moves")
                         move = true;
                     else if (move) {
-                        pos.makeMove(stringToMove(pos, tokens[i]));
+                        pos.useMove(stringToMove(pos, tokens[i]));
                     }
                     i++;
                 }
