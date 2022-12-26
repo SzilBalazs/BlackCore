@@ -83,6 +83,11 @@ jobs:
         run: |
           cd src
           make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}} ARCH=${{matrix.config.target}}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: BlackCore
+          path: src/${{matrix.config.target}}
       - name: Running perft
         run: |
           cd src
@@ -91,8 +96,4 @@ jobs:
         run: |
           cd src
           ./${{matrix.config.target}} bench
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: BlackCore
-          path: src/${{matrix.config.target}}
+

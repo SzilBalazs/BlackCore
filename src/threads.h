@@ -56,10 +56,10 @@ struct ThreadData {
         clear();
     }
 
-    int getHistoryDifference(Color stm, Move move, Bitboard pieces) {
+    int getHistoryDifference(Color stm, Move move, Bitboard occ) {
         int diff = 100;
         for (int idx = 0; idx < HISTORY_DIFF_SLOTS; idx++) {
-            diff = std::min(diff, (historyDiff[stm][move.getFrom()][move.getTo()][idx] ^ pieces).popCount());
+            diff = std::min(diff, (historyDiff[stm][move.getFrom()][move.getTo()][idx] ^ occ).popCount());
         }
         return diff;
     }
