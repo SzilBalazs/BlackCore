@@ -26,7 +26,7 @@ move generator.
 You can download the latest release <a href="https://github.com/SzilBalazs/BlackCore/releases/latest">here</a> both for
 Windows and Linux.
 To select the right binary use the first instruction set that your CPU supports (doesn't crash), in the order of BMI2 ->
-AVX2 -> modern -> popcnt
+AVX2 -> popcnt
 
 ### Building from source (recommended)
 
@@ -42,7 +42,7 @@ cd src
 make clean build CXX=g++ ARCH=native
 ```
 
-ARCH = popcnt/modern/avx2/bmi2/native
+ARCH = popcnt/avx2/bmi2/native
 
 CXX = the compiler of your choice (I recommend using g++, as it gives the best performance)
 

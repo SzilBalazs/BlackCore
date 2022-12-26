@@ -26,17 +26,13 @@ ifeq ($(ARCH), native)
 endif
 
 ifeq ($(ARCH), bmi2)
-	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2 -mbmi2
+	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2 -mbmi -mbmi2
 	DEFINE_FLAGS = -DAVX2 -DBMI2
 endif
 
 ifeq ($(ARCH), avx2)
-	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2
+	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2 -mbmi
     	DEFINE_FLAGS = -DAVX2
-endif
-
-ifeq ($(ARCH), modern)
-    ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1
 endif
 
 ifeq ($(ARCH), popcnt)

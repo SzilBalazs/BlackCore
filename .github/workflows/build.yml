@@ -21,13 +21,6 @@ jobs:
             target: BlackCore-popcnt-linux,
           }
           - {
-            name: "Ubuntu g++ modern",
-            os: ubuntu-latest,
-            compiler: g++-11,
-            arch: modern,
-            target: BlackCore-modern-linux,
-          }
-          - {
             name: "Ubuntu g++ avx2",
             os: ubuntu-latest,
             compiler: g++-11,
@@ -47,13 +40,6 @@ jobs:
             compiler: g++,
             arch: popcnt,
             target: BlackCore-popcnt-win.exe,
-          }
-          - {
-            name: "Windows g++ modern",
-            os: windows-latest,
-            compiler: g++,
-            arch: popcnt,
-            target: BlackCore-modern-win.exe,
           }
           - {
             name: "Windows g++ avx2",
