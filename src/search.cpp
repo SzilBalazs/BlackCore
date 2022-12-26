@@ -64,6 +64,7 @@ U64 nodesSearched[64][64];
 std::vector<ThreadData> tds;
 std::vector<std::thread> ths;
 
+// Sums up the node count of individual threads
 U64 getTotalNodes() {
     U64 totalNodes = 0;
     for (ThreadData &td : tds) {
@@ -72,6 +73,7 @@ U64 getTotalNodes() {
     return totalNodes;
 }
 
+// Initialize a lookup table for LMR reduction values
 void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < MAX_PLY; depth++) {
@@ -82,6 +84,7 @@ void initLmr() {
 }
 
 Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
+
     for (PieceType t : PIECE_TYPES_BY_VALUE) {
         Bitboard s = attackers & pos.pieces(stm, t);
         if (s) {
@@ -101,7 +104,10 @@ Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
            occ;
 }
 
+// Returns the evaluation of a capture
 Score see(const Position &pos, Move move) {
+    assert(move.isCapture());
+
     Score e[32];
     Depth d = 0;
     Square from = move.getFrom();
@@ -149,25 +155,34 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     constexpr bool pvNode = type != NON_PV_NODE;
     constexpr bool nonPvNode = !pvNode;
 
+    // Ask the time manager whether the search should stop
     if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
+    // Update the maximum depth reached.
     if (ply > td.selectiveDepth) {
         td.selectiveDepth = ply;
     }
 
+    // Probe the transposition table for information about this position
+    // in case, if it was already searched.
     bool ttHit = false;
     TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+
+    // If we have already searched this position, we can return that score.
     if (ttHit && nonPvNode && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
         return ttEntry->eval;
     }
 
+    // Get the evaluation of the position, which later will be used as a stand pat score.
     Score staticEval = eval(pos);
 
     if (ply >= MAX_PLY) {
         return staticEval;
     }
 
+    // As only tactical moves will be evaluated, static evaluation can be used to get a
+    // lower-bound of the position score.
     if (staticEval >= beta) {
         return beta;
     }
@@ -185,12 +200,15 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         Move m = moves.nextMove();
 
         // Delta pruning
+        // If the static evaluation and the expected gain of this move plus a large margin is still
+        // less than alpha the move can be safely skipped.
         if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
                     staticEval + DELTA_MARGIN <
             alpha)
             continue;
 
         // SEE pruning
+        // If the move loses material we skip its evaluation
         if (alpha > -WORST_MATE && see(pos, m) < -SEE_MARGIN)
             continue;
 
@@ -201,14 +219,19 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
 
         pos.undoMove(m);
 
+        // Ask the time manager whether the search should stop
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
+        // If the score is too good to be acceptable by our opponent return beta.
         if (score >= beta) {
+            // If beta cutoff happens save the information to the transposition table.
             ttSave(pos.getHash(), 0, score, BETA, m);
+
             return beta;
         }
 
+        // If the score is better than alpha update alpha.
         if (score > alpha) {
             alpha = score;
             ttFlag = EXACT;
@@ -216,6 +239,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         }
     }
 
+    // Save information to the transposition table.
     ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
@@ -232,23 +256,30 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     td.pvLength[ply] = ply;
 
+    // Ask the time manager whether the search should stop
     if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
+    // If a repetition happens return DRAW_VALUE.
     if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
         return DRAW_VALUE;
     }
 
+    // Probe the transposition table for information about this position. If the
+    // node is a singular search root skip this step.
     bool ttHit = false;
     Score matePly = MATE_VALUE - ply;
     TTEntry *ttEntry = isSingularRoot ? nullptr : ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
 
+    // If this is a not a PV node and the transposition entry was saved by a
+    // big enough depth search, return the evaluation from TT.
     if (ttHit && nonPvNode &&
         ttEntry->depth >= depth && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
         return ttEntry->eval;
     }
 
     // Mate distance pruning
+    // If the position is "solved" - the shortest mate was found - update alpha and beta.
     if (notRootNode) {
         if (alpha < -matePly)
             alpha = -matePly;
@@ -262,6 +293,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return eval(pos);
     }
 
+    // At depth 0 drop into quiescence search.
     if (depth <= 0)
         return quiescence<nextPv>(pos, td, alpha, beta, ply);
 
@@ -270,23 +302,30 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     Score staticEval = stack->eval = eval(pos);
 
+    // Improving boolean, first introduced by StockFish
+    // If the position got better than 2 ply before, we can
+    // except that it will further improve.
     bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
 
     if (notRootNode && !inCheck && !isSingularRoot) {
 
         // Razoring
+        // At depth 1 safely drop into quiescence search, if the static evaluation is very low.
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
             return quiescence<NON_PV_NODE>(pos, td, alpha, beta, ply);
         }
 
         // Reverse futility pruning
+        // At low depths if the static evaluation is very high return beta.
         if (depth <= RFP_DEPTH &&
             staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
         // Null move pruning
+        // If the static evaluation is better than beta, give the turn to the opponent.
         if (nonPvNode && !(stack - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+
             // We don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
@@ -298,6 +337,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 Score score = -search<NON_PV_NODE>(pos, td, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
                 pos.undoNullMove();
 
+                // If the score is still higher than beta, safely return score.
                 if (score >= beta) {
                     if (std::abs(score) > WORST_MATE)
                         return beta;
@@ -306,7 +346,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             }
         }
 
-        // Internal iterative deepening
+        // Internal iterative deepening to prevent search explosions.
         if (!ttHit && pvNode)
             depth--;
         if (!ttHit && depth >= 5)
@@ -317,6 +357,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     }
 
     MoveList moves = {pos, td, (ply >= 1 ? (stack - 1)->move : Move()), false, (rootNode && depth >= 6)};
+
+    // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
         if (isSingularRoot)
             return alpha;
@@ -348,16 +390,18 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score score;
         Score history = td.historyTable[color][m.getFrom()][m.getTo()];
 
-        // We can prune the move in some cases
+        // Prune the move if...
         if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
 
+            // Futility pruning
+            // it is quiet and static evaluation is far below alpha.
             if (depth <= FUTILITY_DEPTH && m.isQuiet() &&
                 staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving <
                         alpha)
                 continue;
 
-            // Late move/movecount pruning
-            // This will also prune losing captures
+            // Late move pruning
+            // many moves had been made before.
             if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
                 continue;
         }
@@ -365,7 +409,12 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         // Extensions
         Depth extensions = 0;
 
+        // Check extension
+        // If the position is a check extend by 1 ply.
         if (inCheck) extensions = 1;
+
+        // Singular extension
+        // If 1 move is a lot better than all the others extend by 1 ply.
         else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && m == ttEntry->hashMove && !isSingularRoot && ttEntry->flag == BETA && ttEntry->depth >= depth - 3) {
             // This implementation is heavily inspired by StockFish & Alexandria
             Score singularBeta = ttEntry->eval - depth * 3;

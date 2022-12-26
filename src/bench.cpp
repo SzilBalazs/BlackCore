@@ -70,7 +70,7 @@ void testPerft() {
         U64 nodes = perft<false>(pos, tPos.perftDepth);
         totalNodes += nodes;
 
-        // If the node count doesn't match with recorded value we notify the user about it.
+        // If the node count doesn't match with the recorded value notify the user about it.
         if (nodes != tPos.perftResult) {
             ok = false;
             std::cout << tPos.fen << " failed! Result: " << nodes << " Expected: " << tPos.perftResult << std::endl;
@@ -101,7 +101,7 @@ void testSearch() {
     U64 nps;
 
     for (const TestPosition &tPos : testPositions) {
-        // We clear the transposition table for a deterministic behaviour.
+        // Clear the transposition table for a deterministic behaviour.
         ttClear();
 
         Position pos = {tPos.fen};
@@ -111,7 +111,7 @@ void testSearch() {
 
         startSearch(info, pos, 1);
 
-        // We wait the search to finish, to record the node count and the nps.
+        // Wait the search to finish, to record the node count and the nps.
         while (!stopped) {}
         totalNodes += getTotalNodes();
         nps += getNps(getTotalNodes());
