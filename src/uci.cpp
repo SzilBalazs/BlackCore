@@ -218,7 +218,11 @@ void uciLoop() {
                     if (tokens[i] == "moves")
                         move = true;
                     else if (move) {
-                        pos.useMove(stringToMove(pos, tokens[i]));
+                        Move m = stringToMove(pos, tokens[i]);
+                        pos.makeMove(m);
+                        if (m.isCapture() || pos.pieceAt(m.getTo()).type == PAWN) {
+                            pos.resetStack();
+                        }
                     }
                     i++;
                 }

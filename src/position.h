@@ -36,6 +36,14 @@ struct BoardState {
     NNUE::Accumulator accumulator = {};
 
     constexpr BoardState() = default;
+
+    inline void load(BoardState &state) {
+        stm = state.stm;
+        epSquare = state.epSquare;
+        castlingRights = state.castlingRights;
+        hash = state.hash;
+        capturedPiece = state.capturedPiece;
+    }
 };
 
 struct RawState {
@@ -64,12 +72,6 @@ struct StateStack {
         *currState = newState;
     }
 
-    inline void update(BoardState newState) {
-        newState.lastIrreversibleMove = currState->lastIrreversibleMove;
-        newState.accumulator.loadAccumulator(currState->accumulator);
-        *currState = newState;
-    }
-
     inline void pop() {
         currState--;
     }
@@ -81,6 +83,13 @@ struct StateStack {
     inline void clear() {
         currState = stateStart;
         *currState = {};
+    }
+
+    inline void reset() {
+        stateStart->load(*currState);
+        stateStart->lastIrreversibleMove = stateStart;
+        stateStart->accumulator.loadAccumulator(currState->accumulator);
+        currState = stateStart;
     }
 
     inline Ply getMove50() const {
@@ -177,8 +186,8 @@ public:
         return state;
     }
 
-    inline void clearStack() {
-        states.clear();
+    inline void resetStack() {
+        states.reset();
     }
 
     inline U64 getHash() const {
@@ -190,8 +199,6 @@ public:
     }
 
     inline void makeMove(Move move);
-
-    inline void useMove(Move move);
 
     inline void undoMove(Move move);
 
@@ -237,9 +244,6 @@ private:
 
     template<Color color>
     void makeMove(Move move);
-
-    template<Color color>
-    void useMove(Move move);
 
     template<Color color>
     void undoMove(Move move);
@@ -394,97 +398,6 @@ void Position::makeMove(Move move) {
 }
 
 template<Color color>
-void Position::useMove(Move move) {
-
-    BoardState newState;
-
-    constexpr Color enemyColor = EnemyColor<color>();
-    constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
-    constexpr Direction DOWN = -UP;
-
-    Square from = move.getFrom();
-    Square to = move.getTo();
-
-    if (move.equalFlag(EP_CAPTURE)) {
-        newState.capturedPiece = {PAWN, enemyColor};
-    } else {
-        newState.capturedPiece = pieceAt(to);
-    }
-    newState.castlingRights = state->castlingRights;
-    newState.stm = enemyColor;
-    newState.hash = state->hash ^ *blackRand;
-
-    // Removing ep from hash
-    if (state->epSquare != NULL_SQUARE) {
-        newState.hash ^= epRandTable[squareToFile(state->epSquare)];
-    }
-
-    if (move.equalFlag(DOUBLE_PAWN_PUSH)) {
-        newState.epSquare = from + UP;
-        newState.hash ^= epRandTable[squareToFile(newState.epSquare)];
-    } else {
-        newState.epSquare = NULL_SQUARE;
-    }
-
-    states.update(newState);
-
-    if (move.equalFlag(EP_CAPTURE)) {
-        clearSquare<true>(to + DOWN);
-    }
-
-    if (move.isCapture() || pieceAt(from).type == PAWN) {
-        state->lastIrreversibleMove = state;
-    }
-
-    // Removing castling rights
-    state->hash ^= castlingRandTable[state->castlingRights];
-    if (getCastleRight(WK_MASK) && (from == E1 || from == H1 || to == H1)) {
-        removeCastleRight(WK_MASK);
-    }
-    if (getCastleRight(WQ_MASK) && (from == E1 || from == A1 || to == A1)) {
-        removeCastleRight(WQ_MASK);
-    }
-    if (getCastleRight(BK_MASK) && (from == E8 || from == H8 || to == H8)) {
-        removeCastleRight(BK_MASK);
-    }
-    if (getCastleRight(BQ_MASK) && (from == E8 || from == A8 || to == A8)) {
-        removeCastleRight(BQ_MASK);
-    }
-    state->hash ^= castlingRandTable[state->castlingRights];
-
-    // Moving rook in case of a castle
-    if (move.equalFlag(KING_CASTLE)) {
-        if constexpr (color == WHITE) {
-            movePiece<true>(H1, F1);
-        } else {
-            movePiece<true>(H8, F8);
-        }
-    } else if (move.equalFlag(QUEEN_CASTLE)) {
-        if constexpr (color == WHITE) {
-            movePiece<true>(A1, D1);
-        } else {
-            movePiece<true>(A8, D8);
-        }
-    }
-
-    movePiece<true>(from, to);
-
-    if (move.isFlag(PROMO_FLAG)) {
-        Piece piece = {PIECE_EMPTY, color};
-        if (move.equalFlag(PROMO_KNIGHT) || move.equalFlag(PROMO_CAPTURE_KNIGHT)) {
-            piece.type = KNIGHT;
-        } else if (move.equalFlag(PROMO_BISHOP) || move.equalFlag(PROMO_CAPTURE_BISHOP)) {
-            piece.type = BISHOP;
-        } else if (move.equalFlag(PROMO_ROOK) || move.equalFlag(PROMO_CAPTURE_ROOK)) {
-            piece.type = ROOK;
-        } else if (move.equalFlag(PROMO_QUEEN) || move.equalFlag(PROMO_CAPTURE_QUEEN)) {
-            piece.type = QUEEN;
-        }
-        setSquare<true>(to, piece);
-    }
-}
-
-template<Color color>
 void Position::undoMove(Move move) {
 
     constexpr Color enemyColor = EnemyColor<color>();
@@ -526,13 +439,6 @@ inline void Position::makeMove(Move move) {
         makeMove<WHITE>(move);
     else
         makeMove<BLACK>(move);
-}
-
-inline void Position::useMove(Move move) {
-    if (getSideToMove() == WHITE)
-        useMove<WHITE>(move);
-    else
-        useMove<BLACK>(move);
 }
 
 inline void Position::undoMove(Move move) {
