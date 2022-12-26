@@ -13,8 +13,8 @@ move generator.
 
 | Version   |   CCRL Blitz elo   |               CCRL 40/15 elo |
 |:----------|:------------------:|-----------------------------:|
-| v4.0 4CPU | ~3200 (estiamtion) |           ~3200 (estiamtion) |
-| v4.0 1CPU | ~3100 (estiamtion) |           ~3100 (estiamtion) |
+| v4.0 4CPU | ~3200 (estimation) |           ~3200 (estimation) |
+| v4.0 1CPU | ~3100 (estimation) |           ~3100 (estimation) |
 | v3.0 1CPU |        3069        |                         3035 |
 | v2.0 1CPU |        N/A         |                         2982 |
 | v1.0 1CPU |        2134        |                          N/A |
