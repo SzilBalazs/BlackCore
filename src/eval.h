@@ -36,4 +36,4 @@ inline Score eval(const Position &pos) {
     return pos.getState()->accumulator.forward(pos.getSideToMove());
 }
 
-#endif//BLACKCORE_EVAL_H
+#endif //BLACKCORE_EVAL_H

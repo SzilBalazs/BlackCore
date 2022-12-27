@@ -59,9 +59,9 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
         PieceType type = pos.pieceAt(from).type;
         Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
         if constexpr (pinHV)
-            attacks &= rookMask(from);
+            attacks &= rookMasks[from];
         if constexpr (pinDA)
-            attacks &= bishopMask(from);
+            attacks &= bishopMasks[from];
 
         if constexpr (!capturesOnly) {
             Bitboard quiets = attacks & empty;
@@ -159,7 +159,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
         }
     }
 
-    if ((epSquare != NULL_SQUARE) && (pawnMask(pos.getEpSquare(), enemyColor) & pawns) &&
+    if ((epSquare != NULL_SQUARE) && (pawnMasks[pos.getEpSquare()][enemyColor] & pawns) &&
         checkMask.get(epSquare + DOWN)) {
         Bitboard occ = pos.occupied();
         bool rightEp = (step<UP_RIGHT>(pawns & moveD)).get(epSquare);
@@ -175,9 +175,9 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             Bitboard rookAttack = rookAttacks(attackedPawn, occ);
             Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
 
-            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
-            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
-            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
+            Bitboard rankAttack = rankMasks[attackedPawn] & rookAttack;
+            Bitboard diagAttack = diagonalMasks[attackedPawn] & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMasks[attackedPawn] & bishopAttack;
 
             Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
             Bitboard seenDiagSliders =
@@ -206,9 +206,9 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             Bitboard rookAttack = rookAttacks(attackedPawn, occ);
             Bitboard bishopAttack = bishopAttacks(attackedPawn, occ);
 
-            Bitboard rankAttack = rankMask(attackedPawn) & rookAttack;
-            Bitboard diagAttack = diagonalMask(attackedPawn) & bishopAttack;
-            Bitboard aDiagAttack = antiDiagonalMask(attackedPawn) & bishopAttack;
+            Bitboard rankAttack = rankMasks[attackedPawn] & rookAttack;
+            Bitboard diagAttack = diagonalMasks[attackedPawn] & bishopAttack;
+            Bitboard aDiagAttack = antiDiagonalMasks[attackedPawn] & bishopAttack;
 
             Bitboard seenRankSliders = (pos.pieces<enemyColor, QUEEN>() | pos.pieces<enemyColor, ROOK>()) & rankAttack;
             Bitboard seenDiagSliders =
@@ -235,7 +235,7 @@ template<bool capturesOnly>
 inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
                                Bitboard safeSquares, Bitboard empty, Bitboard enemy) {
 
-    Bitboard kingTarget = kingMask(king) & safeSquares;
+    Bitboard kingTarget = kingMasks[king] & safeSquares;
 
     if constexpr (!capturesOnly) {
         Bitboard kingQuiets = kingTarget & empty;

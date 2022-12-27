@@ -70,4 +70,4 @@ Bitboard randBB();
 
 std::string BBToHex(Bitboard bb);
 
-#endif//BLACKCORE_UTILS_H
+#endif //BLACKCORE_UTILS_H

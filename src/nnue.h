@@ -74,6 +74,6 @@ namespace NNUE {
     }
 
     void init();
-}// namespace NNUE
+} // namespace NNUE
 
-#endif//BLACKCORE_NNUE_H
+#endif //BLACKCORE_NNUE_H

@@ -36,7 +36,7 @@ namespace BlackCore {
         std::cout << " " << a;
         _out(args...);
     }
-}// namespace BlackCore
+} // namespace BlackCore
 
 template<typename T, typename... Args>
 inline void out(T a, Args... args) {
@@ -52,4 +52,4 @@ inline void tuneOut(const std::string &name, int value, int min, int max) {
 
 void uciLoop();
 
-#endif//BLACKCORE_UCI_H
+#endif //BLACKCORE_UCI_H

@@ -215,7 +215,7 @@ void Position::loadPositionFromRawState(const RawState &rawState) {
     state->hash = rawState.hash;
     allPieceBB[WHITE] = rawState.allPieceBB[WHITE];
     allPieceBB[BLACK] = rawState.allPieceBB[BLACK];
-    
+
     for (int i = 0; i < 6; i++) {
         pieceBB[i] = rawState.pieceBB[i];
     }
@@ -235,7 +235,7 @@ RawState Position::getRawState() const {
     rawState.hash = getHash();
     rawState.allPieceBB[WHITE] = allPieceBB[WHITE];
     rawState.allPieceBB[BLACK] = allPieceBB[BLACK];
-    
+
     for (int i = 0; i < 6; i++) {
         rawState.pieceBB[i] = pieceBB[i];
     }

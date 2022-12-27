@@ -15,16 +15,16 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The concept of this class is from https://www.chessprogramming.org/Encoding_Moves
-#ifndef CHESS_MOVE_H
-#define CHESS_MOVE_H
+#ifndef BLACKCORE_MOVE_H
+#define BLACKCORE_MOVE_H
 
 #include "constants.h"
 #include "utils.h"
 
-constexpr unsigned int PROMO_FLAG = 0x8;   // 0b1000
-constexpr unsigned int CAPTURE_FLAG = 0x4; // 0b0100
-constexpr unsigned int SPECIAL1_FLAG = 0x2;// 0b0010
-constexpr unsigned int SPECIAL2_FLAG = 0x1;// 0b0001
+constexpr unsigned int PROMO_FLAG = 0x8;    // 0b1000
+constexpr unsigned int CAPTURE_FLAG = 0x4;  // 0b0100
+constexpr unsigned int SPECIAL1_FLAG = 0x2; // 0b0010
+constexpr unsigned int SPECIAL2_FLAG = 0x1; // 0b0001
 
 constexpr unsigned int QUIET_MOVE = 0;
 constexpr unsigned int CAPTURE = CAPTURE_FLAG;
@@ -117,4 +117,4 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const Move &move);
 
-#endif//CHESS_MOVE_H
+#endif //BLACKCORE_MOVE_H

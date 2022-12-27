@@ -33,4 +33,4 @@ U64 getSearchTime();
 
 U64 getNps(U64 nodes);
 
-#endif//BLACKCORE_TIMEMAN_H
+#endif //BLACKCORE_TIMEMAN_H

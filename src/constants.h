@@ -628,4 +628,4 @@ constexpr U64 const *castlingRandTable = randTable + 768;
 constexpr U64 const *epRandTable = randTable + 772;
 constexpr U64 const *blackRand = randTable + 780;
 
-#endif//BLACKCORE_CONSTANTS_H
+#endif //BLACKCORE_CONSTANTS_H

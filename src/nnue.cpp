@@ -197,4 +197,4 @@ namespace NNUE {
 
         }*/
     }
-}// namespace NNUE
+} // namespace NNUE

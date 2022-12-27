@@ -107,4 +107,4 @@ void joinThreads(bool waitToFinish);
 
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 
-#endif//BLACKCORE_SEARCH_H
+#endif //BLACKCORE_SEARCH_H

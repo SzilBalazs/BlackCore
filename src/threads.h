@@ -101,38 +101,39 @@ struct ThreadData {
         historyTable[color][move.getFrom()][move.getTo()] += bonus;
     }
 
-    void updateNodesSearched(Move m, U64 totalNodes) {
+    void updateNodesSearched(Move move, U64 totalNodes) {
         mNodesSearched.lock();
-        nodesSearched[m.getFrom()][m.getTo()] += totalNodes;
+        nodesSearched[move.getFrom()][move.getTo()] += totalNodes;
         mNodesSearched.unlock();
     }
 
-    Score scoreRootNode(Move m) {
-        return nodesSearched[m.getFrom()][m.getTo()] / 1000;
+    Score scoreRootNode(Move move) {
+        return nodesSearched[move.getFrom()][move.getTo()] / 1000;
     }
 
-    Score scoreMove(const Position &pos, Move prevMove, Move m) {
-        if (m == getHashMove(pos.getHash())) {
+    Score scoreMove(const Position &pos, Move prevMove, Move move) {
+
+        if (move == getHashMove(pos.getHash())) {
             return 10000000;
-        } else if (m.isPromo()) {
-            if (m.isSpecial1() && m.isSpecial2()) {// Queen promo
+        } else if (move.isPromo()) {
+            if (move.isSpecial1() && move.isSpecial2()) { // Queen promo
                 return 9000000;
-            } else {// Anything else, under promotions should only be played in really few cases
+            } else { // Anything else, under promotions should only be played in really few cases
                 return -3000000;
             }
-        } else if (m.isCapture()) {
-            Score seeScore = see(pos, m);
+        } else if (move.isCapture()) {
+            Score seeScore = see(pos, move);
 
-            if (see(pos, m) >= 0)
+            if (see(pos, move) >= 0)
                 return 8000000 + seeScore;
             else
                 return 2000000 + seeScore;
-        } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == m) {
+        } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == move) {
             return 5000000;
         }
         Color stm = pos.getSideToMove();
         Bitboard occ = pos.occupied();
-        int diff = getHistoryDifference(stm, m, occ);
+        int diff = getHistoryDifference(stm, move, occ);
         Score diffBonus = 0;
         if (diff == 0)
             diffBonus = 5600000;
@@ -140,8 +141,8 @@ struct ThreadData {
             diffBonus = 5500000;
         else if (diff == 2)
             diffBonus = 5400000;
-        return diffBonus + historyTable[stm][m.getFrom()][m.getTo()];
+        return diffBonus + historyTable[stm][move.getFrom()][move.getTo()];
     }
 };
 
-#endif//BLACKCORE_THREADS_H
+#endif //BLACKCORE_THREADS_H

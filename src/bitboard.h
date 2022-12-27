@@ -26,7 +26,7 @@
 #include <nmmintrin.h>
 #endif
 
-// Struct for referencing the 64 squares of a board using a 64-bit number
+// Used for referencing the 64 squares of a board using a 64-bit number
 struct Bitboard {
 
     U64 bb = 0;
@@ -39,22 +39,22 @@ struct Bitboard {
 
     constexpr Bitboard() = default;
 
-    // Function that returns the square's value.
+    // Returns the square's value.
     constexpr bool get(Square square) const {
         return (bb >> square) & 1;
     }
 
-    // Function that sets the square's value.
+    // Sets the square's value to 1.
     constexpr void set(Square square) {
         bb |= 1ULL << square;
     }
 
-    // Function that clears the square's value.
+    // Clears the square's value.
     constexpr void clear(Square square) {
         bb &= ~(1ULL << square);
     }
 
-    // Function that returns the number of bits set to 1.
+    // Returns the number of bits set to 1.
     constexpr int popCount() const {
 
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
@@ -64,7 +64,7 @@ struct Bitboard {
 #endif
     }
 
-    // Function that returns the square with the lowest index, that is set to 1.
+    // Returns the square with the lowest index, that is set to 1.
     constexpr Square lsb() const {
 
 #ifdef __GNUC__
@@ -78,7 +78,7 @@ struct Bitboard {
 #endif
     }
 
-    // Function that clears the square with the lowest index, that is set to 1.
+    // Clears the square with the lowest index, that is set to 1.
     constexpr Square popLsb() {
         Square square = lsb();
         bb &= bb - 1;
@@ -158,7 +158,7 @@ struct Bitboard {
     }
 };
 
-// Struct for storing a magic entry.
+// Stores a magic entry.
 struct Magic {
     Bitboard *ptr;
     Bitboard mask;
@@ -169,9 +169,11 @@ struct Magic {
 extern Bitboard rookAttackTable[102400];
 extern Bitboard bishopAttackTable[5248];
 
-// Fancy magic bitboards
-// To generate the attackTables from them use initMagic
-// To generate new magic numbers use findMagics
+/*
+ * Fancy magic bitboards
+ * To generate the attackTables from them use initMagic
+ * To generate new magic numbers use findMagics
+*/
 constexpr Magic rookMagics[64] = {
         {rookAttackTable + 0, 0x101010101017eULL, 0x200102084420100ULL, 12},
         {rookAttackTable + 4096, 0x202020202027cULL, 0x40200040001000ULL, 11},
@@ -306,6 +308,7 @@ constexpr Magic bishopMagics[64] = {
         {bishopAttackTable + 5184, 0x40201008040200ULL, 0x208600082060020ULL, 6},
 };
 
+// Constant values generated at compile time.
 constexpr Bitboard fileA = 0x101010101010101ULL;
 constexpr Bitboard fileB = fileA << 1;
 constexpr Bitboard fileC = fileA << 2;
@@ -361,55 +364,7 @@ inline Bitboard::Bitboard(Square square) {
     bb = bitMasks[square].bb;
 }
 
-inline Bitboard adjacentFileMask(Square square) {
-    return adjacentFileMasks[square];
-}
-
-inline Bitboard adjacentNorthMask(Square square) {
-    return adjacentNorthMasks[square];
-}
-
-inline Bitboard adjacentSouthMask(Square square) {
-    return adjacentSouthMasks[square];
-}
-
-inline Bitboard pawnMask(Square square, Color color) {
-    return pawnMasks[square][color];
-}
-
-inline Bitboard knightMask(Square square) {
-    return knightMasks[square];
-}
-
-inline Bitboard kingMask(Square square) {
-    return kingMasks[square];
-}
-
-inline Bitboard fileMask(Square square) {
-    return fileMasks[square];
-}
-
-inline Bitboard rankMask(Square square) {
-    return rankMasks[square];
-}
-
-inline Bitboard rookMask(Square square) {
-    return rookMasks[square];
-}
-
-inline Bitboard diagonalMask(Square square) {
-    return diagonalMasks[square];
-}
-
-inline Bitboard antiDiagonalMask(Square square) {
-    return antiDiagonalMasks[square];
-}
-
-inline Bitboard bishopMask(Square square) {
-    return bishopMasks[square];
-}
-
-// Function that converts the magic and the occupancy bitboard into an index in the lookup table
+// Converts the magic and the occupancy bitboard into an index in the lookup table.
 inline unsigned int getMagicIndex(const Magic &m, Bitboard occ) {
 #ifdef BMI2
     return _pext_u64(occ.bb, m.mask.bb);
@@ -437,7 +392,7 @@ constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
     assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case KNIGHT:
-            return knightMask(square);
+            return knightMasks[square];
         case BISHOP:
             return bishopAttacks(square, occupied);
         case ROOK:
@@ -445,7 +400,7 @@ constexpr Bitboard pieceAttacks(Square square, Bitboard occupied) {
         case QUEEN:
             return queenAttacks(square, occupied);
         case KING:
-            return kingMask(square);
+            return kingMasks[square];
         default:
             return 0;
     }
@@ -455,7 +410,7 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
     assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case KNIGHT:
-            return knightMask(square);
+            return knightMasks[square];
         case BISHOP:
             return bishopAttacks(square, occupied);
         case ROOK:
@@ -463,7 +418,7 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case QUEEN:
             return queenAttacks(square, occupied);
         case KING:
-            return kingMask(square);
+            return kingMasks[square];
         default:
             return 0;
     }
@@ -474,9 +429,9 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
     assert((type != PAWN) && (type != PIECE_EMPTY));
     switch (type) {
         case PAWN:
-            return pawnMask(square, color);
+            return pawnMasks[square][color];
         case KNIGHT:
-            return knightMask(square);
+            return knightMasks[square];
         case BISHOP:
             return bishopAttacks(square, occupied);
         case ROOK:
@@ -484,7 +439,7 @@ inline Bitboard pieceAttacks(PieceType type, Square square, Bitboard occupied) {
         case QUEEN:
             return queenAttacks(square, occupied);
         case KING:
-            return kingMask(square);
+            return kingMasks[square];
         default:
             return 0;
     }
@@ -572,4 +527,4 @@ void initMagic(const Magic *magics, PieceType type);
 
 void findMagics(Bitboard *attackTable, Magic *magics, PieceType type);
 
-#endif//BLACKCORE_BITBOARD_H
+#endif //BLACKCORE_BITBOARD_H

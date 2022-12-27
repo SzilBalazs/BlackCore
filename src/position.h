@@ -450,4 +450,4 @@ inline void Position::undoMove(Move move) {
 
 #undef state
 
-#endif//BLACKCORE_POSITION_H
+#endif //BLACKCORE_POSITION_H

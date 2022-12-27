@@ -96,7 +96,7 @@ Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, 
 }
 
 Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
-    return (((pawnMask(square, WHITE) | pawnMask(square, BLACK)) & pos.pieces<PAWN>()) |
+    return (((pawnMasks[square][WHITE] | pawnMasks[square][BLACK]) & pos.pieces<PAWN>()) |
             (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
             (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
             (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |

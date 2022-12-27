@@ -36,4 +36,4 @@ struct EvalParameter {
 
 void tune(const std::string &inputFile);
 
-#endif//BLACKCORE_TUNER_H
+#endif //BLACKCORE_TUNER_H

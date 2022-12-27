@@ -22,13 +22,15 @@
 
 #include <iostream>
 
-// Function that outputs the number of positions which can be got into,
-// in depth number of legal moves. Used for validating the move generator.
-// For more information: https://www.chessprogramming.org/Perft
+/*
+ * Outputs the number of positions which can be got into,
+ * in depth number of legal moves. Used for validating the move generator.
+ * For more information: https://www.chessprogramming.org/Perft
+*/
 template<bool output>
 U64 perft(Position &position, Depth depth) {
 
-    Move moves[200];
+    Move moves[200]; // Stores the legal moves in the position
     Move *movesEnd = generateMoves(position, moves, false);
 
     // Bulk counting the number of moves at depth 1.
@@ -39,18 +41,17 @@ U64 perft(Position &position, Depth depth) {
     U64 nodes = 0;
     for (Move *it = moves; it != movesEnd; it++) {
         position.makeMove(*it);
-        U64 a = perft<false>(position, depth - 1);
+        U64 nodeCount = perft<false>(position, depth - 1);
         if constexpr (output) {
-            std::cout << *it << ": " << a << std::endl;
+            std::cout << *it << ": " << nodeCount << std::endl; // Used for debugging purposes.
         }
-        nodes += a;
+        nodes += nodeCount;
         position.undoMove(*it);
     }
     return nodes;
 }
 
 void testPerft();
-
 void testSearch();
 
-#endif//BLACKCORE_BENCH_H
+#endif //BLACKCORE_BENCH_H

@@ -26,8 +26,10 @@ Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMas
         adjacentSouthMasks[64];
 LineType lineType[64][64];
 
-// Function that initializes values, regarding bitboard. Must be called
-// before calling the move generator.
+/*
+ * Initializes values, regarding bitboard. Must be called
+ * before calling the move generator.
+*/
 void initBitboard() {
 
     for (Square sq = A1; sq < 64; sq += 1) {
@@ -69,7 +71,7 @@ void initBitboard() {
         adjacentSouthMasks[sq] = slide<SOUTH>(sq) | (file != 0 ? slide<SOUTH>(sq + WEST) : 0) |
                                  (file != 7 ? slide<SOUTH>(sq + EAST) : 0);
         adjacentFileMasks[sq] =
-                ~fileMask(sq) & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
+                ~fileMasks[sq] & (adjacentNorthMasks[sq] | adjacentSouthMasks[sq] | step<WEST>(sq) | step<EAST>(sq));
 
         // Calculates the common ray and the line type of the shortest path between sq and sq2.
         for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
@@ -106,8 +108,10 @@ void initBitboard() {
         }
     }
 
-    // Initializes magic bitboards, which are used for generating sliding moves.
-    // For more information: https://www.chessprogramming.org/Magic_Bitboards
+    /*
+     * Initializes magic bitboards, which are used for generating sliding moves.
+     * For more information: https://www.chessprogramming.org/Magic_Bitboards
+    */
     initMagic(rookMagics, ROOK);
     initMagic(bishopMagics, BISHOP);
 }
@@ -127,7 +131,7 @@ Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type) {
     }
 }
 
-// Function that initializes magic bitboards.
+// Initializes magic bitboards.
 void initMagic(const Magic *magics, PieceType type) {
     assert((type == ROOK) || (type == BISHOP));
     Bitboard occupied[4096], attacked[4096];
@@ -153,7 +157,7 @@ void initMagic(const Magic *magics, PieceType type) {
     }
 }
 
-// Function used for finding magic bitboards.
+// When called it generates magics and outputs them to the console.
 void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
     assert((type == ROOK) || (type == BISHOP));
     Bitboard occupied[4096], attacked[4096];
@@ -165,7 +169,7 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
 
     unsigned int length = 0;
     for (Square square = A1; square < 64; square += 1) {
-        Bitboard edge = (((rank1 | rank8) & ~rankMask(square)) | ((fileA | fileH) & ~fileMask(square)));
+        Bitboard edge = (((rank1 | rank8) & ~rankMasks[square]) | ((fileA | fileH) & ~fileMasks[square]));
 
         Magic &magic = magics[square];
 
@@ -177,7 +181,7 @@ void findMagics(Bitboard *attackTable, Magic *magics, PieceType type) {
         else
             magic.ptr = magics[square - 1].ptr + length;
 
-        // Carry-Ripler trick for reference check out: https://www.chessprogramming.org/Traversing_Subsets_of_a_Set
+        // Carry-Ripler trick: https://www.chessprogramming.org/Traversing_Subsets_of_a_Set
         length = 0;
         Bitboard occ = 0;
         do {
