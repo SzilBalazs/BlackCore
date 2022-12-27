@@ -29,7 +29,7 @@ LineType lineType[64][64];
 /*
  * Initializes values, regarding bitboard. Must be called
  * before calling the move generator.
-*/
+ */
 void initBitboard() {
 
     for (Square sq = A1; sq < 64; sq += 1) {
@@ -111,7 +111,7 @@ void initBitboard() {
     /*
      * Initializes magic bitboards, which are used for generating sliding moves.
      * For more information: https://www.chessprogramming.org/Magic_Bitboards
-    */
+     */
     initMagic(rookMagics, ROOK);
     initMagic(bishopMagics, BISHOP);
 }

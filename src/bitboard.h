@@ -173,7 +173,7 @@ extern Bitboard bishopAttackTable[5248];
  * Fancy magic bitboards
  * To generate the attackTables from them use initMagic
  * To generate new magic numbers use findMagics
-*/
+ */
 constexpr Magic rookMagics[64] = {
         {rookAttackTable + 0, 0x101010101017eULL, 0x200102084420100ULL, 12},
         {rookAttackTable + 4096, 0x202020202027cULL, 0x40200040001000ULL, 11},

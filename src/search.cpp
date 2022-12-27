@@ -149,6 +149,13 @@ Score see(const Position &pos, Move move) {
     return e[0];
 }
 
+/*
+ * Quiescence search
+ *
+ * A special type of alpha-beta search, which only searches
+ * captures, to improve the tactical stability of the main
+ * search.
+ */
 template<NodeType type>
 Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply) {
 
@@ -164,12 +171,20 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         td.selectiveDepth = ply;
     }
 
-    // Probe the transposition table for information about this position
-    // in case, if it was already searched.
+    /*
+     * Transposition table probing
+     *
+     * Check the transposition table for information about this position
+     * in case, if it was already searched.
+     */
     bool ttHit = false;
     TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
 
-    // If we have already searched this position, we can return that score.
+    /*
+     * TT cutoffs
+     *
+     * If we have already searched this position, we can return that score.
+     */
     if (ttHit && nonPvNode && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
         return ttEntry->eval;
     }
@@ -181,8 +196,12 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         return staticEval;
     }
 
-    // As only tactical moves will be evaluated, static evaluation can be used to get a
-    // lower-bound of the position score.
+    /*
+     * Standing pat
+     *
+     * As only tactical moves will be evaluated, static evaluation can be used to get a
+     * lower-bound of the position score.
+     */
     if (staticEval >= beta) {
         return beta;
     }
@@ -197,27 +216,33 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
 
     while (!moves.empty()) {
 
-        Move m = moves.nextMove();
+        Move move = moves.nextMove();
 
-        // Delta pruning
-        // If the static evaluation and the expected gain of this move plus a large margin is still
-        // less than alpha the move can be safely skipped.
-        if (m.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(m.getTo()).type] +
+        /*
+         * Delta pruning
+         *
+         * If the static evaluation and the expected gain of this move plus a large margin is still
+         * less than alpha the move can be safely skipped.
+         */
+        if (move.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(move.getTo()).type] +
                     staticEval + DELTA_MARGIN <
             alpha)
             continue;
 
-        // SEE pruning
-        // If the move loses material we skip its evaluation
-        if (alpha > -WORST_MATE && see(pos, m) < -SEE_MARGIN)
+        /*
+         * Static-Exchange-Evaluation pruning
+         *
+         * If the move loses material we skip its evaluation
+         */
+        if (alpha > -WORST_MATE && see(pos, move) < -SEE_MARGIN)
             continue;
 
         td.nodes++;
-        pos.makeMove(m);
+        pos.makeMove(move);
 
         Score score = -quiescence<type>(pos, td, -beta, -alpha, ply + 1);
 
-        pos.undoMove(m);
+        pos.undoMove(move);
 
         // Ask the time manager whether the search should stop
         if (shouldEnd(td.nodes, getTotalNodes()))
@@ -226,7 +251,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         // If the score is too good to be acceptable by our opponent return beta.
         if (score >= beta) {
             // If beta cutoff happens save the information to the transposition table.
-            ttSave(pos.getHash(), 0, score, BETA, m);
+            ttSave(pos.getHash(), 0, score, BETA, move);
 
             return beta;
         }
@@ -235,7 +260,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         if (score > alpha) {
             alpha = score;
             ttFlag = EXACT;
-            bestMove = m;
+            bestMove = move;
         }
     }
 
@@ -252,8 +277,9 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     constexpr bool notRootNode = !rootNode;
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
-    const bool isSingularRoot = !stack->excludedMove.isNull();
+    const bool isSingularRoot = stack->excludedMove.isOk();
 
+    Move prevMove = (stack - 1)->move;
     td.pvLength[ply] = ply;
 
     // Ask the time manager whether the search should stop
@@ -265,21 +291,32 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return DRAW_VALUE;
     }
 
-    // Probe the transposition table for information about this position. If the
-    // node is a singular search root skip this step.
+    /*
+     * Transposition table probing
+     *
+     * Check the transposition table for information about this position. If the
+     * node is a singular search root skip this step.
+     */
     bool ttHit = false;
-    Score matePly = MATE_VALUE - ply;
     TTEntry *ttEntry = isSingularRoot ? nullptr : ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
 
-    // If this is a not a PV node and the transposition entry was saved by a
-    // big enough depth search, return the evaluation from TT.
+    /*
+     * TT cutoffs
+     *
+     * If this is a not a PV node and the transposition entry was saved by a
+     * big enough depth search, return the evaluation from TT.
+     */
     if (ttHit && nonPvNode &&
         ttEntry->depth >= depth && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
         return ttEntry->eval;
     }
 
-    // Mate distance pruning
-    // If the position is "solved" - the shortest mate was found - update alpha and beta.
+    /*
+     * Mate distance pruning
+     *
+     * If the position is "solved" - the shortest mate was found - update alpha and beta.
+     */
+    Score matePly = MATE_VALUE - ply;
     if (notRootNode) {
         if (alpha < -matePly)
             alpha = -matePly;
@@ -309,24 +346,34 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     if (notRootNode && !inCheck && !isSingularRoot) {
 
-        // Razoring
-        // At depth 1 safely drop into quiescence search, if the static evaluation is very low.
+        /*
+         * Razoring
+         *
+         * At depth 1 safely drop into quiescence search, if the static evaluation is very low.
+         */
         if (depth == 1 && nonPvNode && staticEval + RAZOR_MARGIN < alpha) {
             return quiescence<NON_PV_NODE>(pos, td, alpha, beta, ply);
         }
 
-        // Reverse futility pruning
-        // At low depths if the static evaluation is very high return beta.
+        /*
+         * Reverse futility pruning
+         *
+         * At low depths if the static evaluation is very high return beta.
+         */
         if (depth <= RFP_DEPTH &&
             staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
 
-        // Null move pruning
-        // If the static evaluation is better than beta, give the turn to the opponent.
-        if (nonPvNode && !(stack - 1)->move.isNull() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        /*
+         * Null move pruning
+         *
+         * If the static evaluation is better than beta, give the turn to the opponent and hope that it
+         * will stay big enough to cause a beta-cutoff in a reduced depth search.
+         */
+        if (nonPvNode && prevMove.isOk() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
 
-            // We don't want to make a null move in a Zugzwang position
+            // Don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
                 pos.pieces<QUEEN>(color)) {
 
@@ -356,18 +403,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             return quiescence<nextPv>(pos, td, alpha, beta, ply);
     }
 
-    MoveList moves = {pos, td, (ply >= 1 ? (stack - 1)->move : Move()), false, (rootNode && depth >= 6)};
+    MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, (rootNode && depth >= 6)};
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
         if (isSingularRoot)
             return alpha;
 
-        if (inCheck) {
-            return -matePly;
-        } else {
-            return DRAW_VALUE;
-        }
+        return inCheck ? -matePly : DRAW_VALUE;
     }
 
     Move bestMove;
@@ -376,51 +419,55 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     std::vector<Move> quiets;
     while (!moves.empty()) {
 
-        Move m = moves.nextMove();
-        stack->move = m;
+        Move move = stack->move = moves.nextMove(); // Currently searched move
 
-        if (m == stack->excludedMove) continue;
+        if (move == stack->excludedMove) continue;
 
         U64 nodesBefore = td.nodes;
 
         if (rootNode && td.uciMode) {
-            if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", m, "currmovenumber", index + 1);
+            if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", move, "currmovenumber", index + 1);
         }
 
         Score score;
-        Score history = td.historyTable[color][m.getFrom()][m.getTo()];
+        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
-        // Prune the move if...
-        if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE) {
+        // Prune quiet moves if ...
+        if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE && move.isQuiet()) {
 
             // Futility pruning
-            // it is quiet and static evaluation is far below alpha.
-            if (depth <= FUTILITY_DEPTH && m.isQuiet() &&
-                staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving <
-                        alpha)
+            // ... the static evaluation is far below alpha.
+            if (depth <= FUTILITY_DEPTH &&
+                staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving < alpha)
                 continue;
 
             // Late move pruning
-            // many moves had been made before.
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth && m.isQuiet())
+            // ... many moves had been made before.
+            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
                 continue;
         }
 
         // Extensions
         Depth extensions = 0;
 
-        // Check extension
-        // If the position is a check extend by 1 ply.
+        /*
+         * Check extension
+         *
+         * If the position is a check extend by 1 ply.
+         */
         if (inCheck) extensions = 1;
 
-        // Singular extension
-        // If 1 move is a lot better than all the others extend by 1 ply.
-        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && m == ttEntry->hashMove && !isSingularRoot && ttEntry->flag == BETA && ttEntry->depth >= depth - 3) {
-            // This implementation is heavily inspired by StockFish & Alexandria
+        /*
+         * Singular extensionű
+         *
+         * If 1 move is a lot better than all the others extend by 1 ply.
+         * This implementation is heavily inspired by StockFish & Alexandria
+         */
+        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry->hashMove && !isSingularRoot && ttEntry->flag == BETA && ttEntry->depth >= depth - 3) {
             Score singularBeta = ttEntry->eval - depth * 3;
             Depth singularDepth = (depth - 1) / 2;
 
-            stack->excludedMove = m;
+            stack->excludedMove = move;
             score = search<NON_PV_NODE>(pos, td, stack, singularDepth, singularBeta - 1, singularBeta, ply);
             stack->excludedMove = Move();
 
@@ -436,20 +483,25 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Depth newDepth = depth - 1 + extensions;
 
         td.nodes++;
-        pos.makeMove(m);
+        pos.makeMove(move);
 
         ttPrefetch(pos.getHash());
 
-        // Late move reduction
-        if (!inCheck && depth >= LMR_DEPTH && index >= LMR_INDEX && !m.isPromo() &&
-            m.isQuiet()) {
+        /*
+         * Late move reduction
+         *
+         * Reduce (or in rare cases) extend quiet moves later ranked by our move ordering.
+         * https://www.chessprogramming.org/Late_Move_Reductions
+         */
+        if (!inCheck && depth >= LMR_DEPTH && index >= LMR_INDEX && !move.isPromo() &&
+            move.isQuiet()) {
 
             Depth R = reductions[index][depth];
 
             R += !improving;
             R -= pvNode;
             R -= std::clamp(history / 3000, -1, 1);
-            R -= (td.killerMoves[ply][0] == m || td.killerMoves[ply][1] == m) || (ply >= 1 && td.counterMoves[(stack - 1)->move.getFrom()][(stack - 1)->move.getTo()] == m);
+            R -= (td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move) || (ply >= 1 && td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
@@ -468,10 +520,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             score = -search<nextPv>(pos, td, stack + 1, newDepth, -beta, -alpha, ply + 1);
         }
 
-        pos.undoMove(m);
+        pos.undoMove(move);
 
         if (rootNode) {
-            td.updateNodesSearched(m, td.nodes - nodesBefore);
+            td.updateNodesSearched(move, td.nodes - nodesBefore);
         }
 
         if (shouldEnd(td.nodes, getTotalNodes()))
@@ -480,46 +532,52 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if (score >= beta) {
 
             if (!isSingularRoot) {
-                if (m.isQuiet()) {
+                if (move.isQuiet()) {
 
-                    td.updateHistoryDifference(color, m, pos.occupied());
-                    td.updateKillerMoves(m, ply);
-                    if (ply >= 1 && !(stack - 1)->move.isNull()) td.updateCounterMoves((stack - 1)->move, m);
-                    td.updateHH(m, color, depth * depth);
+                    // Update history heuristics
+                    td.updateHistoryDifference(color, move, pos.occupied());
+                    td.updateKillerMoves(move, ply);
+                    if (notRootNode && prevMove.isOk())
+                        td.updateCounterMoves(prevMove, move);
+                    td.updateHH(move, color, depth * depth);
 
-                    for (Move move : quiets) {
-                        td.updateHH(move, color, -depth * depth);
+                    for (Move m : quiets) {
+                        td.updateHH(m, color, -depth * depth);
                     }
                 }
 
-                ttSave(pos.getHash(), depth, beta, BETA, m);
+                // Save the information gathered into the transposition table.
+                ttSave(pos.getHash(), depth, beta, BETA, move);
             }
-
             return beta;
         }
 
         if (score > alpha) {
             alpha = score;
-            bestMove = m;
+            bestMove = move;
             ttFlag = EXACT;
 
-            td.pvArray[ply][ply] = m;
+            // Update PV-line
+            td.pvArray[ply][ply] = move;
             for (int i = ply + 1; i < td.pvLength[ply + 1]; i++) {
                 td.pvArray[ply][i] = td.pvArray[ply + 1][i];
             }
             td.pvLength[ply] = td.pvLength[ply + 1];
         }
 
-        if (m.isQuiet()) quiets.push_back(m);
+        if (move.isQuiet())
+            quiets.push_back(move);
         index++;
     }
 
+    // Only save the information gathered into the transposition table, if the node isn't a singular search root.
     if (!isSingularRoot)
         ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
 
     return alpha;
 }
 
+// Returns the PV-line of the selected thread
 std::string getPvLine(ThreadData &td) {
     std::string pv;
 
@@ -530,15 +588,26 @@ std::string getPvLine(ThreadData &td) {
     return pv;
 }
 
+/*
+ * Aspiration window
+ *
+ * Expect that at a new depth the returned score by the main search will
+ * stay close to the previous iteration of iterative deepening.
+ * https://www.chessprogramming.org/Aspiration_Windows
+ */
 Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     if (td.threadId == 0) globalAge++;
     td.clear();
 
     SearchStack stateStack[MAX_PLY + 1];
+
+    // Start at -inf and +inf bounds
     Score alpha = -INF_SCORE;
     Score beta = INF_SCORE;
 
+    // If ASPIRATION_DEPTH is reached, assume that the previous iteration
+    // gave us a close enough score.
     if (depth >= ASPIRATION_DEPTH) {
         alpha = prevScore - ASPIRATION_DELTA;
         beta = prevScore + ASPIRATION_DELTA;
@@ -571,18 +640,13 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                 int mateDepth = MATE_VALUE - absScore;
                 std::string scoreStr = "cp " + std::to_string(score);
 
+                // Calculate mate depth if a mate was found.
                 if (mateDepth <= 64) {
-                    int matePly;
-                    // We are giving the mate
-                    if (score > 0) {
-                        matePly = mateDepth / 2 + 1;
-
-                    } else {
-                        matePly = -(mateDepth / 2);
-                    }
+                    int matePly = score ? mateDepth / 2 + 1 : -(mateDepth / 2);
                     scoreStr = "mate " + std::to_string(matePly);
                 }
 
+                // Output information to the GUI
                 out("info", "depth", depth, "seldepth", td.selectiveDepth, "nodes", getTotalNodes(), "score", scoreStr, "time",
                     getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
             }
@@ -594,7 +658,15 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
     }
 }
 
-void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
+/*
+ * Iterative Deepening
+ *
+ * https://www.chessprogramming.org/Iterative_Deepening
+ */
+void iterativeDeepening(int id, Depth depth) {
+
+    ThreadData &td = tds[id];
+    Position &pos = tds[id].position;
 
     td.reset();
     pos.getState()->accumulator.refresh(pos);
@@ -609,7 +681,7 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
         if (score == UNKNOWN_SCORE)
             break;
 
-        // We only care about stability if we searched enough depth
+        // Only care about stability if we searched enough depth, and we are the main thread.
         if (currDepth >= 14 && td.threadId == 0) {
             if (bestMove != td.pvArray[0][0]) {
                 stability -= 10;
@@ -635,6 +707,7 @@ void iterativeDeepening(Position pos, ThreadData &td, Depth depth) {
     stopped = true;
 }
 
+// Join all the threads to the main thread.
 void joinThreads(bool waitToFinish) {
     if (!waitToFinish)
         stopped = true;
@@ -648,10 +721,12 @@ void joinThreads(bool waitToFinish) {
     tds.clear();
 }
 
+// Starts the process of finding the best move.
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThreads(false);
 
+    // Initializes ThreadData object for storing variables of threads.
     for (int idx = 0; idx < threadCount; idx++) {
         ThreadData td;
         td.threadId = idx;
@@ -659,10 +734,12 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         tds.emplace_back(td);
     }
 
+    // Create a copy of the searched position, one for each thread.
     for (int idx = 0; idx < threadCount; idx++) {
         tds[idx].position.loadPositionFromRawState(pos.getRawState());
     }
 
+    // Initializes time manager.
     Color stm = pos.getSideToMove();
     if (stm == WHITE) {
         initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
@@ -670,7 +747,8 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
+    // Starts every thread.
     for (int idx = 0; idx < threadCount; idx++) {
-        ths.emplace_back(iterativeDeepening, tds[idx].position, std::ref(tds[idx]), searchInfo.maxDepth);
+        ths.emplace_back(iterativeDeepening, idx, searchInfo.maxDepth);
     }
 }

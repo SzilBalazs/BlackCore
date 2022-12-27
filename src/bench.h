@@ -26,7 +26,7 @@
  * Outputs the number of positions which can be got into,
  * in depth number of legal moves. Used for validating the move generator.
  * For more information: https://www.chessprogramming.org/Perft
-*/
+ */
 template<bool output>
 U64 perft(Position &position, Depth depth) {
 

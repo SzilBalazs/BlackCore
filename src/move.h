@@ -57,24 +57,28 @@ public:
 
     constexpr Move() = default;
 
+    // Returns the to square of the move.
     constexpr Square getTo() const {
         return Square(data & 0x3f);
     }
 
+    // Returns the from square of the move.
     constexpr Square getFrom() const {
         return Square((data >> 6) & 0x3f);
     }
 
+    // Returns true if the flag is set in the move.
     constexpr bool isFlag(unsigned int flag) const {
         return (data >> 12) & flag;
     }
 
+    // Returns true if the move type is equal to flag.
     constexpr bool equalFlag(unsigned int flag) const {
         return (data >> 12) == flag;
     }
 
-    constexpr bool isNull() const {
-        return data == 0;
+    constexpr bool isOk() const {
+        return data != 0;
     }
 
     constexpr bool isCapture() const {
@@ -98,7 +102,7 @@ public:
     }
 
     constexpr explicit operator bool() const {
-        return !isNull();
+        return isOk();
     }
 
     constexpr bool operator==(Move a) const {

@@ -53,7 +53,7 @@ const TestPosition testPositions[posCount] = {
  * Exits the program with exit code -1, if the movegen produces an
  * illegal move. Outputs a nodes per second value, which can be used to determine
  * the speed of the move generator.
-*/
+ */
 void testPerft() {
 
     // Initialize values
