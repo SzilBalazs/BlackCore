@@ -20,32 +20,23 @@
 #include "constants.h"
 #include "move.h"
 
-extern uint16_t globalAge;
-
-enum EntryFlag : uint16_t {
+enum EntryFlag : uint8_t {
     NONE = 0,
     EXACT = 1,
     ALPHA = 2,
     BETA = 3
 };
 
-struct TTEntry {    // Total: 21 bytes -> compiler makes it 24
+struct TTEntry {    // Total: 16 bytes
     U64 hash;       // 8 bytes
-    Depth depth;    // 4 bytes
     Score eval;     // 4 bytes
     Move hashMove;  // 2 bytes
-    EntryFlag flag; // 1 bytes
-    uint16_t age;   // 2 bytes
-};
-
-struct TTBucket {             // 64 bytes
-    TTEntry entryA;           // 24 bytes
-    TTEntry entryB;           // 24 bytes
-    U64 _padding1, _padding2; // 16 bytes
+    Depth depth;    // 1 byte
+    EntryFlag flag; // 1 byte
 };
 
 struct TTable {
-    TTBucket *table;
+    TTEntry *table;
     unsigned int bucketCount;
     U64 mask;
 };
@@ -56,7 +47,7 @@ void ttClear();
 
 void ttFree();
 
-TTEntry *ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta);
+TTEntry ttProbe(U64 hash, bool &ttHit);
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
 

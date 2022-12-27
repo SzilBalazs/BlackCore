@@ -31,8 +31,8 @@
 
 typedef uint64_t U64;
 typedef int32_t Score;
-typedef int32_t Depth;
-typedef int32_t Ply;
+typedef int8_t Depth;
+typedef int8_t Ply;
 
 constexpr Score UNKNOWN_SCORE = 100002;
 constexpr Score INF_SCORE = 100001;

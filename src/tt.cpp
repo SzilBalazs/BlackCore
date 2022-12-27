@@ -24,15 +24,13 @@
 #endif
 
 TTable tt;
-uint16_t globalAge = 0;
 
-TTBucket *getBucket(U64 hash) {
+TTEntry *getEntry(U64 hash) {
     return tt.table + (hash & tt.mask);
 }
 
 void ttClear() {
-    std::memset(tt.table, 0, tt.bucketCount * sizeof(TTBucket));
-    globalAge = 0;
+    std::memset(tt.table, 0, tt.bucketCount * sizeof(TTEntry));
 }
 
 void ttFree() {
@@ -45,7 +43,7 @@ void ttResize(unsigned int MBSize) {
         ttFree();
 
     unsigned int i = 10;
-    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTBucket))
+    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTEntry))
         i++;
 
     tt.bucketCount = (1ULL << (i - 1));
@@ -53,46 +51,29 @@ void ttResize(unsigned int MBSize) {
 
 #ifdef __linux__
     // Allocate memory with 1MB alignment
-    tt.table = static_cast<TTBucket *>(aligned_alloc((1ULL << 20), tt.bucketCount * sizeof(TTBucket)));
+    tt.table = static_cast<TTEntry *>(aligned_alloc((1ULL << 20), tt.bucketCount * sizeof(TTEntry)));
 
     // For reference see https://man7.org/linux/man-pages/man2/madvise.2.html on MADV HUGEPAGE
-    madvise(tt.table, tt.bucketCount * sizeof(TTBucket), MADV_HUGEPAGE);
+    madvise(tt.table, tt.bucketCount * sizeof(TTEntry), MADV_HUGEPAGE);
 #else
-    tt.table = (TTBucket *) malloc(tt.bucketCount * sizeof(TTBucket));
+    tt.table = (TTEntry *) malloc(tt.bucketCount * sizeof(TTEntry));
 #endif
 
     ttClear();
 }
 
-TTEntry *ttProbe(U64 hash, bool &ttHit, Depth depth, Score alpha, Score beta) {
-    TTBucket *bucket = getBucket(hash);
-    TTEntry *entry;
-    if (bucket->entryA.hash == hash) {
-        entry = &bucket->entryA;
-        entry->age = globalAge;
-    } else if (bucket->entryB.hash == hash) {
-        entry = &bucket->entryB;
-    } else {
-        return nullptr;
-    }
+TTEntry ttProbe(U64 hash, bool &ttHit) {
+    TTEntry *entry = getEntry(hash);
 
-    if (std::abs(entry->eval) > MATE_VALUE - 100)
-        return nullptr;
+    if (entry->hash != hash || std::abs(entry->eval) > MATE_VALUE - 100)
+        return {};
 
     ttHit = true;
-    return entry;
+    return *entry;
 }
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
-    TTBucket *bucket = getBucket(hash);
-    TTEntry *entry;
-
-    if (bucket->entryA.hash == hash || bucket->entryA.depth * 2 / 3 <= depth ||
-        globalAge - bucket->entryA.age >= 3) {
-        entry = &bucket->entryA;
-    } else {
-        entry = &bucket->entryB;
-    }
+    TTEntry *entry = getEntry(hash);
 
     if (entry->hash != hash || flag == EXACT || entry->depth * 2 / 3 <= depth) {
         entry->hash = hash;
@@ -100,16 +81,13 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
         entry->eval = eval;
         entry->flag = flag;
         entry->hashMove = bestMove;
-        entry->age = globalAge;
     }
 }
 
 Move getHashMove(U64 hash) {
-    TTBucket *bucket = getBucket(hash);
-    if (bucket->entryA.hash == hash)
-        return bucket->entryA.hashMove;
-    else if (bucket->entryB.hash == hash)
-        return bucket->entryB.hashMove;
+    TTEntry *entry = getEntry(hash);
+    if (entry->hash == hash)
+        return entry->hashMove;
     return {};
 }
 

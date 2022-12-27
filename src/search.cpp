@@ -78,7 +78,7 @@ void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < MAX_PLY; depth++) {
 
-            reductions[moveIndex][depth] = std::max(2, Depth(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE)));
+            reductions[moveIndex][depth] = Depth(std::max(2, int(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE))));
         }
     }
 }
@@ -178,15 +178,15 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
      * in case, if it was already searched.
      */
     bool ttHit = false;
-    TTEntry *ttEntry = ttProbe(pos.getHash(), ttHit, 0, alpha, beta);
+    TTEntry ttEntry = ttProbe(pos.getHash(), ttHit);
 
     /*
      * TT cutoffs
      *
      * If we have already searched this position, we can return that score.
      */
-    if (ttHit && nonPvNode && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
-        return ttEntry->eval;
+    if (ttHit && nonPvNode && (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
+        return ttEntry.eval;
     }
 
     // Get the evaluation of the position, which later will be used as a stand pat score.
@@ -298,7 +298,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * node is a singular search root skip this step.
      */
     bool ttHit = false;
-    TTEntry *ttEntry = isSingularRoot ? nullptr : ttProbe(pos.getHash(), ttHit, depth, alpha, beta);
+    TTEntry ttEntry = isSingularRoot ? TTEntry() : ttProbe(pos.getHash(), ttHit);
 
     /*
      * TT cutoffs
@@ -307,8 +307,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * big enough depth search, return the evaluation from TT.
      */
     if (ttHit && nonPvNode &&
-        ttEntry->depth >= depth && (ttEntry->flag == EXACT || (ttEntry->flag == ALPHA && ttEntry->eval <= alpha) || (ttEntry->flag == BETA && ttEntry->eval >= beta))) {
-        return ttEntry->eval;
+        ttEntry.depth >= depth && (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
+        return ttEntry.eval;
     }
 
     /*
@@ -426,7 +426,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         U64 nodesBefore = td.nodes;
 
         if (rootNode && td.uciMode) {
-            if (getSearchTime() > 6000) out("info", "depth", depth, "currmove", move, "currmovenumber", index + 1);
+            if (getSearchTime() > 6000) out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
         }
 
         Score score;
@@ -463,8 +463,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          * If 1 move is a lot better than all the others extend by 1 ply.
          * This implementation is heavily inspired by StockFish & Alexandria
          */
-        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry->hashMove && !isSingularRoot && ttEntry->flag == BETA && ttEntry->depth >= depth - 3) {
-            Score singularBeta = ttEntry->eval - depth * 3;
+        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry.hashMove && !isSingularRoot && ttEntry.flag == BETA && ttEntry.depth >= depth - 3) {
+            Score singularBeta = ttEntry.eval - depth * 3;
             Depth singularDepth = (depth - 1) / 2;
 
             stack->excludedMove = move;
@@ -475,7 +475,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 extensions = 1;
             } else if (singularBeta >= beta) {
                 return singularBeta;
-            } else if (ttEntry->eval >= beta) {
+            } else if (ttEntry.eval >= beta) {
                 extensions = -1;
             }
         }
@@ -597,7 +597,6 @@ std::string getPvLine(ThreadData &td) {
  */
 Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
-    if (td.threadId == 0) globalAge++;
     td.clear();
 
     SearchStack stateStack[MAX_PLY + 1];
@@ -647,7 +646,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                 }
 
                 // Output information to the GUI
-                out("info", "depth", depth, "seldepth", td.selectiveDepth, "nodes", getTotalNodes(), "score", scoreStr, "time",
+                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "score", scoreStr, "time",
                     getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
             }
 
