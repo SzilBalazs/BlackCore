@@ -104,7 +104,11 @@ Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
            occ;
 }
 
-// Returns the evaluation of a capture
+/*
+ * Static-Exchange-Evaluation
+ *
+ * Returns the material change, after playing out every resulting capture of the move.
+ */
 Score see(const Position &pos, Move move) {
     assert(move.isCapture());
 
@@ -458,7 +462,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if (inCheck) extensions = 1;
 
         /*
-         * Singular extensionű
+         * Singular extension
          *
          * If 1 move is a lot better than all the others extend by 1 ply.
          * This implementation is heavily inspired by StockFish & Alexandria
