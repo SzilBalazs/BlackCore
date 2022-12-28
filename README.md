@@ -1,5 +1,5 @@
 <div align="center" style="padding-top: 50px">
-    <img src="https://raw.githubusercontent.com/SzilBalazs/BlackCore/master/icon.png" alt="BlackCore logo" width="150px" height="auto">
+    <img src="https://github.com/SzilBalazs/BlackCore/blob/020c7fa5be444b0053faba37ff4b25918acb6a3e/icon.png" alt="BlackCore logo by Graham Banks" width="200px" height="auto">
 </div>
 
 ## Overview
