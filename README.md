@@ -1,6 +1,5 @@
-<h1 align="center">BlackCore</h1>
-<div align="center">
-    <img src="https://github.com/SzilBalazs/BlackCore/actions/workflows/build.yml/badge.svg" alt="Test status">
+<div align="center" style="padding-top: 50px">
+    <img src="https://raw.githubusercontent.com/SzilBalazs/BlackCore/master/icon.png" alt="BlackCore logo" width="150px" height="auto">
 </div>
 
 ## Overview
