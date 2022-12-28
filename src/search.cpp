@@ -310,8 +310,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * If this is a not a PV node and the transposition entry was saved by a
      * big enough depth search, return the evaluation from TT.
      */
-    if (ttHit && nonPvNode &&
-        ttEntry.depth >= depth && (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
+    if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() &&
+        (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
     }
 
