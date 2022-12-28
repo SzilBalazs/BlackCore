@@ -1,5 +1,12 @@
 <div align="center" style="padding-top: 50px">
     <img src="https://github.com/SzilBalazs/BlackCore/blob/020c7fa5be444b0053faba37ff4b25918acb6a3e/icon.png" alt="BlackCore logo by Graham Banks" width="200px" height="auto">
+    <br>
+    <br>
+    <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
+    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?label=Latest%20release&style=for-the-badge">
+    <br>
+    <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?style=for-the-badge">
+    <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?style=for-the-badge">
 </div>
 
 ## Overview
