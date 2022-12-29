@@ -78,7 +78,7 @@ void initLmr() {
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < MAX_PLY; depth++) {
 
-            reductions[moveIndex][depth] = Depth(std::max(2, int(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE))));
+            reductions[moveIndex][depth] = Depth(std::max(1, int(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE))));
         }
     }
 }
