@@ -15,15 +15,15 @@ BlackCore is a UCI compatible c++ chess engine written from scratch.
 Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
 move generator.
 
-## Playing strength - Last updated 2022. dec. 26.
+### Playing strength - Last updated: 2022. 12. 30.
 
-| Version   |   CCRL Blitz elo   |               CCRL 40/15 elo |
-|:----------|:------------------:|-----------------------------:|
-| v4.0 4CPU | ~3200 (estimation) |           ~3200 (estimation) |
-| v4.0 1CPU | ~3100 (estimation) |           ~3100 (estimation) |
-| v3.0 1CPU |        3069        |                         3035 |
-| v2.0 1CPU |        N/A         |                         2982 |
-| v1.0 1CPU |        2134        |                          N/A |
+| Version   |   CCRL 2'+1" elo   |   CCRL 40/15 elo   | CEGT 40/4 elo |
+|:----------|:------------------:|:------------------:|:-------------:|
+| v4.0 4CPU | ~3200 (estimation) | ~3200 (estimation) |      N/A      |
+| v4.0 1CPU | ~3100 (estimation) | ~3100 (estimation) |     3068      |
+| v3.0 1CPU |        3069        |        3035        |     2941      |
+| v2.0 1CPU |        N/A         |        2982        |      N/A      |
+| v1.0 1CPU |        2134        |        N/A         |      N/A      |
 
 ## Installation
 
