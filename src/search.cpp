@@ -348,14 +348,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     // except that it will further improve.
     bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
 
-    if (notRootNode && nonPvNode && !inCheck && !isSingularRoot) {
+    if (notRootNode && !inCheck && !isSingularRoot) {
 
         /*
          * Razoring
          *
          * At depth 1 safely drop into quiescence search, if the static evaluation is very low.
          */
-        if (depth == 1 && staticEval + RAZOR_MARGIN < alpha) {
+        if (nonPvNode && depth == 1 && staticEval + RAZOR_MARGIN < alpha) {
             return quiescence<NON_PV_NODE>(pos, td, alpha, beta, ply);
         }
 
@@ -364,7 +364,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          *
          * At low depths if the static evaluation is very high return beta.
          */
-        if (depth <= RFP_DEPTH &&
+        if (nonPvNode && depth <= RFP_DEPTH &&
             staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
             std::abs(beta) < WORST_MATE)
             return beta;
@@ -375,7 +375,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          * If the static evaluation is better than beta, give the turn to the opponent and hope that it
          * will stay big enough to cause a beta-cutoff in a reduced depth search.
          */
-        if (prevMove.isOk() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
+        if (nonPvNode && prevMove.isOk() && depth >= NULL_MOVE_DEPTH && staticEval >= beta) {
 
             // Don't want to make a null move in a Zugzwang position
             if (pos.pieces<KNIGHT>(color) | pos.pieces<BISHOP>(color) | pos.pieces<ROOK>(color) |
