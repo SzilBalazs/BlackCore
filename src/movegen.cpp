@@ -16,6 +16,7 @@
 
 #include "movegen.h"
 
+// Generates all the promotions of a move.
 inline Move *makePromo(Move *moves, Square from, Square to) {
     *moves++ = Move(from, to, PROMO_KNIGHT);
     *moves++ = Move(from, to, PROMO_BISHOP);
@@ -24,6 +25,7 @@ inline Move *makePromo(Move *moves, Square from, Square to) {
     return moves;
 }
 
+// Generates all the promotion captures of a move.
 inline Move *makePromoCapture(Move *moves, Square from, Square to) {
     *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT);
     *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP);
@@ -32,6 +34,7 @@ inline Move *makePromoCapture(Move *moves, Square from, Square to) {
     return moves;
 }
 
+// Returns all the attacked squares by a side.
 template<Color color>
 inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
 
@@ -50,6 +53,7 @@ inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     return result;
 }
 
+// Generates all legal moves of the pieces.
 template<bool capturesOnly, bool pinHV, bool pinDA>
 inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
                                      Bitboard occupied, Bitboard empty, Bitboard enemy) {
@@ -80,6 +84,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
     return moves;
 }
 
+// Generates all the legal pawn moves.
 template<Color color, bool capturesOnly>
 Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard checkMask,
                         Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
@@ -231,6 +236,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     return moves;
 }
 
+// Generates all the legal king moves.
 template<bool capturesOnly>
 inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
                                Bitboard safeSquares, Bitboard empty, Bitboard enemy) {
@@ -253,6 +259,7 @@ inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
     return moves;
 }
 
+// Returns the "to" squares which evades check.
 inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard checkers) {
     unsigned int checks = checkers.popCount();
     if (checks == 0) {
@@ -270,6 +277,7 @@ inline Bitboard generateCheckMask(const Position &pos, Square king, Bitboard che
     }
 }
 
+// Generates all the legal slider and knight moves using the generateMovesFromPieces utility.
 template<bool capturesOnly>
 inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboard pieces,
                                         Bitboard occupied, Bitboard empty, Bitboard enemy, Bitboard checkMask,
@@ -289,6 +297,7 @@ inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboa
     return moves;
 }
 
+// Generates all the legal moves in a position.
 template<Color color, bool capturesOnly>
 Move *generateMoves(const Position &pos, Move *moves) {
     constexpr Color enemyColor = EnemyColor<color>();
@@ -406,6 +415,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     return moves;
 }
 
+// Wrapper around the stm template.
 template<bool capturesOnly>
 Move *generateMoves(const Position &pos, Move *moves) {
     if (pos.getSideToMove() == WHITE) {
@@ -415,6 +425,7 @@ Move *generateMoves(const Position &pos, Move *moves) {
     }
 }
 
+// Wrapper around captures only template.
 Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly) {
     if (capturesOnly) {
         return generateMoves<true>(pos, moves);

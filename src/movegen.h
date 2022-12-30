@@ -42,6 +42,7 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
 
 Move *generateMoves(const Position &pos, Move *moves, bool capturesOnly);
 
+// Stores and orders legal moves in a position.
 struct MoveList {
     Move moves[200];
     Move *movesEnd;
@@ -51,6 +52,7 @@ struct MoveList {
 
     unsigned int count;
 
+    // Constructor that generates and scores legal moves.
     MoveList(const Position &pos, ThreadData &td, Move prevMove, bool capturesOnly, bool rootNode) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
@@ -61,10 +63,12 @@ struct MoveList {
         }
     }
 
+    // Returns true if there are no more moves left.
     inline bool empty() const {
         return index == count;
     }
 
+    // Sorts and returns the next best scored move.
     inline Move nextMove() {
         unsigned int best = index;
         for (unsigned int i = index; i < count; i++) {

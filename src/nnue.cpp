@@ -32,6 +32,7 @@ namespace NNUE {
     alignas(64) int16_t L_1_WEIGHTS[L_1_SIZE * 2];
     alignas(64) int16_t L_1_BIASES[1];
 
+    // Copies accumulator.
     void Accumulator::loadAccumulator(NNUE::Accumulator &accumulator) {
         for (Color perspective : {WHITE, BLACK}) {
 #ifdef AVX2
@@ -57,6 +58,7 @@ namespace NNUE {
         }
     }
 
+    // Refreshes the accumulator.
     void Accumulator::refresh(const Position &pos) {
         for (Color perspective : {WHITE, BLACK}) {
             std::memcpy(hiddenLayer[perspective], L_0_BIASES, sizeof(int16_t) * L_1_SIZE);
@@ -70,9 +72,10 @@ namespace NNUE {
         }
     }
 
+    // Adds a feature and forward propagates it to L_1.
     void Accumulator::addFeature(Color pieceColor, PieceType pieceType, Square sq) {
         for (Color perspective : {WHITE, BLACK}) {
-            unsigned int index = getAccumulatorIndex(perspective, pieceColor, pieceType, sq);
+            unsigned int index = getInputIndex(perspective, pieceColor, pieceType, sq);
 #ifdef AVX2
             for (int i = 0; i < chunkNum; i += 4) {
                 const int offset1 = (i + 0) * regWidth;
@@ -108,9 +111,10 @@ namespace NNUE {
         }
     }
 
+    // Removes a feature and forward propagates it to L_1.
     void Accumulator::removeFeature(Color pieceColor, PieceType pieceType, Square sq) {
         for (Color perspective : {WHITE, BLACK}) {
-            unsigned int index = getAccumulatorIndex(perspective, pieceColor, pieceType, sq);
+            unsigned int index = getInputIndex(perspective, pieceColor, pieceType, sq);
 #ifdef AVX2
             for (int i = 0; i < chunkNum; i += 4) {
 
@@ -147,6 +151,7 @@ namespace NNUE {
         }
     }
 
+    // Forward propagates L_1 to L_2.
     Score Accumulator::forward(Color stm) {
 
         int32_t output = L_1_BIASES[0];
@@ -169,11 +174,13 @@ namespace NNUE {
             }
         }
 
+        // Scales back the output with the quantization scales.
         return output * 400 / (255 * 255);
     }
 
     void init() {
 
+        // Loads values from the embedded net.
         int ptr = 0;
         std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
         ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;

@@ -61,7 +61,6 @@ void Position::undoNullMove() {
 }
 
 bool Position::isRepetition() {
-    // TODO we can make this faster, because we only have to check every second ply
     for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
         if (state->hash == ptr->hash) {
             return true;
@@ -73,7 +72,9 @@ bool Position::isRepetition() {
 void Position::display() const {
 
     std::vector<string> text;
+    text.emplace_back(string("Half-move counter: ") + std::to_string(getMove50()));
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
+    
     if (getEpSquare() != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
     string cr;
@@ -87,9 +88,9 @@ void Position::display() const {
         cr += 'q';
     if (cr.empty())
         cr = "None";
+
     text.emplace_back(string("Castling rights: ") + cr);
     text.emplace_back(string("Side to move: ") + string(getSideToMove() == WHITE ? "White" : "Black"));
-    // TODO FEN, full-half move counter
 
     cout << "\n     A   B   C   D   E   F   G   H  \n";
     for (int i = 8; i >= 1; i--) {

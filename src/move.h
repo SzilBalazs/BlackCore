@@ -76,27 +76,33 @@ public:
     constexpr bool equalFlag(unsigned int flag) const {
         return (data >> 12) == flag;
     }
-
+    
+    // Returns true if the move is not null.
     constexpr bool isOk() const {
         return data != 0;
     }
-
+    
+    // Returns true if the move is a capture.
     constexpr bool isCapture() const {
         return isFlag(CAPTURE_FLAG);
     }
 
+    // Returns true if the move is a promotion.
     constexpr bool isPromo() const {
         return isFlag(PROMO_FLAG);
     }
 
+    // Returns true if the move has the SPECIAL1_FLAG set.
     constexpr bool isSpecial1() const {
         return isFlag(SPECIAL1_FLAG);
     }
 
+    // Returns true if the move has the SPECIAL2_FLAG set.
     constexpr bool isSpecial2() const {
         return isFlag(SPECIAL2_FLAG);
     }
 
+    // Returns true if the move is quiet - not a capture.
     constexpr bool isQuiet() const {
         return !isCapture();
     }
@@ -113,6 +119,7 @@ public:
         return (data & 0xFFFF) != (a.data & 0xFFFF);
     }
 
+    // Returns the uci format string of the move.
     std::string str() const;
 
 private:

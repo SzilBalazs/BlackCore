@@ -47,11 +47,11 @@ namespace NNUE {
     constexpr int regWidth = 256 / 16;
     constexpr int chunkNum = 256 / regWidth;
 
+    // Stores the hidden layer of the NNUE.
     struct Accumulator {
         alignas(32) int16_t hiddenLayer[2][L_1_SIZE];
 
-        constexpr Accumulator() {
-        }
+        constexpr Accumulator() {}
 
         void loadAccumulator(Accumulator &accumulator);
 
@@ -64,11 +64,13 @@ namespace NNUE {
         Score forward(Color stm);
     };
 
-    constexpr int getAccumulatorIndex(Color perspective, Color pieceColor, PieceType pieceType, Square square) {
+    // Returns the L_0 index of a feature.
+    constexpr int getInputIndex(Color perspective, Color pieceColor, PieceType pieceType, Square square) {
         return (perspective == WHITE ? pieceColor : 1 - pieceColor) * 384 + pieceType * 64 +
                (perspective == WHITE ? square : square ^ 56);
     }
 
+    // Activation function used in BlackCore's NNUE.
     constexpr int16_t ReLU(int16_t in) {
         return std::max((int16_t) 0, in);
     }
