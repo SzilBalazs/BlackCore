@@ -23,17 +23,18 @@
 #include "utils.h"
 #include <vector>
 
+// Stores the state of a board.
 struct BoardState {
-    Color stm = COLOR_EMPTY;
-    Square epSquare = NULL_SQUARE;
-    unsigned char castlingRights = 0;
-    U64 hash = 0;
+    Color stm = COLOR_EMPTY;                // Side to move
+    Square epSquare = NULL_SQUARE;          // En passant square
+    unsigned char castlingRights = 0;       // Castling rights
+    U64 hash = 0;                           // Zobrist hash
 
-    Piece capturedPiece = {};
+    Piece capturedPiece = {};               // Piece captured in the last move
 
-    BoardState *lastIrreversibleMove = nullptr;
+    BoardState *lastIrreversibleMove = nullptr; // Pointer to the last irreversible state.
 
-    NNUE::Accumulator accumulator = {};
+    NNUE::Accumulator accumulator = {};     // NNUE accumulator
 
     constexpr BoardState() = default;
 
@@ -46,6 +47,7 @@ struct BoardState {
     }
 };
 
+// Stores general information about a position.
 struct RawState {
     Piece board[64];
     Bitboard pieceBB[6] = {0}, allPieceBB[2] = {0};
@@ -76,7 +78,7 @@ struct StateStack {
         currState--;
     }
 
-    inline BoardState *top() const {
+    [[nodiscard]] inline BoardState *top() const {
         return currState;
     }
 
@@ -92,7 +94,7 @@ struct StateStack {
         currState = stateStart;
     }
 
-    inline Ply getMove50() const {
+    [[nodiscard]] inline Ply getMove50() const {
         return currState - currState->lastIrreversibleMove;
     }
 };
@@ -101,100 +103,120 @@ struct StateStack {
 
 class Position {
 public:
-    constexpr Piece pieceAt(Square square) const {
+    // Returns the piece at a square.
+    [[nodiscard]] constexpr Piece pieceAt(Square square) const {
         return board[square];
     }
 
-    // This will be mostly used with constant color and type so this will result a nicer code
-    // pieces<{ROOK, WHITE}>() --> pieces<WHITE, ROOK>()
+    // Returns the bitboard of all the pieces of a color and type.
     template<Color color, PieceType type>
-    constexpr Bitboard pieces() const {
+    [[nodiscard]] constexpr Bitboard pieces() const {
         return pieceBB[type] & allPieceBB[color];
     }
 
+    // Returns the bitboard of all the pieces of a color and type.
     template<Color color>
-    constexpr Bitboard pieces(PieceType type) const {
+    [[nodiscard]] constexpr Bitboard pieces(PieceType type) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
+    // Returns the bitboard of all the pieces of a color and type.
     template<PieceType type>
-    constexpr Bitboard pieces(Color color) const {
+    [[nodiscard]] constexpr Bitboard pieces(Color color) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
-    constexpr Bitboard pieces(Color color, PieceType type) const {
+    // Returns the bitboard of all the pieces of a color and type.
+    [[nodiscard]] constexpr Bitboard pieces(Color color, PieceType type) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
+    // Returns the bitboard of all the pieces of a type.
     template<PieceType type>
-    constexpr Bitboard pieces() const {
+    [[nodiscard]] constexpr Bitboard pieces() const {
         return pieceBB[type];
     }
 
-    constexpr Bitboard pieces(PieceType type) const {
+    // Returns the bitboard of all the pieces of a type.
+    [[nodiscard]] constexpr Bitboard pieces(PieceType type) const {
         return pieceBB[type];
     }
 
+    // Returns the bitboard of all the friendly/same color pieces.
     template<Color color>
-    constexpr Bitboard friendly() const {
+    [[nodiscard]] constexpr Bitboard friendly() const {
         return allPieceBB[color];
     }
 
-    constexpr Bitboard friendly(Color color) const {
+    // Returns the bitboard of all the friendly/same color pieces.
+    [[nodiscard]] constexpr Bitboard friendly(Color color) const {
         return allPieceBB[color];
     }
 
+    // Returns the bitboard of all the enemy/different color pieces.
     template<Color color>
-    constexpr Bitboard enemy() const {
+    [[nodiscard]] constexpr Bitboard enemy() const {
         return allPieceBB[EnemyColor<color>()];
     }
 
+    // Returns the bitboard of all the enemy or empty pieces.
     template<Color color>
-    constexpr Bitboard enemyOrEmpty() const {
+    [[nodiscard]] constexpr Bitboard enemyOrEmpty() const {
         return ~friendly<color>();
     }
 
-    inline Bitboard occupied() const {
+    // Returns the bitboard of all occupied squares.
+    [[nodiscard]] inline Bitboard occupied() const {
         return allPieceBB[WHITE] | allPieceBB[BLACK];
     }
 
-    inline Bitboard empty() const {
+    // Returns the bitboard of all empty squares.
+    [[nodiscard]] inline Bitboard empty() const {
         return ~occupied();
     }
 
-    inline Color getSideToMove() const {
+    // Returns the color that makes the next move.
+    [[nodiscard]] inline Color getSideToMove() const {
         return state->stm;
     }
 
-    inline Square getEpSquare() const {
+    // Returns the en-passant square.
+    [[nodiscard]] inline Square getEpSquare() const {
         return state->epSquare;
     }
 
-    inline bool getCastleRight(unsigned char castleRight) const {
+    // Returns true if the castleRight is legal.
+    [[nodiscard]] inline bool getCastleRight(unsigned char castleRight) const {
         return castleRight & state->castlingRights;
     }
 
-    inline unsigned char getCastlingRights() const {
+    // Returns the castling rights.
+    [[nodiscard]] inline unsigned char getCastlingRights() const {
         return state->castlingRights;
     }
 
-    inline BoardState *getState() {
+    // Returns the current board state.
+    [[nodiscard]] inline BoardState *getState() {
         return state;
     }
 
-    inline BoardState *getState() const {
+    // Returns the current board state.
+    [[nodiscard]] inline BoardState *getState() const {
         return state;
     }
 
+    // Resets the state stack. Most commonly used after an irreversible move.
     inline void resetStack() {
         states.reset();
     }
 
-    inline U64 getHash() const {
+    // Returns the Zobrist hash of the position.
+    [[nodiscard]] inline U64 getHash() const {
         return state->hash;
     }
 
-    inline Ply getMove50() const {
+    // Returns the half-move counter of the position.
+    [[nodiscard]] inline Ply getMove50() const {
         return states.getMove50();
     }
 
@@ -216,7 +238,7 @@ public:
 
     void loadPositionFromRawState(const RawState &rawState);
 
-    RawState getRawState() const;
+    [[nodiscard]] RawState getRawState() const;
 
     Position();
 
@@ -232,10 +254,12 @@ private:
     template<bool updateAccumulator>
     void movePiece(Square from, Square to);
 
+    // Sets a castling right.
     inline void setCastleRight(unsigned char castleRight) {
         state->castlingRights |= castleRight;
     }
 
+    // Removes a castling right.
     inline void removeCastleRight(unsigned char castleRight) {
         state->castlingRights &= ~castleRight;
     }
@@ -248,13 +272,19 @@ private:
     template<Color color>
     void undoMove(Move move);
 
-    Piece board[64];
+    /*
+     * BlackCore uses a hybrid approach for board representation.
+     *
+     * Bitboards most importantly allows us to loop through a type of piece.
+     * For example RANK2 & WHITE & PAWN
+     */
 
-    Bitboard pieceBB[6], allPieceBB[2];
-
+    Piece board[64];                    // Mailbox board representation
+    Bitboard pieceBB[6], allPieceBB[2]; // Bitboard board representation
     StateStack states;
 };
 
+// Clears a square and updates hash & NNUE accumulator.
 template<bool updateAccumulator>
 void Position::clearSquare(Square square) {
     if (pieceAt(square).isNull())
@@ -274,6 +304,7 @@ void Position::clearSquare(Square square) {
     }
 }
 
+// Sets a square and updates hash & NNUE accumulator.
 template<bool updateAccumulator>
 void Position::setSquare(Square square, Piece piece) {
     if (!pieceAt(square).isNull()) {
@@ -300,12 +331,14 @@ void Position::setSquare(Square square, Piece piece) {
     }
 }
 
+// Moves a piece.
 template<bool updateAccumulator>
 void Position::movePiece(Square from, Square to) {
     setSquare<updateAccumulator>(to, pieceAt(from));
     clearSquare<updateAccumulator>(from);
 }
 
+// Makes a move. Doesn't check for legality!
 template<Color color>
 void Position::makeMove(Move move) {
 
@@ -397,6 +430,7 @@ void Position::makeMove(Move move) {
     }
 }
 
+// Undo a move. Doesn't check for legality!
 template<Color color>
 void Position::undoMove(Move move) {
 
@@ -434,6 +468,7 @@ void Position::undoMove(Move move) {
     states.pop();
 }
 
+// Makes a move. Doesn't check for legality!
 inline void Position::makeMove(Move move) {
     if (getSideToMove() == WHITE)
         makeMove<WHITE>(move);
@@ -441,6 +476,7 @@ inline void Position::makeMove(Move move) {
         makeMove<BLACK>(move);
 }
 
+// Undo a move. Doesn't check for legality!
 inline void Position::undoMove(Move move) {
     if (getSideToMove() == WHITE)
         undoMove<WHITE>(move);

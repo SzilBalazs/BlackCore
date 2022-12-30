@@ -17,8 +17,8 @@
 #ifndef BLACKCORE_THREADS_H
 #define BLACKCORE_THREADS_H
 
-#include "move.h"
 #include "tt.h"
+#include "search.h"
 
 #include <cstring>
 #include <mutex>
@@ -40,10 +40,11 @@ struct ThreadData {
 
     bool uciMode = false;
 
+    // Arrays used for retrieving the principal variation.
     Move pvArray[MAX_PLY + 1][MAX_PLY + 1];
-    int pvLength[MAX_PLY + 1];
+    Ply pvLength[MAX_PLY + 1];
 
-    // Move ordering
+    // Arrays used for move ordering.
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
     Score historyTable[2][64][64];
@@ -116,7 +117,7 @@ struct ThreadData {
         if (move == getHashMove(pos.getHash())) {
             return 10000000;
         } else if (move.isPromo()) {
-            if (move.isSpecial1() && move.isSpecial2()) { // Queen promo
+            if (move.isSpecial1() && move.isSpecial2()) { // Queen promotion
                 return 9000000;
             } else { // Anything else, under promotions should only be played in really few cases
                 return -3000000;

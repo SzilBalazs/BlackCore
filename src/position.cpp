@@ -25,6 +25,7 @@
 
 using std::cout, std::string;
 
+// Clears the position.
 void Position::clearPosition() {
     for (auto &i : pieceBB) {
         i = 0;
@@ -41,6 +42,7 @@ void Position::clearPosition() {
     state->lastIrreversibleMove = state;
 }
 
+// Makes a null move, which is used in null move pruning.
 void Position::makeNullMove() {
     BoardState newState;
 
@@ -56,10 +58,12 @@ void Position::makeNullMove() {
     states.push(newState);
 }
 
+// Undo a null move.
 void Position::undoNullMove() {
     states.pop();
 }
 
+// Returns true if one more instance of this position was found before.
 bool Position::isRepetition() {
     for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
         if (state->hash == ptr->hash) {
@@ -69,6 +73,7 @@ bool Position::isRepetition() {
     return false;
 }
 
+// Displays the current position in the console.
 void Position::display() const {
 
     std::vector<string> text;
@@ -113,6 +118,7 @@ void Position::display() const {
          << std::endl;
 }
 
+// Displays the NNUE's take on the current position.
 void Position::displayEval() {
     Score score = eval(*this);
     cout << "\n      A     B     C     D     E     F     G     H    \n";
@@ -145,6 +151,7 @@ void Position::displayEval() {
     cout << "Eval: " << score << std::endl;
 }
 
+// Loads the board from a FEN.
 void Position::loadPositionFromFen(const string &fen) {
     clearPosition();
 
@@ -208,6 +215,7 @@ void Position::loadPositionFromFen(const string &fen) {
     state->accumulator.refresh(*this);
 }
 
+// Loads a raw state into the position.
 void Position::loadPositionFromRawState(const RawState &rawState) {
     clearPosition();
     state->stm = rawState.stm;
@@ -228,6 +236,7 @@ void Position::loadPositionFromRawState(const RawState &rawState) {
     state->accumulator.refresh(*this);
 }
 
+// Returns the raw state of the position.
 RawState Position::getRawState() const {
     RawState rawState;
     rawState.stm = getSideToMove();

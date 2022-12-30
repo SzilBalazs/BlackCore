@@ -95,6 +95,7 @@ U64 getTotalNodes();
 
 void initLmr();
 
+// Initializes stuff that is needed for a search.
 inline void initSearch() {
     initBitboard();
     initLmr();

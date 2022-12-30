@@ -189,7 +189,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
      *
      * If we have already searched this position, we can return that score.
      */
-    if (ttHit && nonPvNode && (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
+    if (ttHit && nonPvNode && (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
     }
 
@@ -215,7 +215,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     }
 
     MoveList moves = {pos, td, Move(), true, false};
-    EntryFlag ttFlag = ALPHA;
+    EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
 
     while (!moves.empty()) {
@@ -255,7 +255,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         // If the score is too good to be acceptable by our opponent return beta.
         if (score >= beta) {
             // If beta cutoff happens save the information to the transposition table.
-            ttSave(pos.getHash(), 0, score, BETA, move);
+            ttSave(pos.getHash(), 0, score, TT_BETA, move);
 
             return beta;
         }
@@ -263,7 +263,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         // If the score is better than alpha update alpha.
         if (score > alpha) {
             alpha = score;
-            ttFlag = EXACT;
+            ttFlag = TT_EXACT;
             bestMove = move;
         }
     }
@@ -311,7 +311,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * big enough depth search, return the evaluation from TT.
      */
     if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() &&
-        (ttEntry.flag == EXACT || (ttEntry.flag == ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == BETA && ttEntry.eval >= beta))) {
+        (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
     }
 
@@ -418,7 +418,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     }
 
     Move bestMove;
-    EntryFlag ttFlag = ALPHA;
+    EntryFlag ttFlag = TT_ALPHA;
     int index = 0;
     std::vector<Move> quiets;
     while (!moves.empty()) {
@@ -467,7 +467,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          * If 1 move is a lot better than all the others extend by 1 ply.
          * This implementation is heavily inspired by StockFish & Alexandria
          */
-        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry.hashMove && !isSingularRoot && ttEntry.flag == BETA && ttEntry.depth >= depth - 3) {
+        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry.hashMove && !isSingularRoot && ttEntry.flag == TT_BETA && ttEntry.depth >= depth - 3) {
             Score singularBeta = ttEntry.eval - depth * 3;
             Depth singularDepth = (depth - 1) / 2;
 
@@ -551,7 +551,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 }
 
                 // Save the information gathered into the transposition table.
-                ttSave(pos.getHash(), depth, beta, BETA, move);
+                ttSave(pos.getHash(), depth, beta, TT_BETA, move);
             }
             return beta;
         }
@@ -559,7 +559,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if (score > alpha) {
             alpha = score;
             bestMove = move;
-            ttFlag = EXACT;
+            ttFlag = TT_EXACT;
 
             // Update PV-line
             td.pvArray[ply][ply] = move;

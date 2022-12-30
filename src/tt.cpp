@@ -25,18 +25,22 @@
 
 TTable tt;
 
+// Returns a candidate ttEntry corresponding to a hash.
 TTEntry *getEntry(U64 hash) {
     return tt.table + (hash & tt.mask);
 }
 
+// Clears the transposition table.
 void ttClear() {
     std::memset(tt.table, 0, tt.bucketCount * sizeof(TTEntry));
 }
 
+// Frees the space allocated for the transposition table.
 void ttFree() {
     free(tt.table);
 }
 
+// Resizes the transposition table.
 void ttResize(unsigned int MBSize) {
 
     if (tt.bucketCount)
@@ -62,6 +66,7 @@ void ttResize(unsigned int MBSize) {
     ttClear();
 }
 
+// Probes a Zobrish hash and sets ttHit to true, if it succeeds.
 TTEntry ttProbe(U64 hash, bool &ttHit) {
     TTEntry *entry = getEntry(hash);
 
@@ -72,10 +77,11 @@ TTEntry ttProbe(U64 hash, bool &ttHit) {
     return *entry;
 }
 
+// Saves an entry into the transposition table.
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     TTEntry *entry = getEntry(hash);
 
-    if (entry->hash != hash || flag == EXACT || entry->depth * 2 / 3 <= depth) {
+    if (entry->hash != hash || flag == TT_EXACT || entry->depth * 2 / 3 <= depth) {
         entry->hash = hash;
         entry->depth = depth;
         entry->eval = eval;
@@ -84,6 +90,7 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     }
 }
 
+// Returns the hash move corresponding to the Zobrist hash.
 Move getHashMove(U64 hash) {
     TTEntry *entry = getEntry(hash);
     if (entry->hash == hash)
@@ -91,6 +98,7 @@ Move getHashMove(U64 hash) {
     return {};
 }
 
+// Prefetches a transposition table entry.
 void ttPrefetch(U64 hash) {
     __builtin_prefetch(&tt.table[hash & tt.mask], 0, 1);
 }

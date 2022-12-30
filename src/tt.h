@@ -21,10 +21,14 @@
 #include "move.h"
 
 enum EntryFlag : uint8_t {
-    NONE = 0,
-    EXACT = 1,
-    ALPHA = 2,
-    BETA = 3
+    TT_NONE = 0,
+    TT_EXACT = 1,
+    
+    // UPPERBOUND
+    TT_ALPHA = 2,
+    
+    // LOWERBOUND
+    TT_BETA = 3
 };
 
 struct TTEntry {    // Total: 16 bytes
