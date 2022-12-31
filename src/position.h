@@ -25,16 +25,16 @@
 
 // Stores the state of a board.
 struct BoardState {
-    Color stm = COLOR_EMPTY;                // Side to move
-    Square epSquare = NULL_SQUARE;          // En passant square
-    unsigned char castlingRights = 0;       // Castling rights
-    U64 hash = 0;                           // Zobrist hash
+    Color stm = COLOR_EMPTY;          // Side to move
+    Square epSquare = NULL_SQUARE;    // En passant square
+    unsigned char castlingRights = 0; // Castling rights
+    U64 hash = 0;                     // Zobrist hash
 
-    Piece capturedPiece = {};               // Piece captured in the last move
+    Piece capturedPiece = {}; // Piece captured in the last move
 
     BoardState *lastIrreversibleMove = nullptr; // Pointer to the last irreversible state.
 
-    NNUE::Accumulator accumulator = {};     // NNUE accumulator
+    NNUE::Accumulator accumulator = {}; // NNUE accumulator
 
     constexpr BoardState() = default;
 
@@ -95,7 +95,7 @@ struct StateStack {
     }
 
     [[nodiscard]] inline Ply getMove50() const {
-        return currState - currState->lastIrreversibleMove;
+        return currState - currState->lastIrreversibleMove + 1;
     }
 };
 
