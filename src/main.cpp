@@ -15,22 +15,18 @@
 //     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "bench.h"
-#include "bitboard.h"
-#include "eval.h"
-#include "nnue.h"
-#include "search.h"
-#include "tuner.h"
+#include "tune.h"
 #include "uci.h"
 #include <iostream>
 
 int main(int argc, char **argv) {
 
 #ifdef TUNE
-    std::cout << "This build is for tuning only, please uncomment the TUNE define in constants.h for regular use!"
-              << std::endl;
+    std::cout << "This build is for tuning only!" << std::endl;
 #endif
 
     srand(RANDOM_SEED);
+
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);
@@ -41,17 +37,17 @@ int main(int argc, char **argv) {
     }
 
     if (mode == "bench") {
+#ifdef TUNE
+        Tune::initTune();
+#endif
         testSearch();
     } else if (mode == "perft") {
         testPerft();
     } else if (mode == "uci") {
         uciLoop();
     } else if (mode == "tune") {
-#ifdef TUNE
-        tune("out.fen");
-#else
-        std::cout << "This build doesn't support tuning!" << std::endl;
-#endif
+        Tune::initTune();
+        Tune::printTunePrepare();
     } else {
         std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
     }

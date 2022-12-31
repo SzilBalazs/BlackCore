@@ -16,13 +16,19 @@
 
 #include "uci.h"
 #include "bench.h"
-#include "eval.h"
 #include "position.h"
 #include "search.h"
 #include "timeman.h"
 #include "tt.h"
+#include "tune.h"
+
 #include <sstream>
 #include <vector>
+
+namespace Tune {
+    std::map<std::string, TuneEntry> tuneParams;
+    std::vector<int> tuneValues;
+} // namespace Tune
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -81,32 +87,10 @@ void uciLoop() {
     out("option", "name", "Ponder", "type", "check", "default", "false");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
 
-#ifdef TUNE
-    tuneOut("DELTA_MARGIN", 400, 200, 500);
-    tuneOut("RAZOR_MARGIN", 130, 50, 200);
-    tuneOut("RFP_DEPTH", 5, 3, 10);
-    tuneOut("RFP_DEPTH_MULTIPLIER", 70, 30, 200);
-    tuneOut("RFP_IMPROVING_MULTIPLIER", 80, 30, 200);
-    tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
-    tuneOut("NULL_MOVE_BASE_R", 4, 2, 6);
-    tuneOut("NULL_MOVE_R_SCALE", 5, 2, 10);
-    tuneOut("LMR_DEPTH", 4, 2, 10);
-    tuneOut("LMR_INDEX", 3, 1, 10);
-    tuneOut("LMP_DEPTH", 4, 1, 10);
-    tuneOut("LMP_MOVES", 5, 1, 10);
-    tuneOut("ASPIRATION_DEPTH", 9, 5, 20);
-    tuneOut("ASPIRATION_DELTA", 30, 10, 100);
-    tuneOut("SEE_MARGIN", 0, 0, 200);
-    tuneOut("PAWN_VALUE", 150, 100, 200);
-    tuneOut("KNIGHT_VALUE", 750, 300, 1000);
-    tuneOut("BISHOP_VALUE", 850, 300, 1000);
-    tuneOut("ROOK_VALUE", 800, 300, 1000);
-    tuneOut("QUEEN_VALUE", 1000, 500, 1500);
-    tuneOut("LMR_BASE", 10, 1, 30);
-    tuneOut("LMR_SCALE", 17, 10, 40);
-#endif
-
     ttResize(32);
+#ifdef TUNE
+    Tune::initTune();
+#endif
 
     // We have sent all the parameters
     out("uciok");
@@ -150,53 +134,10 @@ void uciLoop() {
                 } else if (tokens[1] == "Threads") {
                     threadCount = std::stoi(tokens[3]);
                 } else {
-#ifdef TUNE
-                    if (tokens[1] == "DELTA_MARGIN") {
-                        DELTA_MARGIN = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "RAZOR_MARGIN") {
-                        RAZOR_MARGIN = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "RFP_DEPTH") {
-                        RFP_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "RFP_DEPTH_MULTIPLIER") {
-                        RFP_DEPTH_MULTIPLIER = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "RFP_IMPROVING_MULTIPLIER") {
-                        RFP_IMPROVING_MULTIPLIER = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "NULL_MOVE_DEPTH") {
-                        NULL_MOVE_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "NULL_MOVE_BASE_R") {
-                        NULL_MOVE_BASE_R = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "NULL_MOVE_R_SCALE") {
-                        NULL_MOVE_R_SCALE = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_DEPTH") {
-                        LMR_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_INDEX") {
-                        LMR_INDEX = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMP_DEPTH") {
-                        LMP_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMP_MOVES") {
-                        LMP_MOVES = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "ASPIRATION_DEPTH") {
-                        ASPIRATION_DEPTH = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "ASPIRATION_DELTA") {
-                        ASPIRATION_DELTA = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "SEE_MARGIN") {
-                        SEE_MARGIN = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "PAWN_VALUE") {
-                        PIECE_VALUES[PAWN] = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "KNIGHT_VALUE") {
-                        PIECE_VALUES[KNIGHT] = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "BISHOP_VALUE") {
-                        PIECE_VALUES[BISHOP] = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "ROOK_VALUE") {
-                        PIECE_VALUES[ROOK] = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "QUEEN_VALUE") {
-                        PIECE_VALUES[QUEEN] = std::stoi(tokens[3]);
-                    } else if (tokens[1] == "LMR_BASE") {
-                        LMR_BASE = double(std::stoi(tokens[3])) / 10;
-                    } else if (tokens[1] == "LMR_SCALE") {
-                        LMR_SCALE = double(std::stoi(tokens[3])) / 10;
+                    if (Tune::tuneParams.count(tokens[1])) {
+                        Tune::tuneParams[tokens[1]].value = std::stoi(tokens[3]);
+                        Tune::tuneValues[Tune::tuneParams[tokens[1]].index] = std::stoi(tokens[3]);
                     }
-#endif
                 }
             }
         } else if (command == "position" || command == "pos") {

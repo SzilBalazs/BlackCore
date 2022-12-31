@@ -20,16 +20,8 @@
 #include "constants.h"
 #include "position.h"
 
-#ifdef TUNE
-
-extern Score PIECE_VALUES[6];
-
-#else
-
 constexpr Score PIECE_VALUES[6] = {
         0, 156, 561, 608, 736, 1022};
-
-#endif
 
 // Returns the score of a position using NNUE.
 inline Score eval(const Position &pos) {

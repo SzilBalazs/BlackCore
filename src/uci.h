@@ -44,12 +44,6 @@ inline void out(T a, Args... args) {
     BlackCore::_out(args...);
 }
 
-inline void tuneOut(const std::string &name, int value, int min, int max) {
-    out("option", "name", name, "type", "spin", "default", value, "min", min, "max", max);
-
-    // std::cout << "else if (tokens[1] == \"" << name << "\") {\n" << name << " = std::stoi(tokens[3]);\n}";
-}
-
 void uciLoop();
 
 #endif //BLACKCORE_UCI_H

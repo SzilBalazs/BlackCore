@@ -19,8 +19,6 @@
 
 #include <string>
 
-// #define TUNE
-
 #if defined(NATIVE) && defined(__BMI2__)
 #define BMI2
 #endif
