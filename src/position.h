@@ -47,16 +47,6 @@ struct BoardState {
     }
 };
 
-// Stores general information about a position.
-struct RawState {
-    Piece board[64];
-    Bitboard pieceBB[6] = {0}, allPieceBB[2] = {0};
-    Color stm = COLOR_EMPTY;
-    Square epSquare = NULL_SQUARE;
-    unsigned char castlingRights = 0;
-    U64 hash = 0;
-};
-
 struct StateStack {
 
     BoardState stateStart[500];
@@ -235,14 +225,14 @@ public:
     void displayEval();
 
     void loadPositionFromFen(const std::string &fen);
-
-    void loadPositionFromRawState(const RawState &rawState);
-
-    [[nodiscard]] RawState getRawState() const;
-
+    
+    void loadFromPosition(const Position &position);
+    
     Position();
 
     Position(const std::string &fen);
+
+    StateStack states;
 
 private:
     template<bool updateAccumulator>
@@ -278,10 +268,8 @@ private:
      * Bitboards most importantly allows us to loop through a type of piece.
      * For example RANK2 & WHITE & PAWN
      */
-
     Piece board[64];                    // Mailbox board representation
     Bitboard pieceBB[6], allPieceBB[2]; // Bitboard board representation
-    StateStack states;
 };
 
 // Clears a square and updates hash & NNUE accumulator.

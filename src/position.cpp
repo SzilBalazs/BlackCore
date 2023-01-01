@@ -17,6 +17,7 @@
 #include "position.h"
 #include "eval.h"
 
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <vector>
@@ -79,7 +80,7 @@ void Position::display() const {
     std::vector<string> text;
     text.emplace_back(string("Half-move counter: ") + std::to_string(getMove50()));
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
-    
+
     if (getEpSquare() != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
     string cr;
@@ -215,52 +216,31 @@ void Position::loadPositionFromFen(const string &fen) {
     state->accumulator.refresh(*this);
 }
 
-// Loads a raw state into the position.
-void Position::loadPositionFromRawState(const RawState &rawState) {
-    clearPosition();
-    state->stm = rawState.stm;
-    state->epSquare = rawState.epSquare;
-    state->castlingRights = rawState.castlingRights;
-    state->hash = rawState.hash;
-    allPieceBB[WHITE] = rawState.allPieceBB[WHITE];
-    allPieceBB[BLACK] = rawState.allPieceBB[BLACK];
-
-    for (int i = 0; i < 6; i++) {
-        pieceBB[i] = rawState.pieceBB[i];
-    }
-
-    for (Square sq = A1; sq < 64; sq += 1) {
-        board[sq] = rawState.board[sq];
-    }
-
-    state->accumulator.refresh(*this);
-}
-
-// Returns the raw state of the position.
-RawState Position::getRawState() const {
-    RawState rawState;
-    rawState.stm = getSideToMove();
-    rawState.epSquare = getEpSquare();
-    rawState.castlingRights = getCastlingRights();
-    rawState.hash = getHash();
-    rawState.allPieceBB[WHITE] = allPieceBB[WHITE];
-    rawState.allPieceBB[BLACK] = allPieceBB[BLACK];
-
-    for (int i = 0; i < 6; i++) {
-        rawState.pieceBB[i] = pieceBB[i];
-    }
-
-    for (Square sq = A1; sq < 64; sq += 1) {
-        rawState.board[sq] = board[sq];
-    }
-
-    return rawState;
-}
-
 Position::Position() {
     clearPosition();
 }
 
 Position::Position(const std::string &fen) {
     loadPositionFromFen(fen);
+}
+
+void Position::loadFromPosition(const Position &position) {
+    for (Square idx = A1; idx < 64; idx += 1) {
+        board[idx] = position.pieceAt(idx);
+    }
+
+    for (Color color : {WHITE, BLACK}) {
+        allPieceBB[color] = position.friendly(color);
+    }
+
+    for (PieceType type : {KING, PAWN, KNIGHT, BISHOP, ROOK, QUEEN}) {
+        pieceBB[type] = position.pieces(type);
+    }
+
+    std::memcpy(states.stateStart, position.states.stateStart, sizeof(BoardState) * 500);
+    states.currState = states.stateStart + (position.states.currState - position.states.stateStart);
+
+    for (int idx = 0; idx < 500; idx++) {
+        states.stateStart[idx].lastIrreversibleMove = states.stateStart + (position.states.stateStart[idx].lastIrreversibleMove - position.states.stateStart);
+    }
 }

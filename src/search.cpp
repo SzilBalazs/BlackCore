@@ -709,7 +709,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     // Create a copy of the searched position, one for each thread.
     for (int idx = 0; idx < threadCount; idx++) {
-        tds[idx].position.loadPositionFromRawState(pos.getRawState());
+        tds[idx].position.loadFromPosition(pos);
     }
 
     // Initializes time manager.
