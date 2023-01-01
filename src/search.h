@@ -21,36 +21,6 @@
 #include "uci.h"
 #include <atomic>
 
-#ifdef TUNE
-
-extern Score DELTA_MARGIN;
-
-extern Score RAZOR_MARGIN;
-
-extern Depth RFP_DEPTH;
-extern Score RFP_DEPTH_MULTIPLIER;
-extern Score RFP_IMPROVING_MULTIPLIER;
-
-extern Depth NULL_MOVE_DEPTH;
-extern Depth NULL_MOVE_BASE_R;
-extern Depth NULL_MOVE_R_SCALE;
-
-extern Depth LMR_DEPTH;
-extern double LMR_BASE;
-extern double LMR_SCALE;
-extern int LMR_INDEX;
-
-extern Depth LMP_DEPTH;
-extern int LMP_MOVES;
-
-extern Depth ASPIRATION_DEPTH;
-extern Score ASPIRATION_DELTA;
-extern Score ASPIRATION_BOUND;
-
-extern Score SEE_MARGIN;
-
-#else
-
 constexpr Score DELTA_MARGIN = 252;
 
 constexpr Score RAZOR_MARGIN = 155;
@@ -64,27 +34,23 @@ constexpr Depth NULL_MOVE_BASE_R = 4;
 constexpr Depth NULL_MOVE_R_SCALE = 2;
 
 constexpr Depth LMR_DEPTH = 3;
-constexpr double LMR_BASE = 0;
-constexpr double LMR_SCALE = 1.65;
-constexpr int LMR_INDEX = 2;
+constexpr double LMR_BASE = 0.1;
+constexpr double LMR_SCALE = 1.6;
+constexpr int LMR_INDEX = 3;
 
 constexpr Depth LMP_DEPTH = 4;
 constexpr int LMP_MOVES = 5;
 
-constexpr Depth FUTILITY_DEPTH = 3;
-constexpr Score FUTILITY_MARGIN = 30;
-constexpr Score FUTILITY_MARGIN_DEPTH = 60;
-constexpr Score FUTILITY_MARGIN_IMPROVING = 80;
+constexpr Depth FUTILITY_DEPTH = 5;
+constexpr Score FUTILITY_MARGIN = 33;
+constexpr Score FUTILITY_MARGIN_DEPTH = 53;
+constexpr Score FUTILITY_MARGIN_IMPROVING = 71;
 
 constexpr Depth ASPIRATION_DEPTH = 9;
 constexpr Score ASPIRATION_DELTA = 28;
 constexpr Score ASPIRATION_BOUND = 3000;
 
-constexpr Score SEE_MARGIN = 2;
-
-constexpr Depth SINGULAR_DEPTH = 7;
-
-#endif
+constexpr Depth SINGULAR_DEPTH = 8;
 
 struct SearchStack {
     Move move, excludedMove;

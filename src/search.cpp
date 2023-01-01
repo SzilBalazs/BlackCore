@@ -25,36 +25,6 @@
 #include <cmath>
 #include <thread>
 
-#ifdef TUNE
-
-Score DELTA_MARGIN = 252;
-
-Score RAZOR_MARGIN = 155;
-
-Depth RFP_DEPTH = 8;
-Score RFP_DEPTH_MULTIPLIER = 56;
-Score RFP_IMPROVING_MULTIPLIER = 46;
-
-Depth NULL_MOVE_DEPTH = 2;
-Depth NULL_MOVE_BASE_R = 3;
-Depth NULL_MOVE_R_SCALE = 3;
-
-Depth LMR_DEPTH = 3;
-double LMR_BASE = 1;
-double LMR_SCALE = 1.65;
-int LMR_INDEX = 2;
-
-Depth LMP_DEPTH = 4;
-int LMP_MOVES = 5;
-
-Depth ASPIRATION_DEPTH = 9;
-Score ASPIRATION_DELTA = 28;
-Score ASPIRATION_BOUND = 3000;
-
-Score SEE_MARGIN = 2;
-
-#endif
-
 // Move index -> depth
 Depth reductions[200][MAX_PLY + 1];
 
@@ -238,7 +208,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
          *
          * If the move loses material we skip its evaluation
          */
-        if (alpha > -WORST_MATE && see(pos, move) < -SEE_MARGIN)
+        if (alpha > -WORST_MATE && see(pos, move) < 0)
             continue;
 
         td.nodes++;
