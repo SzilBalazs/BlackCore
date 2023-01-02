@@ -217,7 +217,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
          *
          * If the move loses material we skip its evaluation
          */
-        if (alpha > -WORST_MATE && see(pos, move) < 0)
+        if (alpha > TB_BEST_LOSS && see(pos, move) < 0)
             continue;
 
         td.nodes++;
@@ -282,14 +282,12 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          *
          * If the position is "solved" - the shortest mate was found - update alpha and beta.
          */
-        if (notRootNode) {
-            if (alpha < -matePly)
-                alpha = -matePly;
-            if (beta > matePly - 1)
-                beta = matePly - 1;
-            if (alpha >= beta)
-                return alpha;
-        }
+        if (alpha < -matePly)
+            alpha = -matePly;
+        if (beta > matePly - 1)
+            beta = matePly - 1;
+        if (alpha >= beta)
+            return alpha;
     }
 
     if (ply >= MAX_PLY) {
@@ -329,10 +327,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             if (result == TB_WIN_SCORE) {
                 flag = TT_BETA;
-                result -= ply - 1;
+                result -= ply;
             } else if (result == TB_LOSS_SCORE) {
                 flag = TT_ALPHA;
-                result += ply + 1;
+                result += ply;
             } else {
                 flag = TT_EXACT;
             }
@@ -384,7 +382,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          */
         if (nonPvNode && depth <= RFP_DEPTH &&
             staticEval - RFP_DEPTH_MULTIPLIER * depth + RFP_IMPROVING_MULTIPLIER * improving >= beta &&
-            std::abs(beta) < WORST_MATE)
+            std::abs(beta) < TB_WORST_WIN)
             return beta;
 
         /*
@@ -408,7 +406,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
                 // If the score is still higher than beta, safely return score.
                 if (score >= beta) {
-                    if (std::abs(score) > WORST_MATE)
+                    if (std::abs(score) > TB_WORST_WIN)
                         return beta;
                     return score;
                 }
@@ -455,7 +453,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
-        if (notRootNode && nonPvNode && !inCheck && alpha > -WORST_MATE && move.isQuiet()) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet()) {
 
             // Futility pruning
             // ... the static evaluation is far below alpha.
