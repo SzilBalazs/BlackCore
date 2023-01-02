@@ -14,26 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_EVAL_H
-#define BLACKCORE_EVAL_H
+#ifndef BLACKCORE_EGTB_H
+#define BLACKCORE_EGTB_H
 
-#include "constants.h"
-#include "position.h"
 
-#ifdef TUNE
-
-extern Score PIECE_VALUES[6];
-
-#else
-
-constexpr Score PIECE_VALUES[6] = {
-        0, 156, 561, 608, 736, 1022};
-
-#endif
-
-// Returns the score of a position using NNUE.
-inline Score eval(const Position &pos) {
-    return pos.getState()->accumulator.forward(pos.getSideToMove());
-}
-
-#endif //BLACKCORE_EVAL_H
+#endif //BLACKCORE_EGTB_H
