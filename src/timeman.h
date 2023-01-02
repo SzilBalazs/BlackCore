@@ -29,6 +29,8 @@ bool shouldEnd(U64 nodes, U64 totalNodes);
 
 void allocateTime(int stability);
 
+bool isInfiniteSearch();
+
 U64 getSearchTime();
 
 U64 getNps(U64 nodes);

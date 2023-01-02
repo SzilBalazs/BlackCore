@@ -37,6 +37,8 @@ typedef int8_t Ply;
 constexpr Score UNKNOWN_SCORE = 100002;
 constexpr Score INF_SCORE = 100001;
 constexpr Score MATE_VALUE = 100000;
+constexpr Score TB_WIN_SCORE = 50000;
+constexpr Score TB_LOSS_SCORE = -50000;
 constexpr Score WORST_MATE = MATE_VALUE - 100;
 constexpr Score DRAW_VALUE = 0;
 

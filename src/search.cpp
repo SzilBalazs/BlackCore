@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "search.h"
+#include "egtb.h"
 #include "eval.h"
 #include "threads.h"
 #include "timeman.h"
@@ -41,6 +42,14 @@ U64 getTotalNodes() {
         totalNodes += td.nodes;
     }
     return totalNodes;
+}
+
+U64 getTotalTBHits() {
+    U64 totalHits = 0;
+    for (ThreadData &td : tds) {
+        totalHits += td.tbHits;
+    }
+    return totalHits;
 }
 
 // Initialize a lookup table for LMR reduction values
@@ -252,8 +261,11 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
     const bool isSingularRoot = stack->excludedMove.isOk();
+    const Score matePly = MATE_VALUE - ply;
+    const Move prevMove = (stack - 1)->move;
 
-    Move prevMove = (stack - 1)->move;
+    Score maxAlpha = INF_SCORE;
+
     td.pvLength[ply] = ply;
 
     // Ask the time manager whether the search should stop
@@ -261,8 +273,27 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return UNKNOWN_SCORE;
 
     // If a repetition happens return DRAW_VALUE.
-    if (notRootNode && pos.getMove50() >= 3 && pos.isRepetition()) {
-        return DRAW_VALUE;
+    if (notRootNode) {
+        if (pos.isRepetition() || pos.getMove50() >= 99)
+            return DRAW_VALUE;
+
+        /*
+         * Mate distance pruning
+         *
+         * If the position is "solved" - the shortest mate was found - update alpha and beta.
+         */
+        if (notRootNode) {
+            if (alpha < -matePly)
+                alpha = -matePly;
+            if (beta > matePly - 1)
+                beta = matePly - 1;
+            if (alpha >= beta)
+                return alpha;
+        }
+    }
+
+    if (ply >= MAX_PLY) {
+        return eval(pos);
     }
 
     /*
@@ -280,28 +311,45 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * If this is a not a PV node and the transposition entry was saved by a
      * big enough depth search, return the evaluation from TT.
      */
-    if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() &&
+    if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() && pos.getMove50() < 90 &&
         (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
     }
 
     /*
-     * Mate distance pruning
+     * Endgame tablebase probing
      *
-     * If the position is "solved" - the shortest mate was found - update alpha and beta.
+     * https://www.chessprogramming.org/Syzygy_Bases
      */
-    Score matePly = MATE_VALUE - ply;
     if (notRootNode) {
-        if (alpha < -matePly)
-            alpha = -matePly;
-        if (beta > matePly - 1)
-            beta = matePly - 1;
-        if (alpha >= beta)
-            return alpha;
-    }
+        Score result = TBProbe(pos);
+        if (result != UNKNOWN_SCORE) {
+            EntryFlag flag = TT_NONE;
+            td.tbHits++;
 
-    if (ply >= MAX_PLY) {
-        return eval(pos);
+            if (result == TB_WIN_SCORE) {
+                flag = TT_BETA;
+                result -= ply - 1;
+            } else if (result == TB_LOSS_SCORE) {
+                flag = TT_ALPHA;
+                result += ply + 1;
+            } else {
+                flag = TT_EXACT;
+            }
+
+            if (flag == TT_EXACT || (flag == TT_ALPHA && result <= alpha) || (flag == TT_BETA && result >= beta)) {
+                ttSave(pos.getHash(), depth, result, flag, Move());
+                return result;
+            }
+
+            if (pvNode) {
+                if (flag == TT_BETA) {
+                    alpha = std::max(alpha, result);
+                } else {
+                    maxAlpha = result;
+                }
+            }
+        }
     }
 
     // At depth 0 drop into quiescence search.
@@ -544,6 +592,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         index++;
     }
 
+    alpha = std::min(alpha, maxAlpha);
+
     // Only save the information gathered into the transposition table, if the node isn't a singular search root.
     if (!isSingularRoot)
         ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
@@ -620,7 +670,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                 }
 
                 // Output information to the GUI
-                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "score", scoreStr, "time",
+                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "tbhits", getTotalTBHits(), "score", scoreStr, "time",
                     getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
             }
 
@@ -699,6 +749,23 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThreads(false);
 
+    // Initializes time manager.
+    Color stm = pos.getSideToMove();
+    if (stm == WHITE) {
+        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    } else {
+        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    }
+
+    if (!isInfiniteSearch()) {
+        Move tbMove = TBProbeRoot(pos);
+
+        if (tbMove.isOk()) {
+            out("bestmove", tbMove);
+            return;
+        }
+    }
+
     // Initializes ThreadData object for storing variables of threads.
     for (int idx = 0; idx < threadCount; idx++) {
         ThreadData td;
@@ -710,14 +777,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     // Create a copy of the searched position, one for each thread.
     for (int idx = 0; idx < threadCount; idx++) {
         tds[idx].position.loadFromPosition(pos);
-    }
-
-    // Initializes time manager.
-    Color stm = pos.getSideToMove();
-    if (stm == WHITE) {
-        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
-    } else {
-        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
     // Starts every thread.

@@ -73,6 +73,8 @@ bool shouldEnd(U64 nodes, U64 totalNodes) {
     return stopped;
 }
 
+bool isInfiniteSearch() { return maxSearch == 0; }
+
 U64 getSearchTime() {
     return getTime() - startedSearch;
 }

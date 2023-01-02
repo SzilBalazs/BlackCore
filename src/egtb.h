@@ -17,5 +17,74 @@
 #ifndef BLACKCORE_EGTB_H
 #define BLACKCORE_EGTB_H
 
+#include "constants.h"
+#include "fathom/src/tbprobe.h"
+
+inline Score TBProbe(const Position &pos) {
+    Bitboard white = pos.friendly<WHITE>();
+    Bitboard black = pos.friendly<BLACK>();
+
+    if ((white & black).popCount() > TB_LARGEST)
+        return UNKNOWN_SCORE;
+
+    unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
+    unsigned int result = tb_probe_wdl(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
+                                       pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
+                                       pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE);
+
+    if (result == TB_WIN) {
+        return TB_WIN_SCORE;
+    } else if (result == TB_LOSS) {
+        return TB_LOSS_SCORE;
+    } else if (result == TB_DRAW || result == TB_CURSED_WIN || result == TB_BLESSED_LOSS) {
+        return DRAW_VALUE;
+    } else {
+        return UNKNOWN_SCORE;
+    }
+}
+
+inline Move TBProbeRoot(const Position &pos) {
+    Bitboard white = pos.friendly<WHITE>();
+    Bitboard black = pos.friendly<BLACK>();
+
+    if ((white & black).popCount() > TB_LARGEST)
+        return {};
+
+    unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
+    unsigned int result = tb_probe_root(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
+                                        pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
+                                        pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE, nullptr);
+
+    if (result == TB_RESULT_FAILED || result == TB_RESULT_STALEMATE || result == TB_RESULT_CHECKMATE)
+        return {};
+
+    Square from = static_cast<Square>(TB_GET_FROM(result));
+    Square to = static_cast<Square>(TB_GET_TO(result));
+    unsigned int promo = TB_GET_PROMOTES(result);
+
+    unsigned char flags;
+    switch (promo) {
+        case 0:
+            flags = 0;
+            break;
+        case 1:
+            flags = PROMO_QUEEN;
+            break;
+        case 2:
+            flags = PROMO_ROOK;
+            break;
+        case 3:
+            flags = PROMO_BISHOP;
+            break;
+        case 4:
+            flags = PROMO_KNIGHT;
+            break;
+        default:
+            out("info string Unable to determine DTZ move promotion type!");
+            return {};
+    }
+
+    return {from, to, flags};
+}
 
 #endif //BLACKCORE_EGTB_H

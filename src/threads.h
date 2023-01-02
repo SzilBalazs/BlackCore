@@ -17,8 +17,8 @@
 #ifndef BLACKCORE_THREADS_H
 #define BLACKCORE_THREADS_H
 
-#include "tt.h"
 #include "search.h"
+#include "tt.h"
 
 #include <cstring>
 #include <mutex>
@@ -37,6 +37,7 @@ struct ThreadData {
 
     U64 nodes = 0;
     Depth selectiveDepth = 0;
+    U64 tbHits = 0;
 
     bool uciMode = false;
 
@@ -65,6 +66,7 @@ struct ThreadData {
 
     inline void reset() {
         nodes = 0;
+        tbHits = 0;
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));

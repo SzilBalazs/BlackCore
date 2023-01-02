@@ -44,11 +44,6 @@ EXE = $(NAME)-v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
 
-$(EXE): $(OBJECTS)
-	@echo Linking $(NAME)
-	@$(CXX) $(TARGET_FLAGS) $(CXXFLAGS) -o $@ $^
-	@echo Build has finished.
-
 $(OBJECTS): | $(OBJECT_DIR)
 
 $(OBJECT_DIR):
@@ -57,6 +52,15 @@ $(OBJECT_DIR):
 $(OBJECT_DIR)/%.o: %.cpp
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJECT_DIR)/tbprobe.o:
+	@echo Compiling tbprobe.cpp
+	@$(CXX) $(CXXFLAGS) -c -o $(OBJECT_DIR)/tbprobe.o fathom/src/tbprobe.c
+
+$(EXE): $(OBJECTS) $(OBJECT_DIR)/tbprobe.o
+	@echo Linking $(NAME)
+	@$(CXX) $(TARGET_FLAGS) $(CXXFLAGS) -o $@ $^
+	@echo Build has finished.
 
 all: clean build
 

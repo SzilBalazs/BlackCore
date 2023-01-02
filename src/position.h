@@ -85,7 +85,7 @@ struct StateStack {
     }
 
     [[nodiscard]] inline Ply getMove50() const {
-        return currState - currState->lastIrreversibleMove + 1;
+        return currState - currState->lastIrreversibleMove;
     }
 };
 
@@ -225,9 +225,9 @@ public:
     void displayEval();
 
     void loadPositionFromFen(const std::string &fen);
-    
+
     void loadFromPosition(const Position &position);
-    
+
     Position();
 
     Position(const std::string &fen);
