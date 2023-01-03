@@ -20,6 +20,7 @@
 #include "search.h"
 #include "tt.h"
 
+#include <algorithm>
 #include <cstring>
 #include <mutex>
 
@@ -101,7 +102,7 @@ struct ThreadData {
     }
 
     void updateHH(Move move, Color color, Score bonus) {
-        historyTable[color][move.getFrom()][move.getTo()] += bonus;
+        historyTable[color][move.getFrom()][move.getTo()] = std::clamp(historyTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
