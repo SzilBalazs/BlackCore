@@ -207,8 +207,8 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
          * If the static evaluation and the expected gain of this move plus a large margin is still
          * less than alpha the move can be safely skipped.
          */
-        if (move.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(move.getTo()).type] +
-                    staticEval + DELTA_MARGIN <
+        if (move.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(move.getTo()).type] + staticEval +
+                    DELTA_MARGIN <
             alpha)
             continue;
 
@@ -355,12 +355,12 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
 
-    Score staticEval = stack->eval = eval(pos);
+    Score staticEval = stack->eval = inCheck ? UNKNOWN_SCORE : eval(pos);
 
     // Improving boolean, first introduced by StockFish
     // If the position got better than 2 ply before, we can
     // except that it will further improve.
-    bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
+    bool improving = ply >= 2 && staticEval >= (stack - 2)->eval && (stack - 2)->eval != UNKNOWN_SCORE;
 
     if (notRootNode && !inCheck && !isSingularRoot) {
 
