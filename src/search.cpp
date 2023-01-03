@@ -261,9 +261,9 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
     const bool isSingularRoot = stack->excludedMove.isOk();
-    const Score matePly = MATE_VALUE - ply;
-    const Move prevMove = (stack - 1)->move;
 
+    
+    Move prevMove = (stack - 1)->move;
     Score maxAlpha = INF_SCORE;
 
     td.pvLength[ply] = ply;
@@ -273,25 +273,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return UNKNOWN_SCORE;
 
     // If a repetition happens return DRAW_VALUE.
-    if (notRootNode) {
-        if (pos.isRepetition() || pos.getMove50() >= 99)
-            return DRAW_VALUE;
-
-        /*
-         * Mate distance pruning
-         *
-         * If the position is "solved" - the shortest mate was found - update alpha and beta.
-         */
-        if (alpha < -matePly)
-            alpha = -matePly;
-        if (beta > matePly - 1)
-            beta = matePly - 1;
-        if (alpha >= beta)
-            return alpha;
-    }
-
-    if (ply >= MAX_PLY) {
-        return eval(pos);
+    if (notRootNode && (pos.isRepetition() || pos.getMove50() >= 99)) {
+        return DRAW_VALUE;
     }
 
     /*
@@ -312,6 +295,25 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() && pos.getMove50() < 90 &&
         (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
+    }
+
+    /*
+     * Mate distance pruning
+     *
+     * If the position is "solved" - the shortest mate was found - update alpha and beta.
+     */
+    Score matePly = MATE_VALUE - ply;
+    if (notRootNode) {
+        if (alpha < -matePly)
+            alpha = -matePly;
+        if (beta > matePly - 1)
+            beta = matePly - 1;
+        if (alpha >= beta)
+            return alpha;
+    }
+
+    if (ply >= MAX_PLY) {
+        return eval(pos);
     }
 
     /*
@@ -747,15 +749,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThreads(false);
 
-    // Initializes time manager.
-    Color stm = pos.getSideToMove();
-    if (stm == WHITE) {
-        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
-    } else {
-        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
-    }
-
-    if (!isInfiniteSearch()) {
+    if (searchInfo.wtime == 0 || searchInfo.btime == 0) {
         Move tbMove = TBProbeRoot(pos);
 
         if (tbMove.isOk()) {
@@ -777,6 +771,14 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         tds[idx].position.loadFromPosition(pos);
     }
 
+    // Initializes time manager.
+    Color stm = pos.getSideToMove();
+    if (stm == WHITE) {
+        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    } else {
+        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    }
+    
     // Starts every thread.
     for (int idx = 0; idx < threadCount; idx++) {
         ths.emplace_back(iterativeDeepening, idx, searchInfo.maxDepth);
