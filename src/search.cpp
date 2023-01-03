@@ -749,14 +749,14 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThreads(false);
 
-    if (searchInfo.wtime == 0 || searchInfo.btime == 0) {
+    /*if (searchInfo.wtime == 0 || searchInfo.btime == 0) {
         Move tbMove = TBProbeRoot(pos);
 
         if (tbMove.isOk()) {
             out("bestmove", tbMove);
             return;
         }
-    }
+    }*/
 
     // Initializes ThreadData object for storing variables of threads.
     for (int idx = 0; idx < threadCount; idx++) {
