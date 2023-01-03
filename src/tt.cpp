@@ -70,7 +70,7 @@ void ttResize(unsigned int MBSize) {
 TTEntry ttProbe(U64 hash, bool &ttHit) {
     TTEntry *entry = getEntry(hash);
 
-    if (entry->hash != hash || std::abs(entry->eval) > MATE_VALUE - 100)
+    if (entry->hash != hash || std::abs(entry->eval) > WORST_MATE)
         return {};
 
     ttHit = true;

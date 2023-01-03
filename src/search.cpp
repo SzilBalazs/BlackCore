@@ -263,7 +263,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     const bool isSingularRoot = stack->excludedMove.isOk();
     const Move prevMove = (stack - 1)->move;
     const Score matePly = MATE_VALUE - ply;
-    
+
     Score maxAlpha = INF_SCORE;
     td.pvLength[ply] = ply;
 
@@ -272,12 +272,12 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return UNKNOWN_SCORE;
 
     if (notRootNode) {
-    
+
         // If a repetition or fifty move rule happens return DRAW_VALUE.
         if (pos.isRepetition() || pos.getMove50() >= 99)
             return DRAW_VALUE;
-        
-        
+
+
         /*
          * Mate distance pruning
          *
@@ -319,31 +319,30 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * https://www.chessprogramming.org/Syzygy_Bases
      */
     if (notRootNode) {
-        Score result = TBProbe(pos);
-        if (result != UNKNOWN_SCORE) {
-            EntryFlag flag = TT_NONE;
+        unsigned int result = TBProbe(pos);
+        if (result != TB_RESULT_FAILED) {
+            EntryFlag flag = TT_EXACT;
+            Score score = DRAW_VALUE;
             td.tbHits++;
 
-            if (result == TB_WIN_SCORE) {
+            if (result == TB_WIN) {
                 flag = TT_BETA;
-                result -= ply;
-            } else if (result == TB_LOSS_SCORE) {
+                score = TB_WIN_SCORE - ply;
+            } else if (result == TB_LOSS) {
                 flag = TT_ALPHA;
-                result += ply;
-            } else {
-                flag = TT_EXACT;
+                score = TB_LOSS_SCORE + ply;
             }
 
-            if (flag == TT_EXACT || (flag == TT_ALPHA && result <= alpha) || (flag == TT_BETA && result >= beta)) {
-                ttSave(pos.getHash(), depth, result, flag, Move());
-                return result;
+            if (flag == TT_EXACT || (flag == TT_ALPHA && score <= alpha) || (flag == TT_BETA && score >= beta)) {
+                ttSave(pos.getHash(), depth, score, flag, Move());
+                return score;
             }
 
             if (pvNode) {
                 if (flag == TT_BETA) {
-                    alpha = std::max(alpha, result);
+                    alpha = std::max(alpha, score);
                 } else {
-                    maxAlpha = result;
+                    maxAlpha = score;
                 }
             }
         }
@@ -482,7 +481,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          * If 1 move is a lot better than all the others extend by 1 ply.
          * This implementation is heavily inspired by StockFish & Alexandria
          */
-        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry.hashMove && !isSingularRoot && ttEntry.flag == TT_BETA && ttEntry.depth >= depth - 3) {
+        else if (notRootNode && depth >= SINGULAR_DEPTH && ttHit && move == ttEntry.hashMove && !isSingularRoot && ttEntry.flag == TT_BETA &&
+                 ttEntry.depth >= depth - 3 && std::abs(ttEntry.eval) < TB_WORST_WIN) {
             Score singularBeta = ttEntry.eval - depth * 3;
             Depth singularDepth = (depth - 1) / 2;
 
@@ -628,7 +628,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     // If ASPIRATION_DEPTH is reached, assume that the previous iteration
     // gave us a close enough score.
-    if (depth >= ASPIRATION_DEPTH) {
+    if (depth >= ASPIRATION_DEPTH && std::abs(prevScore) < TB_WORST_WIN) {
         alpha = prevScore - ASPIRATION_DELTA;
         beta = prevScore + ASPIRATION_DELTA;
     }
@@ -772,7 +772,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         if (tbHit)
             return;
     }
-    
+
     // Starts every thread.
     for (int idx = 0; idx < threadCount; idx++) {
         ths.emplace_back(iterativeDeepening, idx, searchInfo.maxDepth);

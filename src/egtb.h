@@ -20,34 +20,24 @@
 #include "constants.h"
 #include "fathom/src/tbprobe.h"
 
-inline Score TBProbe(const Position &pos) {
+inline unsigned int TBProbe(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white | black).popCount() > (int)TB_LARGEST)
-        return UNKNOWN_SCORE;
+    if ((white | black).popCount() > (int) TB_LARGEST)
+        return TB_RESULT_FAILED;
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
-    unsigned int result = tb_probe_wdl(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
-                                       pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
-                                       pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE);
-
-    if (result == TB_WIN) {
-        return TB_WIN_SCORE;
-    } else if (result == TB_LOSS) {
-        return TB_LOSS_SCORE;
-    } else if (result == TB_DRAW || result == TB_CURSED_WIN || result == TB_BLESSED_LOSS) {
-        return DRAW_VALUE;
-    } else {
-        return UNKNOWN_SCORE;
-    }
+    return tb_probe_wdl(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
+                        pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
+                        pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE);
 }
 
 inline bool TBProbeRoot(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white | black).popCount() > (int)TB_LARGEST)
+    if ((white | black).popCount() > (int) TB_LARGEST)
         return false;
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
@@ -83,7 +73,7 @@ inline bool TBProbeRoot(const Position &pos) {
             out("info string Unable to determine DTZ move promotion type!");
             return false;
     }
-    
+
     unsigned int wdl = TB_GET_WDL(result);
     Score score;
     if (wdl == TB_WIN) {
@@ -96,7 +86,7 @@ inline bool TBProbeRoot(const Position &pos) {
         out("info string Unable to determine WDL!");
         return false;
     }
-    
+
     out("info", "depth", 1, "seldepth", 0, "nodes", 0, "score", score, "time",
         1, "pv", Move(from, to, flags));
     out("bestmove", Move(from, to, flags));
