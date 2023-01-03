@@ -87,8 +87,7 @@ inline bool TBProbeRoot(const Position &pos) {
         return false;
     }
 
-    out("info", "depth", 1, "seldepth", 0, "nodes", 0, "tbhits", 1, "score", score, "time",
-        0, "nps", 0, "pv", Move(from, to, flags));
+    out("info", "depth", 1, "seldepth", 1, "nodes", 1, "tbhits", 1, "score", "cp", score, "time", 1, "pv", Move(from, to, flags));
     out("bestmove", Move(from, to, flags));
     return true;
 }
