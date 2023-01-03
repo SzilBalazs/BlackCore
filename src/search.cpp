@@ -749,15 +749,6 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     joinThreads(false);
 
-    /*if (searchInfo.wtime == 0 || searchInfo.btime == 0) {
-        Move tbMove = TBProbeRoot(pos);
-
-        if (tbMove.isOk()) {
-            out("bestmove", tbMove);
-            return;
-        }
-    }*/
-
     // Initializes ThreadData object for storing variables of threads.
     for (int idx = 0; idx < threadCount; idx++) {
         ThreadData td;
@@ -777,6 +768,12 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
         initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     } else {
         initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+    }
+
+    if (!isInfiniteSearch() && searchInfo.uciMode) {
+        bool tbHit = TBProbeRoot(pos);
+        if (tbHit)
+            return;
     }
     
     // Starts every thread.

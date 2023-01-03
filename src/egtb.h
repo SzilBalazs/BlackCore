@@ -24,7 +24,7 @@ inline Score TBProbe(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white & black).popCount() > TB_LARGEST)
+    if ((white | black).popCount() > TB_LARGEST)
         return UNKNOWN_SCORE;
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
@@ -43,11 +43,11 @@ inline Score TBProbe(const Position &pos) {
     }
 }
 
-inline Move TBProbeRoot(const Position &pos) {
+inline bool TBProbeRoot(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white & black).popCount() > TB_LARGEST)
+    if ((white | black).popCount() > TB_LARGEST)
         return {};
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
@@ -83,8 +83,24 @@ inline Move TBProbeRoot(const Position &pos) {
             out("info string Unable to determine DTZ move promotion type!");
             return {};
     }
-
-    return {from, to, flags};
+    
+    unsigned int wdl = TB_GET_WDL(result);
+    Score score;
+    if (wdl == TB_WIN) {
+        score = TB_WIN_SCORE;
+    } else if (wdl == TB_LOSS) {
+        score = TB_LOSS_SCORE;
+    } else if (wdl == TB_DRAW || wdl == TB_CURSED_WIN || wdl == TB_BLESSED_LOSS) {
+        score = DRAW_VALUE;
+    } else {
+        out("info string Unable to determine WDL!");
+        return false;
+    }
+    
+    out("info", "depth", 1, "seldepth", 0, "nodes", 0, "score", score, "time",
+        1, "pv", Move(from, to, flags));
+    out("bestmove", Move(from, to, flags));
+    return true;
 }
 
 #endif //BLACKCORE_EGTB_H
