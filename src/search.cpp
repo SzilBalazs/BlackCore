@@ -261,20 +261,32 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
     const bool isSingularRoot = stack->excludedMove.isOk();
-
+    const Move prevMove = (stack - 1)->move;
+    const Score matePly = MATE_VALUE - ply;
     
-    Move prevMove = (stack - 1)->move;
     Score maxAlpha = INF_SCORE;
-
     td.pvLength[ply] = ply;
 
     // Ask the time manager whether the search should stop
     if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
-    // If a repetition happens return DRAW_VALUE.
-    if (notRootNode && (pos.isRepetition() || pos.getMove50() >= 99)) {
-        return DRAW_VALUE;
+    if (notRootNode) {
+    
+        // If a repetition or fifty move rule happens return DRAW_VALUE.
+        if (pos.isRepetition() || pos.getMove50() >= 99)
+            return DRAW_VALUE;
+        
+        
+        /*
+         * Mate distance pruning
+         *
+         * If the position is "solved" - the shortest mate was found - update alpha and beta.
+         */
+        alpha = std::max(alpha, -matePly);
+        beta = std::min(beta, matePly - 1);
+        if (alpha >= beta)
+            return alpha;
     }
 
     /*
@@ -295,21 +307,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() && pos.getMove50() < 90 &&
         (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
-    }
-
-    /*
-     * Mate distance pruning
-     *
-     * If the position is "solved" - the shortest mate was found - update alpha and beta.
-     */
-    Score matePly = MATE_VALUE - ply;
-    if (notRootNode) {
-        if (alpha < -matePly)
-            alpha = -matePly;
-        if (beta > matePly - 1)
-            beta = matePly - 1;
-        if (alpha >= beta)
-            return alpha;
     }
 
     if (ply >= MAX_PLY) {

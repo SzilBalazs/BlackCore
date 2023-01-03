@@ -24,7 +24,7 @@ inline Score TBProbe(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white | black).popCount() > TB_LARGEST)
+    if ((white | black).popCount() > (int)TB_LARGEST)
         return UNKNOWN_SCORE;
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
@@ -47,8 +47,8 @@ inline bool TBProbeRoot(const Position &pos) {
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
-    if ((white | black).popCount() > TB_LARGEST)
-        return {};
+    if ((white | black).popCount() > (int)TB_LARGEST)
+        return false;
 
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
     unsigned int result = tb_probe_root(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
@@ -56,7 +56,7 @@ inline bool TBProbeRoot(const Position &pos) {
                                         pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE, nullptr);
 
     if (result == TB_RESULT_FAILED || result == TB_RESULT_STALEMATE || result == TB_RESULT_CHECKMATE)
-        return {};
+        return false;
 
     Square from = static_cast<Square>(TB_GET_FROM(result));
     Square to = static_cast<Square>(TB_GET_TO(result));
@@ -81,7 +81,7 @@ inline bool TBProbeRoot(const Position &pos) {
             break;
         default:
             out("info string Unable to determine DTZ move promotion type!");
-            return {};
+            return false;
     }
     
     unsigned int wdl = TB_GET_WDL(result);
