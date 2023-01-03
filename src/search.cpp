@@ -702,17 +702,12 @@ void iterativeDeepening(int id, Depth depth) {
             break;
 
         // Only care about stability if we searched enough depth, and we are the main thread.
-        if (currDepth >= 14 && td.threadId == 0) {
+        if (currDepth >= 10 && td.threadId == 0) {
             if (bestMove != td.pvArray[0][0]) {
-                stability -= 10;
+                stability = -10;
             } else {
-                if (std::abs(prevScore - score) >= std::max(prevScore / 10, 50)) {
-                    stability -= 4;
-                } else {
-                    stability += 1;
-                }
+                stability++;
             }
-
             allocateTime(stability);
         }
 

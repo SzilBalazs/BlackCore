@@ -52,7 +52,7 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
     } else {
 
         U64 panicTime = time / (movesToGo + 10) + 2 * inc;
-        stabilityTime = time / 500;
+        stabilityTime = (time / movesToGo + inc) / 40;
 
         shouldSearch = std::min(time - MOVE_OVERHEAD, time / movesToGo + inc * 3 / 4 - MOVE_OVERHEAD);
         maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
