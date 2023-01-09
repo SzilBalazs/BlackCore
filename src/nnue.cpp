@@ -175,7 +175,7 @@ namespace NNUE {
         }
 
         // Scales back the output with the quantization scales.
-        return output / (64 * 64);
+        return output / (64 * 64 * 2);
     }
 
     void init() {

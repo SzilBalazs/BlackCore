@@ -19,6 +19,8 @@
 
 #include "bitboard.h"
 
+#include <algorithm>
+
 class Position;
 
 namespace NNUE {
@@ -72,7 +74,7 @@ namespace NNUE {
 
     // Activation function used in BlackCore's NNUE.
     constexpr int16_t ReLU(int16_t in) {
-        return std::max((int16_t) 0, in);
+        return std::clamp(in, (int16_t) 0, (int16_t) (64 * 64));
     }
 
     void init();
