@@ -437,7 +437,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     std::vector<Move> quiets;
     while (!moves.empty()) {
 
-        Move move = stack->move = moves.nextMove(); // Currently searched move
+        Move move = moves.nextMove(); // Currently searched move
 
         if (move == stack->excludedMove) continue;
 
@@ -498,6 +498,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 extensions = -1;
             }
         }
+
+        stack->move = move;
 
         Depth newDepth = depth - 1 + extensions;
 
