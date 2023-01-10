@@ -448,7 +448,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet()) {
@@ -521,7 +520,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             R += !improving;
             R -= pvNode;
-            R -= std::clamp(history / 3000, -1, 1);
             R -= (td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move) || (ply >= 1 && td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
