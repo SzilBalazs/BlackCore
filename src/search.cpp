@@ -532,7 +532,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
         }
 
-        if (pvNode && (index == 0 || (score > alpha && score < beta))) {
+        if (pvNode && (index == 0 || (score > alpha && (rootNode || score < beta)))) {
             score = -search<nextPv>(pos, td, stack + 1, newDepth, -beta, -alpha, ply + 1);
         }
 
