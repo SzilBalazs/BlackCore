@@ -364,6 +364,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     if (notRootNode && !inCheck && !isSingularRoot) {
 
+        // Internal iterative deepening to prevent search explosions.
+        if (!ttHit && depth >= 5)
+            depth--;
+
         /*
          * Razoring
          *
@@ -410,15 +414,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 }
             }
         }
-
-        // Internal iterative deepening to prevent search explosions.
-        if (!ttHit && pvNode)
-            depth--;
-        if (!ttHit && depth >= 5)
-            depth--;
-
-        if (depth <= 0)
-            return quiescence<nextPv>(pos, td, alpha, beta, ply);
     }
 
     MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, (rootNode && depth >= 6)};
