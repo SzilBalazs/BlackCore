@@ -275,7 +275,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
         // If a repetition or fifty move rule happens return DRAW_VALUE.
         if (pos.isRepetition() || pos.getMove50() >= 99)
-            return DRAW_VALUE;
+            return 1 - (td.nodes & 3);
 
 
         /*
