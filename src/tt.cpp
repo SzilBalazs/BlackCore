@@ -81,12 +81,15 @@ TTEntry ttProbe(U64 hash, bool &ttHit) {
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     TTEntry *entry = getEntry(hash);
 
-    if (entry->hash != hash || flag == TT_EXACT || entry->depth * 2 / 3 <= depth) {
+    if (entry->hash != hash || bestMove.isOk()) {
+        entry->hashMove = bestMove;
+    }
+
+    if (entry->hash != hash || flag == TT_EXACT || entry->depth <= depth + 4) {
         entry->hash = hash;
         entry->depth = depth;
         entry->eval = eval;
         entry->flag = flag;
-        entry->hashMove = bestMove;
     }
 }
 
