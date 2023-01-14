@@ -29,7 +29,16 @@ const int HISTORY_DIFF_SLOTS = 4;
 extern std::mutex mNodesSearched;
 extern U64 nodesSearched[64][64];
 
-Score see(const Position &pos, Move move);
+constexpr Score MVV_LVA[6][6] = {
+        {0, 000, 000, 000, 000, 000},
+        {0, 004, 104, 204, 304, 404},
+        {0, 003, 103, 203, 303, 403},
+        {0, 002, 102, 202, 302, 402},
+        {0, 001, 101, 201, 301, 401},
+        {0, 000, 100, 200, 300, 400},
+};
+
+bool see(const Position &pos, Move move, Score threshold);
 
 struct ThreadData {
 
@@ -126,12 +135,12 @@ struct ThreadData {
                 return -3000000;
             }
         } else if (move.isCapture()) {
-            Score seeScore = see(pos, move);
-
-            if (see(pos, move) >= 0)
-                return 8000000 + seeScore;
+            Square from = move.getFrom();
+            Square to = move.getTo();
+            if (see(pos, move, 0))
+                return 8000000 + MVV_LVA[pos.pieceAt(from).type][pos.pieceAt(to).type];
             else
-                return 2000000 + seeScore;
+                return 2000000 + MVV_LVA[pos.pieceAt(from).type][pos.pieceAt(to).type];
         } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == move) {
             return 5000000;
         }

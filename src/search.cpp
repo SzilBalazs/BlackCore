@@ -88,15 +88,23 @@ Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
  *
  * Returns the material change, after playing out every resulting capture of the move.
  */
-Score see(const Position &pos, Move move) {
+bool see(const Position &pos, Move move, Score threshold) {
     assert(move.isCapture());
 
-    Score e[32];
-    Depth d = 0;
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
+    if (move.isPromo())
+        return true;
+
+    Score e = (move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type]) - threshold;
+    if (e < 0)
+        return false;
+
+    e -= PIECE_VALUES[pos.pieceAt(from).type];
+    if (e >= 0)
+        return true;
+
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
@@ -108,14 +116,19 @@ Score see(const Position &pos, Move move) {
     PieceType type = pos.pieceAt(from).type;
 
     do {
-        d++;
-        e[d] = PIECE_VALUES[type] - e[d - 1];
 
-        if (std::max(-e[d - 1], e[d]) < 0)
+        e = -e - 1 - PIECE_VALUES[type];
+
+        if (e >= 0) {
+            if (type == KING && (attackers & pos.friendly(stm)))
+                stm = EnemyColor(stm);
+
             break;
+        }
 
         occ ^= attacker;
         attackers ^= attacker;
+
         if (type == ROOK || type == QUEEN)
             attackers |= rookAttacks(to, occ) & rooks & occ;
         if (type == PAWN || type == BISHOP || type == QUEEN)
@@ -125,11 +138,7 @@ Score see(const Position &pos, Move move) {
 
     } while (attacker);
 
-    while (--d) {
-        e[d - 1] = -std::max(-e[d - 1], e[d]);
-    }
-
-    return e[0];
+    return stm != pos.pieceAt(to).color;
 }
 
 /*
@@ -217,7 +226,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
          *
          * If the move loses material we skip its evaluation
          */
-        if (alpha > TB_BEST_LOSS && see(pos, move) < 0)
+        if (alpha > TB_BEST_LOSS && !see(pos, move, 0))
             continue;
 
         td.nodes++;

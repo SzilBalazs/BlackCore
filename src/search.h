@@ -68,7 +68,7 @@ inline void initSearch() {
     NNUE::init();
 }
 
-Score see(const Position &pos, Move move);
+bool see(const Position &pos, Move move, Score threshold);
 
 void joinThreads(bool waitToFinish);
 
