@@ -23,10 +23,10 @@
 enum EntryFlag : uint8_t {
     TT_NONE = 0,
     TT_EXACT = 1,
-    
+
     // UPPERBOUND
     TT_ALPHA = 2,
-    
+
     // LOWERBOUND
     TT_BETA = 3
 };
@@ -54,6 +54,8 @@ void ttFree();
 TTEntry ttProbe(U64 hash, bool &ttHit);
 
 void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
+
+int getTTFull();
 
 Move getHashMove(U64 hash);
 

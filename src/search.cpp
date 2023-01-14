@@ -664,7 +664,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                 }
 
                 // Output information to the GUI
-                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "tbhits", getTotalTBHits(), "score", scoreStr, "time",
+                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "hashfull", getTTFull(), "tbhits", getTotalTBHits(), "score", scoreStr, "time",
                     getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
             }
 

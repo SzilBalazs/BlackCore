@@ -93,6 +93,15 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     }
 }
 
+// Returns the fullness of the transposition table
+int getTTFull() {
+    int cnt = 0;
+    for (int i = 0; i < 1000; i++) {
+        if (tt.table[i].hash != 0) cnt++;
+    }
+    return cnt;
+}
+
 // Returns the hash move corresponding to the Zobrist hash.
 Move getHashMove(U64 hash) {
     TTEntry *entry = getEntry(hash);
