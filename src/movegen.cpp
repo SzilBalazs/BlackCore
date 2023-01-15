@@ -16,7 +16,8 @@
 
 #include "movegen.h"
 
-// Generates all the promotions of a move.
+// Generates all promotion moves for a pawn from 'from' to 'to'
+// and adds them to the move list 'moves'
 inline Move *makePromo(Move *moves, Square from, Square to) {
     *moves++ = Move(from, to, PROMO_KNIGHT);
     *moves++ = Move(from, to, PROMO_BISHOP);
@@ -25,7 +26,8 @@ inline Move *makePromo(Move *moves, Square from, Square to) {
     return moves;
 }
 
-// Generates all the promotion captures of a move.
+// Generates all promotion captures for a pawn from 'from' to 'to'
+// and adds them to the move list 'moves'
 inline Move *makePromoCapture(Move *moves, Square from, Square to) {
     *moves++ = Move(from, to, PROMO_CAPTURE_KNIGHT);
     *moves++ = Move(from, to, PROMO_CAPTURE_BISHOP);
@@ -34,17 +36,22 @@ inline Move *makePromoCapture(Move *moves, Square from, Square to) {
     return moves;
 }
 
-// Returns all the attacked squares by a side.
+// Returns a bitboard of all the squares attacked by a given color
+// 'pos' is the position, 'occupied' is a bitboard of all the occupied squares
 template<Color color>
 inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
 
     constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
     constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
 
+    // Get the pawns of the given color and all other pieces
     Bitboard pawns = pos.pieces<color, PAWN>();
     Bitboard pieces = pos.friendly<color>() & ~pawns;
+
+    // Initially add the attacks of the pawns
     Bitboard result = step<UP_LEFT>(pawns) | step<UP_RIGHT>(pawns);
 
+    // Iterate through all other pieces and add their attacks
     while (pieces) {
         Square from = pieces.popLsb();
         result |= pieceAttacks<color>(pos.pieceAt(from).type, from, occupied);
@@ -53,20 +60,37 @@ inline Bitboard getAttackedSquares(const Position &pos, Bitboard occupied) {
     return result;
 }
 
-// Generates all legal moves of the pieces.
+// Generates all legal moves for the given pieces
+// 'capturesOnly' - if true, only generates capture moves
+// 'pinHV' - if true, pieces are pinned horizontally or vertically
+// 'pinDA' - if true, pieces are pinned diagonally or anti-diagonally
+// 'pieces' - bitboard of the pieces to generate moves for
+// 'specialMask' - a bitboard indicating the squares to generate moves to
+// 'occupied' - a bitboard of all occupied squares
+// 'empty' - a bitboard of all empty squares
+// 'enemy' - a bitboard of all enemy pieces
 template<bool capturesOnly, bool pinHV, bool pinDA>
 inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard pieces, Bitboard specialMask,
                                      Bitboard occupied, Bitboard empty, Bitboard enemy) {
 
+    // Iterate through the pieces
     while (pieces) {
+
         Square from = pieces.popLsb();
         PieceType type = pos.pieceAt(from).type;
+
+        // Get the attacks of the piece and filter by the special mask
         Bitboard attacks = pieceAttacks(type, from, occupied) & specialMask;
+
+        // Check if the piece is pinned horizontally or vertically
         if constexpr (pinHV)
             attacks &= rookMasks[from];
+
+        // Check if the piece is pinned diagonally
         if constexpr (pinDA)
             attacks &= bishopMasks[from];
 
+        // If we're not generating captures only, generate quiet moves
         if constexpr (!capturesOnly) {
             Bitboard quiets = attacks & empty;
             while (quiets) {
@@ -74,6 +98,7 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
             }
         }
 
+        // Generate captures
         Bitboard captures = attacks & enemy;
         while (captures) {
             Square to = captures.popLsb();
@@ -84,12 +109,23 @@ inline Move *generateMovesFromPieces(const Position &pos, Move *moves, Bitboard 
     return moves;
 }
 
-// Generates all the legal pawn moves.
+// Generates all legal pawn moves for all the 'color' pawns in 'pos' position and
+// adds them to the 'moves' move list.
+// 'capturesOnly' - if true, only generates capture moves
+// 'king' - the square where the friendly king is
+// 'checkMask' - a bitboard indicating to squares which evade check
+// 'moveH' - a bitboard indicating pieces which can move horizontally
+// 'moveV' - a bitboard indicating pieces which can move vertically
+// 'moveD' - a bitboard indicating pieces which can move diagonally
+// 'moveA' - a bitboard indicating pieces which can move anti-diagonally
 template<Color color, bool capturesOnly>
 Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard checkMask,
                         Bitboard moveH, Bitboard moveV, Bitboard moveD, Bitboard moveA) {
+
+    // Define enemy color
     constexpr Color enemyColor = EnemyColor<color>();
 
+    // Define move directions
     constexpr Direction UP = color == WHITE ? NORTH : -NORTH;
     constexpr Direction UP_LEFT = color == WHITE ? NORTH_WEST : -NORTH_WEST;
     constexpr Direction UP_RIGHT = color == WHITE ? NORTH_EAST : -NORTH_EAST;
@@ -97,62 +133,85 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
     constexpr Direction DOWN_LEFT = -UP_RIGHT;
     constexpr Direction DOWN_RIGHT = -UP_LEFT;
 
+    // Define ranks for double pawn push and promotion
     constexpr Bitboard doublePushRank = (color == WHITE ? rank3 : rank6);
     constexpr Bitboard beforePromoRank = (color == WHITE ? rank7 : rank2);
+
+    // Create a bitboard of squares not on the promotion rank
     constexpr Bitboard notBeforePromo = ~beforePromoRank;
 
+    // Get the en passant square
     Square epSquare = pos.getEpSquare();
 
+    // Get the empty and the enemy bitboards
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
 
+    // Get the bitboard of pawns to generate moves for
     Bitboard pawns = pos.pieces<color, PAWN>();
+
+    // Get the bitboard of pawns before promotion
     Bitboard pawnsBeforePromo = beforePromoRank & pawns;
     pawns &= notBeforePromo;
 
+    // Generate quiet moves
     if constexpr (!capturesOnly) {
-        Bitboard singlePush = step<UP>(pawns & moveH) & empty;
-        Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty;
 
+        Bitboard singlePush = step<UP>(pawns & moveH) & empty;               // Generates single pawn pushes
+        Bitboard doublePush = step<UP>(singlePush & doublePushRank) & empty; // Generates double pawn pushes
+
+        // Filter out moves that are within the 'checkMask'
         singlePush &= checkMask;
         doublePush &= checkMask;
 
+        // Iterate through single pawn pushes
         while (singlePush) {
             Square to = singlePush.popLsb();
             *moves++ = Move(to + DOWN, to);
         }
 
+        // Iterate through double pawn pushes
         while (doublePush) {
             Square to = doublePush.popLsb();
             *moves++ = Move(to + (2 * DOWN), to, DOUBLE_PAWN_PUSH);
         }
     }
 
+    // Filter out all the legal capture moves to the right
     Bitboard rightCapture = step<UP_RIGHT>(pawns & moveD) & enemy & checkMask;
+    // Filter out all the legal capture moves to the left
     Bitboard leftCapture = step<UP_LEFT>(pawns & moveA) & enemy & checkMask;
 
+    // Iterate through left captures
     while (leftCapture) {
         Square to = leftCapture.popLsb();
         *moves++ = Move(to + DOWN_RIGHT, to, CAPTURE);
     }
 
+    // Iterate through right captures
     while (rightCapture) {
         Square to = rightCapture.popLsb();
         *moves++ = Move(to + DOWN_LEFT, to, CAPTURE);
     }
 
+    // Check if there are any pawns that can be promoted
     if (pawnsBeforePromo) {
 
+        // Generate quiet moves
         if constexpr (!capturesOnly) {
+            // Filter out all the legal promotions upwards
             Bitboard upPromo = step<UP>(pawnsBeforePromo & moveH) & empty & checkMask;
+
             while (upPromo) {
                 Square to = upPromo.popLsb();
                 moves = makePromo(moves, to + DOWN, to);
             }
         }
 
+        // Filter out all the legal sideways capture-promotions
         Bitboard rightPromo = step<UP_RIGHT>(pawnsBeforePromo & moveD) & enemy & checkMask;
         Bitboard leftPromo = step<UP_LEFT>(pawnsBeforePromo & moveA) & enemy & checkMask;
+
         while (rightPromo) {
             Square to = rightPromo.popLsb();
             moves = makePromoCapture(moves, to + DOWN_LEFT, to);
@@ -164,12 +223,19 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
         }
     }
 
+    // Check if the epSquare is not empty, if there is an en-passantable pawn and if the epSquare is within the check mask
     if ((epSquare != NULL_SQUARE) && (pawnMasks[pos.getEpSquare()][enemyColor] & pawns) &&
         checkMask.get(epSquare + DOWN)) {
+
+        // Get the occupied squares
         Bitboard occ = pos.occupied();
+
+        // Check if there is a pawn on the right side of the epSquare that can move diagonally
         bool rightEp = (step<UP_RIGHT>(pawns & moveD)).get(epSquare);
+        // Check if there is a pawn on the right side of the epSquare that can move anti-diagonally
         bool leftEp = (step<UP_LEFT>(pawns & moveA)).get(epSquare);
 
+        // If there is a pawn on the right side
         if (rightEp) {
             Square attackingPawn = epSquare + DOWN_LEFT;
             Square attackedPawn = epSquare + DOWN;
@@ -201,6 +267,7 @@ Move *generatePawnMoves(const Position &pos, Move *moves, Square king, Bitboard 
             occ.set(attackedPawn);
         }
 
+        // If there is a pawn on the left side
         if (leftEp) {
             Square attackingPawn = epSquare + DOWN_RIGHT;
             Square attackedPawn = epSquare + DOWN;
@@ -241,16 +308,22 @@ template<bool capturesOnly>
 inline Move *generateKingMoves(const Position &pos, Move *moves, Square king,
                                Bitboard safeSquares, Bitboard empty, Bitboard enemy) {
 
+    // Calculate all safe squares that the king can move to
     Bitboard kingTarget = kingMasks[king] & safeSquares;
 
     if constexpr (!capturesOnly) {
+
+        // Generate all legal king moves to squares that are empty
         Bitboard kingQuiets = kingTarget & empty;
+
         while (kingQuiets) {
             *moves++ = Move(king, kingQuiets.popLsb());
         }
     }
 
+    // Generate all legal king moves to squares that contain enemy pieces
     Bitboard kingCaptures = kingTarget & enemy;
+
     while (kingCaptures) {
         Square to = kingCaptures.popLsb();
         *moves++ = Move(king, to, CAPTURE);
@@ -315,10 +388,10 @@ Move *generateMoves(const Position &pos, Move *moves) {
     Bitboard safeSquares = ~getAttackedSquares<enemyColor>(pos, occupied);
     occupied.set(king);
 
-    // Generating checkMask
+    // Generate checkMask
     Bitboard checkMask = generateCheckMask(pos, king, checkers);
 
-    // Generating king moves
+    // Generate king moves
     moves = generateKingMoves<capturesOnly>(pos, moves, king, safeSquares, empty, enemy);
 
     // If we are in a double check, only king moves are legal
@@ -373,17 +446,17 @@ Move *generateMoves(const Position &pos, Move *moves) {
 
     occupied ^= possiblePins;
 
-    // Generating pawn moves
+    // Generate pawn moves
     moves = generatePawnMoves<color, capturesOnly>(pos, moves, king, checkMask, moveH, moveV, moveD, moveA);
 
-    // Generating knight and slider moves
+    // Generate knight and slider moves
     Bitboard sliderAndJumperPieces = friendlyPieces & ~pos.pieces<PAWN>();
     sliderAndJumperPieces.clear(king);
 
     moves = generateSliderAndJumpMoves<capturesOnly>(pos, moves, sliderAndJumperPieces, occupied, empty, enemy,
                                                      checkMask, pinHV, pinDA);
 
-    // Generating castling moves
+    // Generate castling moves
     if constexpr (!capturesOnly) {
         if constexpr (color == WHITE) {
             if (pos.getCastleRight(WK_MASK) &&

@@ -93,104 +93,104 @@ struct StateStack {
 
 class Position {
 public:
-    // Returns the piece at a square.
+    // Returns the piece at a given square on the board
     [[nodiscard]] constexpr Piece pieceAt(Square square) const {
         return board[square];
     }
 
-    // Returns the bitboard of all the pieces of a color and type.
+    // Returns the bitboard of all pieces of a given color and type
     template<Color color, PieceType type>
     [[nodiscard]] constexpr Bitboard pieces() const {
         return pieceBB[type] & allPieceBB[color];
     }
 
-    // Returns the bitboard of all the pieces of a color and type.
+    // Returns the bitboard of all pieces of a given color and type
     template<Color color>
     [[nodiscard]] constexpr Bitboard pieces(PieceType type) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
-    // Returns the bitboard of all the pieces of a color and type.
+    // Returns the bitboard of all pieces of a given color and type
     template<PieceType type>
     [[nodiscard]] constexpr Bitboard pieces(Color color) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
-    // Returns the bitboard of all the pieces of a color and type.
+    // Returns the bitboard of all pieces of a given color and type
     [[nodiscard]] constexpr Bitboard pieces(Color color, PieceType type) const {
         return pieceBB[type] & allPieceBB[color];
     }
 
-    // Returns the bitboard of all the pieces of a type.
+    // Returns the bitboard of all pieces of a given type
     template<PieceType type>
     [[nodiscard]] constexpr Bitboard pieces() const {
         return pieceBB[type];
     }
 
-    // Returns the bitboard of all the pieces of a type.
+    // Returns the bitboard of all pieces of a given type
     [[nodiscard]] constexpr Bitboard pieces(PieceType type) const {
         return pieceBB[type];
     }
 
-    // Returns the bitboard of all the friendly/same color pieces.
+    // Returns the bitboard of all pieces of the same color as the input
     template<Color color>
     [[nodiscard]] constexpr Bitboard friendly() const {
         return allPieceBB[color];
     }
 
-    // Returns the bitboard of all the friendly/same color pieces.
+    // Returns the bitboard of all pieces of the same color as the input
     [[nodiscard]] constexpr Bitboard friendly(Color color) const {
         return allPieceBB[color];
     }
 
-    // Returns the bitboard of all the enemy/different color pieces.
+    // Returns the bitboard of all pieces of the opposite color as the input
     template<Color color>
     [[nodiscard]] constexpr Bitboard enemy() const {
         return allPieceBB[EnemyColor<color>()];
     }
 
-    // Returns the bitboard of all the enemy or empty pieces.
+    // Returns the bitboard of all pieces of the opposite color as the input and empty squares
     template<Color color>
     [[nodiscard]] constexpr Bitboard enemyOrEmpty() const {
         return ~friendly<color>();
     }
 
-    // Returns the bitboard of all occupied squares.
+    // Returns the bitboard of all occupied squares
     [[nodiscard]] inline Bitboard occupied() const {
         return allPieceBB[WHITE] | allPieceBB[BLACK];
     }
 
-    // Returns the bitboard of all empty squares.
+    // Returns the bitboard of all empty squares
     [[nodiscard]] inline Bitboard empty() const {
         return ~occupied();
     }
 
-    // Returns the color that makes the next move.
+    // Returns the color that makes the next move
     [[nodiscard]] inline Color getSideToMove() const {
         return state->stm;
     }
 
-    // Returns the en-passant square.
+    // Returns the en-passant square
     [[nodiscard]] inline Square getEpSquare() const {
         return state->epSquare;
     }
 
-    // Returns true if the castleRight is legal.
+    // Returns true if the castleRight is legal
     [[nodiscard]] inline bool getCastleRight(unsigned char castleRight) const {
         return castleRight & state->castlingRights;
     }
 
-    // Returns the castling rights.
+    // Returns the castling rights
     [[nodiscard]] inline unsigned char getCastlingRights() const {
         return state->castlingRights;
     }
 
-    // Returns the current board state.
+    // Returns the current board state
     [[nodiscard]] inline BoardState *getState() {
         return state;
     }
 
-    // Returns the current board state.
+    // Returns the current board state
     [[nodiscard]] inline BoardState *getState() const {
         return state;
     }
@@ -200,32 +200,41 @@ public:
         states.reset();
     }
 
-    // Returns the Zobrist hash of the position.
+    // Returns the Zobrist hash of the position
     [[nodiscard]] inline U64 getHash() const {
         return state->hash;
     }
 
-    // Returns the half-move counter of the position.
+    // Returns the half-move counter of the position
     [[nodiscard]] inline Ply getMove50() const {
         return states.getMove50();
     }
 
+    // Makes a move on the board
     inline void makeMove(Move move);
 
+    // Undoes a move on the board
     inline void undoMove(Move move);
 
+    // Makes a null move on the board
     void makeNullMove();
 
+    // Undoes a null move on the board
     void undoNullMove();
 
+    // Checks if the current position is a 2-fold repetition
     bool isRepetition();
 
+    // Displays the current board state
     void display() const;
 
+    // Displays the current evaluation of the board
     void displayEval();
 
+    // Loads the board position from a FEN string
     void loadPositionFromFen(const std::string &fen);
 
+    // Loads the board position from a Position object
     void loadFromPosition(const Position &position);
 
     Position();

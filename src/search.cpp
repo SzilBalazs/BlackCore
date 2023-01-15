@@ -89,19 +89,23 @@ Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
  * Returns the material change, after playing out every resulting capture of the move.
  */
 Score see(const Position &pos, Move move) {
-    assert(move.isCapture());
+    assert(move.isCapture()); // Make sure move is a capture
 
     Score e[32];
     Depth d = 0;
     Square from = move.getFrom();
     Square to = move.getTo();
 
+    // Initialize the first value in the array to the value of the piece captured
     e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
     Bitboard occ = pos.occupied() ^ Bitboard(to);
+
+    // Initialize the current attacker as the piece that made the capture
     Bitboard attacker = from;
+    // Get all attackers to the destination square
     Bitboard attackers = getAllAttackers(pos, to, occ);
 
     Color stm = pos.pieceAt(to).color;
@@ -111,15 +115,18 @@ Score see(const Position &pos, Move move) {
         d++;
         e[d] = PIECE_VALUES[type] - e[d - 1];
 
+        // If the maximum of the last two values is less than 0, it means the capture is not profitable
         if (std::max(-e[d - 1], e[d]) < 0)
             break;
 
         occ ^= attacker;
         attackers ^= attacker;
+
         if (type == ROOK || type == QUEEN)
             attackers |= rookAttacks(to, occ) & rooks & occ;
         if (type == PAWN || type == BISHOP || type == QUEEN)
             attackers |= bishopAttacks(to, occ) & bishops & occ;
+
         attacker = leastValuablePiece(pos, attackers, stm, type);
         stm = EnemyColor(stm);
 
@@ -145,7 +152,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     constexpr bool pvNode = type != NON_PV_NODE;
     constexpr bool nonPvNode = !pvNode;
 
-    // Ask the time manager whether the search should stop
+    // Check if search should stop by asking the time manager
     if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
@@ -157,8 +164,8 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     /*
      * Transposition table probing
      *
-     * Check the transposition table for information about this position
-     * in case, if it was already searched.
+     * Check if position has been searched before by probing
+     * the transposition table
      */
     bool ttHit = false;
     TTEntry ttEntry = ttProbe(pos.getHash(), ttHit);
@@ -166,15 +173,17 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     /*
      * TT cutoffs
      *
-     * If we have already searched this position, we can return that score.
+     * If the position has been searched before,
+     * return the score from the transposition table.
      */
     if (ttHit && nonPvNode && (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
     }
 
-    // Get the evaluation of the position, which later will be used as a stand pat score.
+    // Get the evaluation of the position, which will be used as the stand pat score
     Score staticEval = eval(pos);
 
+    // Return the evaluation if maximum ply is reached
     if (ply >= MAX_PLY) {
         return staticEval;
     }
@@ -185,6 +194,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
      * As only tactical moves will be evaluated, static evaluation can be used to get a
      * lower-bound of the position score.
      */
+
     if (staticEval >= beta) {
         return beta;
     }
@@ -193,10 +203,13 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         alpha = staticEval;
     }
 
+    // Generate all legal capture
     MoveList moves = {pos, td, Move(), true, false};
+
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
 
+    // Iterate through the generated moves
     while (!moves.empty()) {
 
         Move move = moves.nextMove();
@@ -220,26 +233,27 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         if (alpha > TB_BEST_LOSS && see(pos, move) < 0)
             continue;
 
-        td.nodes++;
+        td.nodes++; // Update total number of nodes searched
+
         pos.makeMove(move);
 
         Score score = -quiescence<type>(pos, td, -beta, -alpha, ply + 1);
 
         pos.undoMove(move);
 
-        // Ask the time manager whether the search should stop
+        // Check if search should stop by asking the time manager
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
-        // If the score is too good to be acceptable by our opponent return beta.
+        // If the score is too good to be acceptable by our opponent return beta
         if (score >= beta) {
-            // If beta cutoff happens save the information to the transposition table.
+            // If beta cutoff happens save the information to the transposition table
             ttSave(pos.getHash(), 0, score, TT_BETA, move);
 
             return beta;
         }
 
-        // If the score is better than alpha update alpha.
+        // If the score is better than alpha update alpha
         if (score > alpha) {
             alpha = score;
             ttFlag = TT_EXACT;
@@ -247,7 +261,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         }
     }
 
-    // Save information to the transposition table.
+    // Save information to the transposition table
     ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
     return alpha;
 }
@@ -267,7 +281,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     Score maxAlpha = INF_SCORE;
     td.pvLength[ply] = ply;
 
-    // Ask the time manager whether the search should stop
+    // Check if search should stop by asking the time manager
     if (shouldEnd(td.nodes, getTotalNodes()))
         return UNKNOWN_SCORE;
 
@@ -446,7 +460,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
-        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet()) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
 
             // Futility pruning
             // ... the static evaluation is far below alpha.
@@ -542,6 +556,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             td.updateNodesSearched(move, td.nodes - nodesBefore);
         }
 
+        // Check if search should stop by asking the time manager
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
@@ -632,6 +647,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     int iter = 1;
     while (true) {
+        // Check if search should stop by asking the time manager
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 

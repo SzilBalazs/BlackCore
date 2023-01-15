@@ -47,57 +47,60 @@ constexpr unsigned int QUEEN_CASTLE = SPECIAL1_FLAG | SPECIAL2_FLAG;
 
 class Move {
 public:
+    // Initialize the move with a from square, to square, and flags
     constexpr Move(Square from, Square to, unsigned int flags) {
         data = (flags << 12) | (from << 6) | (to);
     }
 
+    // Initialize the move with a from square and to square, default flags
     constexpr Move(Square from, Square to) {
         data = (from << 6) | (to);
     }
 
+    // Default constructor, initialize move as null move
     constexpr Move() = default;
 
-    // Returns the to square of the move.
+    // Returns the to square of the move
     constexpr Square getTo() const {
         return Square(data & 0x3f);
     }
 
-    // Returns the from square of the move.
+    // Returns the from square of the move
     constexpr Square getFrom() const {
         return Square((data >> 6) & 0x3f);
     }
 
-    // Returns true if the flag is set in the move.
+    // Returns true if the flag is set in the move
     constexpr bool isFlag(unsigned int flag) const {
         return (data >> 12) & flag;
     }
 
-    // Returns true if the move type is equal to flag.
+    // Returns true if the move type is equal to flag
     constexpr bool equalFlag(unsigned int flag) const {
         return (data >> 12) == flag;
     }
-    
-    // Returns true if the move is not null.
+
+    // Returns true if the move is not null
     constexpr bool isOk() const {
         return data != 0;
     }
-    
-    // Returns true if the move is a capture.
+
+    // Returns true if the move is a capture
     constexpr bool isCapture() const {
         return isFlag(CAPTURE_FLAG);
     }
 
-    // Returns true if the move is a promotion.
+    // Returns true if the move is a promotion
     constexpr bool isPromo() const {
         return isFlag(PROMO_FLAG);
     }
 
-    // Returns true if the move has the SPECIAL1_FLAG set.
+    // Returns true if the move has the SPECIAL1_FLAG set
     constexpr bool isSpecial1() const {
         return isFlag(SPECIAL1_FLAG);
     }
 
-    // Returns true if the move has the SPECIAL2_FLAG set.
+    // Returns true if the move has the SPECIAL2_FLAG set
     constexpr bool isSpecial2() const {
         return isFlag(SPECIAL2_FLAG);
     }
@@ -107,19 +110,22 @@ public:
         return !isCapture();
     }
 
+    // Explicit conversion to bool, returns true if move is not a null move
     constexpr explicit operator bool() const {
         return isOk();
     }
 
+    // Comparison operator, returns true if moves are equal
     constexpr bool operator==(Move a) const {
         return (data & 0xFFFF) == (a.data & 0xFFFF);
     }
 
+    // Comparison operator, returns true if moves are not equal
     constexpr bool operator!=(Move a) const {
         return (data & 0xFFFF) != (a.data & 0xFFFF);
     }
 
-    // Returns the uci format string of the move.
+    // Returns the move in UCI format as a string
     std::string str() const;
 
 private:
