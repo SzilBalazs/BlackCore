@@ -446,18 +446,24 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
-        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet()) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && !move.isPromo() && index > 0) {
 
-            // Futility pruning
-            // ... the static evaluation is far below alpha.
-            if (depth <= FUTILITY_DEPTH &&
-                staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving < alpha)
-                continue;
+            if (move.isQuiet()) {
+                // Futility pruning
+                // ... the static evaluation is far below alpha.
+                if (depth <= FUTILITY_DEPTH &&
+                    staticEval + FUTILITY_MARGIN + FUTILITY_MARGIN_DEPTH * depth + FUTILITY_MARGIN_IMPROVING * improving < alpha)
+                    continue;
 
-            // Late move pruning
-            // ... many moves had been made before.
-            if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
-                continue;
+                // Late move pruning
+                // ... many moves had been made before.
+                if (depth <= LMP_DEPTH && index >= LMP_MOVES + depth * depth)
+                    continue;
+            } else {
+
+                if (depth <= 5 && see(pos, move) < -200 * depth)
+                    continue;
+            }
         }
 
         // Extensions
