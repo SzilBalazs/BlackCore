@@ -659,7 +659,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
                 // Calculate mate depth if a mate was found.
                 if (mateDepth <= 64) {
-                    int matePly = score ? mateDepth / 2 + 1 : -(mateDepth / 2);
+                    int matePly = score > 0 ? mateDepth / 2 + 1 : -(mateDepth / 2);
                     scoreStr = "mate " + std::to_string(matePly);
                 }
 
