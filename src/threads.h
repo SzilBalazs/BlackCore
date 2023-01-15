@@ -107,12 +107,12 @@ struct ThreadData {
 
     void updateNodesSearched(Move move, U64 totalNodes) {
         mNodesSearched.lock();
-        nodesSearched[move.getFrom()][move.getTo()] += totalNodes;
+        nodesSearched[move.getFrom()][move.getTo()] = totalNodes;
         mNodesSearched.unlock();
     }
 
     Score scoreRootNode(Move move) {
-        return nodesSearched[move.getFrom()][move.getTo()] / 1000;
+        return nodesSearched[move.getFrom()][move.getTo()];
     }
 
     Score scoreMove(const Position &pos, Move prevMove, Move move) {

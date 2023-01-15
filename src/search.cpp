@@ -416,7 +416,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, (rootNode && depth >= 6)};
+    MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, rootNode};
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
