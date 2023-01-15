@@ -17,7 +17,6 @@
 #ifndef BLACKCORE_THREADS_H
 #define BLACKCORE_THREADS_H
 
-#include "search.h"
 #include "tt.h"
 
 #include <algorithm>
@@ -117,9 +116,7 @@ struct ThreadData {
 
     Score scoreMove(const Position &pos, Move prevMove, Move move) {
 
-        if (move == getHashMove(pos.getHash())) {
-            return 10000000;
-        } else if (move.isPromo()) {
+        if (move.isPromo()) {
             if (move.isSpecial1() && move.isSpecial2()) { // Queen promotion
                 return 9000000;
             } else { // Anything else, under promotions should only be played in really few cases

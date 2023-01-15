@@ -48,8 +48,6 @@ struct MoveList {
     Move *movesEnd;
     unsigned int index;
 
-    Score scores[200];
-
     unsigned int count;
 
     // Constructor that generates and scores legal moves.
@@ -57,10 +55,6 @@ struct MoveList {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
-
-        for (unsigned int i = 0; i < count; i++) {
-            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(pos, prevMove, moves[i]);
-        }
     }
 
     // Returns true if there are no more moves left.
@@ -70,15 +64,6 @@ struct MoveList {
 
     // Sorts and returns the next best scored move.
     inline Move nextMove() {
-        unsigned int best = index;
-        for (unsigned int i = index; i < count; i++) {
-            if (scores[i] > scores[best]) {
-                best = i;
-            }
-        }
-        std::swap(moves[index], moves[best]);
-        std::swap(scores[index], scores[best]);
-
         return moves[index++];
     }
 };

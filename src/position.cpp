@@ -74,6 +74,25 @@ bool Position::isRepetition() {
     return false;
 }
 
+// A VERY basic legality check
+bool Position::isPseudoLegal(Move move) {
+    if (!move.isOk()) return false;
+
+    Square from = move.getFrom();
+    Square to = move.getTo();
+
+    Piece piece = pieceAt(from);
+
+    if (piece.isNull()) return false;
+    if (pieceAt(to).isNull() && move.isCapture()) return false;
+
+    if (move.isPromo() && piece.type != PAWN) return false;
+
+    if (getSideToMove() != piece.color) return false;
+
+    return true;
+}
+
 // Displays the current position in the console.
 void Position::display() const {
 

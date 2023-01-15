@@ -220,6 +220,8 @@ public:
 
     bool isRepetition();
 
+    bool isPseudoLegal(Move move);
+
     void display() const;
 
     void displayEval();

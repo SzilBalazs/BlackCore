@@ -193,13 +193,15 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         alpha = staticEval;
     }
 
-    MoveList moves = {pos, td, Move(), true, false};
+    MovePicker<QSEARCH> moves = {pos, td, Move(), ttEntry.hashMove};
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
 
     while (!moves.empty()) {
 
         Move move = moves.nextMove();
+
+        if (!move.isOk()) continue;
 
         /*
          * Delta pruning
@@ -416,25 +418,16 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, (rootNode && depth >= 6)};
-
-    // If there is no legal moves the position is either a checkmate or a stalemate.
-    if (moves.count == 0) {
-        if (isSingularRoot)
-            return alpha;
-
-        return inCheck ? -matePly : DRAW_VALUE;
-    }
+    MovePicker<rootNode ? ROOT_SEARCH : MAIN_SEARCH> moves = {pos, td, prevMove, ttEntry.hashMove};
 
     Move bestMove;
     EntryFlag ttFlag = TT_ALPHA;
     int index = 0;
     std::vector<Move> quiets;
     while (!moves.empty()) {
-
         Move move = moves.nextMove(); // Currently searched move
 
-        if (move == stack->excludedMove) continue;
+        if (move == stack->excludedMove || !move.isOk()) continue;
 
         U64 nodesBefore = td.nodes;
 
@@ -446,7 +439,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
-        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet()) {
+        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && index > 0) {
 
             // Futility pruning
             // ... the static evaluation is far below alpha.
@@ -584,6 +577,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if (move.isQuiet())
             quiets.push_back(move);
         index++;
+    }
+
+    // If there is no legal moves the position is either a checkmate or a stalemate.
+    if (index == 0) {
+        if (isSingularRoot)
+            return alpha;
+
+        return inCheck ? -matePly : DRAW_VALUE;
     }
 
     alpha = std::min(alpha, maxAlpha);
