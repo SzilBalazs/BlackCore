@@ -457,7 +457,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
+        Score history = move.isQuiet() ? 0 : td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
@@ -570,10 +570,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                     td.updateKillerMoves(move, ply);
                     if (notRootNode && prevMove.isOk())
                         td.updateCounterMoves(prevMove, move);
-                    td.updateHH(move, color, depth * depth);
+
+                    Score bonus = std::min(150 * depth, 2000);
+                    Score penalty = std::max(-50 * depth, -2000);
+
+                    td.updateHH(move, color, bonus);
 
                     for (Move m : quiets) {
-                        td.updateHH(m, color, -depth * depth);
+                        td.updateHH(m, color, penalty);
                     }
                 }
 

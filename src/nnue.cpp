@@ -153,25 +153,15 @@ namespace NNUE {
 
     // Forward propagates L_1 to L_2.
     Score Accumulator::forward(Color stm) {
-
+        Color xstm = EnemyColor(stm);
         int32_t output = L_1_BIASES[0];
 
-        if (stm == WHITE) {
-            for (int i = 0; i < L_1_SIZE; i++) {
-                output += ReLU(hiddenLayer[WHITE][i]) * L_1_WEIGHTS[i];
-            }
+        for (int i = 0; i < L_1_SIZE; i++) {
+            output += ReLU(hiddenLayer[stm][i]) * L_1_WEIGHTS[i];
+        }
 
-            for (int i = 0; i < L_1_SIZE; i++) {
-                output += ReLU(hiddenLayer[BLACK][i]) * L_1_WEIGHTS[L_1_SIZE + i];
-            }
-        } else {
-            for (int i = 0; i < L_1_SIZE; i++) {
-                output += ReLU(hiddenLayer[BLACK][i]) * L_1_WEIGHTS[i];
-            }
-
-            for (int i = 0; i < L_1_SIZE; i++) {
-                output += ReLU(hiddenLayer[WHITE][i]) * L_1_WEIGHTS[L_1_SIZE + i];
-            }
+        for (int i = 0; i < L_1_SIZE; i++) {
+            output += ReLU(hiddenLayer[xstm][i]) * L_1_WEIGHTS[L_1_SIZE + i];
         }
 
         // Scales back the output with the quantization scales.
