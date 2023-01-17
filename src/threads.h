@@ -60,14 +60,23 @@ struct ThreadData {
         std::memset(pvLength, 0, sizeof(pvLength));
         std::memset(killerMoves, 0, sizeof(killerMoves));
         std::memset(counterMoves, 0, sizeof(counterMoves));
-        std::memset(historyTable, 0, sizeof(historyTable));
         std::memset(historyDiffReplace, 0, sizeof(historyDiffReplace));
         std::memset(historyDiff, 0, sizeof(historyDiff));
+
+        for (Color color : {WHITE, BLACK}) {
+            for (Square sq = A1; sq < 64; sq += 1) {
+                for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
+                    historyTable[color][sq][sq2] /= 2;
+                }
+            }
+        }
     }
 
     inline void reset() {
         nodes = 0;
         tbHits = 0;
+
+        std::memset(historyTable, 0, sizeof(historyTable));
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));
