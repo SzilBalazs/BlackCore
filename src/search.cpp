@@ -447,6 +447,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     while (!moves.empty()) {
 
         Move move = moves.nextMove(); // Currently searched move
+        Piece movedPiece = pos.pieceAt(move.getFrom());
 
         if (move == stack->excludedMove) continue;
 
@@ -457,7 +458,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
+        Score history = td.historyTable[color][movedPiece.type][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
@@ -570,10 +571,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                     td.updateKillerMoves(move, ply);
                     if (notRootNode && prevMove.isOk())
                         td.updateCounterMoves(prevMove, move);
-                    td.updateHH(move, color, depth * depth);
+                    td.updateHH(move, color, movedPiece.type, depth * depth);
 
                     for (Move m : quiets) {
-                        td.updateHH(m, color, -depth * depth);
+                        td.updateHH(m, color, movedPiece.type, -depth * depth);
                     }
                 }
 

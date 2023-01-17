@@ -49,7 +49,7 @@ struct ThreadData {
     // Arrays used for move ordering.
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
-    Score historyTable[2][64][64];
+    Score historyTable[2][6][64][64];
     Bitboard historyDiff[2][64][64][HISTORY_DIFF_SLOTS];
     int historyDiffReplace[2][64][64];
 
@@ -64,9 +64,11 @@ struct ThreadData {
         std::memset(historyDiff, 0, sizeof(historyDiff));
 
         for (Color color : {WHITE, BLACK}) {
-            for (Square sq = A1; sq < 64; sq += 1) {
-                for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
-                    historyTable[color][sq][sq2] /= 2;
+            for (int type = 0; type < 6; type++) {
+                for (Square sq = A1; sq < 64; sq += 1) {
+                    for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
+                        historyTable[color][type][sq][sq2] /= 2;
+                    }
                 }
             }
         }
@@ -110,8 +112,9 @@ struct ThreadData {
         counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
     }
 
-    void updateHH(Move move, Color color, Score bonus) {
-        historyTable[color][move.getFrom()][move.getTo()] = std::clamp(historyTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
+    void updateHH(Move move, Color color, PieceType type, Score bonus) {
+        bonus = bonus - historyTable[color][type][move.getFrom()][move.getTo()] * bonus / 8192;
+        historyTable[color][type][move.getFrom()][move.getTo()] += bonus;
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
@@ -154,7 +157,7 @@ struct ThreadData {
             diffBonus = 5500000;
         else if (diff == 2)
             diffBonus = 5400000;
-        return diffBonus + historyTable[stm][move.getFrom()][move.getTo()];
+        return diffBonus + historyTable[stm][pos.pieceAt(move.getFrom()).type][move.getFrom()][move.getTo()];
     }
 };
 
