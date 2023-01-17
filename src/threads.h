@@ -66,7 +66,7 @@ struct ThreadData {
         for (Color color : {WHITE, BLACK}) {
             for (Square sq = A1; sq < 64; sq += 1) {
                 for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
-                    historyTable[color][sq][sq2] /= 2;
+                    historyTable[color][sq][sq2] /= 4;
                 }
             }
         }
