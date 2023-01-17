@@ -20,6 +20,7 @@
 #include "constants.h"
 #include "position.h"
 
+// Internal piece values
 constexpr Score PIECE_VALUES[6] = {
         0, 156, 561, 608, 736, 1022};
 

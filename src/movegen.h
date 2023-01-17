@@ -21,6 +21,7 @@
 #include "position.h"
 #include "threads.h"
 
+// Returns a bitboard of all the squares attacking a given square for the given color
 template<Color color>
 inline Bitboard getAttackers(const Position &pos, Square square) {
     Bitboard occupied = pos.occupied();
@@ -33,6 +34,7 @@ inline Bitboard getAttackers(const Position &pos, Square square) {
            enemy;
 }
 
+// Returns a bitboard of all the squares attacking a given square for the side to move
 inline Bitboard getAttackers(const Position &pos, Square square) {
     if (pos.getSideToMove() == WHITE)
         return getAttackers<WHITE>(pos, square);

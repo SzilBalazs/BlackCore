@@ -21,37 +21,50 @@
 #include "fathom/src/tbprobe.h"
 
 inline unsigned int TBProbe(const Position &pos) {
+    // Initialize bitboards for friendly white and black pieces
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
+    // Check if the total number of pieces on the board is greater than the largest loaded entry by the tablebase
     if ((white | black).popCount() > (int) TB_LARGEST)
         return TB_RESULT_FAILED;
 
+    // Get the en passant square or 0 if it doesn't exist
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
+
+    // Call Fathom's probe wdl function to get the WDL result for the position
     return tb_probe_wdl(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
                         pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
                         pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE);
 }
 
 inline bool TBProbeRoot(const Position &pos) {
+    // Initialize bitboards for friendly white and black pieces
     Bitboard white = pos.friendly<WHITE>();
     Bitboard black = pos.friendly<BLACK>();
 
+    // Check if the total number of pieces on the board is greater than the largest loaded entry by the tablebase
     if ((white | black).popCount() > (int) TB_LARGEST)
         return false;
 
+    // Get the en passant square or 0 if it doesn't exist
     unsigned int ep = pos.getEpSquare() == NULL_SQUARE ? 0 : int(pos.getEpSquare());
+
+    // Call Fathom's root probing function to get the misc information about the position including WDL, DTZ, best move
     unsigned int result = tb_probe_root(white.bb, black.bb, pos.pieces<KING>().bb, pos.pieces<QUEEN>().bb, pos.pieces<ROOK>().bb,
                                         pos.pieces<BISHOP>().bb, pos.pieces<KNIGHT>().bb, pos.pieces<PAWN>().bb,
                                         pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE, nullptr);
 
+    // Check for failed, stalemate, or checkmate results
     if (result == TB_RESULT_FAILED || result == TB_RESULT_STALEMATE || result == TB_RESULT_CHECKMATE)
         return false;
 
+    // Extract the from, to, and promotion squares from the result
     Square from = static_cast<Square>(TB_GET_FROM(result));
     Square to = static_cast<Square>(TB_GET_TO(result));
     unsigned int promo = TB_GET_PROMOTES(result);
 
+    // Determine the promotion type
     unsigned char flags;
     switch (promo) {
         case 0:
@@ -74,6 +87,7 @@ inline bool TBProbeRoot(const Position &pos) {
             return false;
     }
 
+    // Get the WDL (Win, Draw, Loss) value
     unsigned int wdl = TB_GET_WDL(result);
     Score score;
     if (wdl == TB_WIN) {
@@ -87,6 +101,7 @@ inline bool TBProbeRoot(const Position &pos) {
         return false;
     }
 
+    // Output information to the GUI
     out("info", "depth", 1, "seldepth", 1, "nodes", 1, "tbhits", 1, "score", "cp", score, "time", 1, "pv", Move(from, to, flags));
     out("bestmove", Move(from, to, flags));
     return true;

@@ -373,11 +373,14 @@ inline Move *generateSliderAndJumpMoves(const Position &pos, Move *moves, Bitboa
 // Generates all the legal moves in a position.
 template<Color color, bool capturesOnly>
 Move *generateMoves(const Position &pos, Move *moves) {
+    // Define enemy color
     constexpr Color enemyColor = EnemyColor<color>();
 
+    // Define friendly king square
     Square king = pos.pieces<color, KING>().lsb();
     assert(king != NULL_SQUARE);
 
+    // Define bitboards used for move generation
     Bitboard friendlyPieces = pos.friendly<color>();
     Bitboard empty = pos.empty();
     Bitboard enemy = pos.enemy<color>();
@@ -398,20 +401,23 @@ Move *generateMoves(const Position &pos, Move *moves) {
     if (checkMask == 0)
         return moves;
 
-    // Generating pinMasks
+    // Generate pinMasks
     Bitboard seenSquares = pieceAttacks<QUEEN>(king, occupied);
     Bitboard possiblePins = seenSquares & friendlyPieces;
 
     occupied ^= possiblePins;
 
+    // Get all the pinners
     Bitboard possiblePinners = (pieceAttacks<QUEEN>(king, occupied) ^ seenSquares) & enemy;
     Bitboard pinners = ((pieceAttacks<ROOK>(king, occupied) & pos.pieces<ROOK>()) |
                         (pieceAttacks<BISHOP>(king, occupied) & pos.pieces<BISHOP>()) |
                         (pieceAttacks<QUEEN>(king, occupied) & pos.pieces<QUEEN>())) &
                        possiblePinners;
 
+    // Define bitboards used for storing pin information
     Bitboard pinH, pinV, pinD, pinA, pinHV, pinDA, moveH, moveV, moveD, moveA;
 
+    // Calculate pins
     while (pinners) {
         Square pinner = pinners.popLsb();
         LineType type = lineType[king][pinner];
