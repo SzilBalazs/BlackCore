@@ -50,8 +50,6 @@ struct ThreadData {
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
     Score historyTable[2][64][64];
-    Bitboard historyDiff[2][64][64][HISTORY_DIFF_SLOTS];
-    int historyDiffReplace[2][64][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -60,8 +58,6 @@ struct ThreadData {
         std::memset(pvLength, 0, sizeof(pvLength));
         std::memset(killerMoves, 0, sizeof(killerMoves));
         std::memset(counterMoves, 0, sizeof(counterMoves));
-        std::memset(historyDiffReplace, 0, sizeof(historyDiffReplace));
-        std::memset(historyDiff, 0, sizeof(historyDiff));
 
         for (Color color : {WHITE, BLACK}) {
             for (Square sq = A1; sq < 64; sq += 1) {
@@ -83,22 +79,6 @@ struct ThreadData {
         mNodesSearched.unlock();
 
         clear();
-    }
-
-    int getHistoryDifference(Color stm, Move move, Bitboard occ) {
-        int diff = 100;
-        for (int idx = 0; idx < HISTORY_DIFF_SLOTS; idx++) {
-            diff = std::min(diff, (historyDiff[stm][move.getFrom()][move.getTo()][idx] ^ occ).popCount());
-        }
-        return diff;
-    }
-
-    void updateHistoryDifference(Color stm, Move move, Bitboard pieces) {
-        Square from = move.getFrom();
-        Square to = move.getTo();
-        historyDiff[stm][from][to][historyDiffReplace[stm][from][to]] = pieces;
-        historyDiffReplace[stm][from][to]++;
-        historyDiffReplace[stm][from][to] %= HISTORY_DIFF_SLOTS;
     }
 
     void updateKillerMoves(Move m, Ply ply) {
@@ -124,7 +104,11 @@ struct ThreadData {
         return nodesSearched[move.getFrom()][move.getTo()] / 1000;
     }
 
-    Score scoreMove(const Position &pos, Move prevMove, Move move) {
+    Score scoreMove(const Position &pos, Move prevMove, Move move, Ply ply) {
+
+        Square from = move.getFrom();
+        Square to = move.getTo();
+        Color stm = pos.getSideToMove();
 
         if (move == getHashMove(pos.getHash())) {
             return 10000000;
@@ -141,20 +125,14 @@ struct ThreadData {
                 return 8000000 + seeScore;
             else
                 return 2000000 + seeScore;
-        } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == move) {
+        } else if (killerMoves[ply][0] == move) {
+            return 7000000;
+        } else if (killerMoves[ply][1] == move) {
+            return 6000000;
+        } else if (counterMoves[from][to] == move) {
             return 5000000;
         }
-        Color stm = pos.getSideToMove();
-        Bitboard occ = pos.occupied();
-        int diff = getHistoryDifference(stm, move, occ);
-        Score diffBonus = 0;
-        if (diff == 0)
-            diffBonus = 5600000;
-        else if (diff == 1)
-            diffBonus = 5500000;
-        else if (diff == 2)
-            diffBonus = 5400000;
-        return diffBonus + historyTable[stm][move.getFrom()][move.getTo()];
+        return historyTable[stm][from][to];
     }
 };
 

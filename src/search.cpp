@@ -204,7 +204,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     }
 
     // Generate all legal capture
-    MoveList moves = {pos, td, Move(), true, false};
+    auto moves = MoveList<true, false>(pos, td, Move(), ply);
 
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
@@ -280,6 +280,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     Score maxAlpha = INF_SCORE;
     td.pvLength[ply] = ply;
+    td.killerMoves[ply + 1][0] = Move();
+    td.killerMoves[ply + 1][1] = Move();
 
     // Check if search should stop by asking the time manager
     if (shouldEnd(td.nodes, getTotalNodes()))
@@ -430,7 +432,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    MoveList moves = {pos, td, (notRootNode ? prevMove : Move()), false, (rootNode && depth >= 6)};
+    auto moves = MoveList<false, rootNode>(pos, td, prevMove, ply);
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
@@ -530,7 +532,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             R += !improving;
             R -= pvNode;
-            R -= std::clamp(history / 3000, -1, 1);
+            R -= std::clamp(history / 3000, 0, 1);
             R -= (td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move) || (ply >= 1 && td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
@@ -566,7 +568,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 if (move.isQuiet()) {
 
                     // Update history heuristics
-                    td.updateHistoryDifference(color, move, pos.occupied());
                     td.updateKillerMoves(move, ply);
                     if (notRootNode && prevMove.isOk())
                         td.updateCounterMoves(prevMove, move);
