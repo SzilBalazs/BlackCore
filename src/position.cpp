@@ -216,6 +216,27 @@ void Position::loadPositionFromFen(const string &fen) {
     state->accumulator.refresh(*this);
 }
 
+Bitboard Position::getAllAttackers(Square square, Bitboard occ) const {
+    return (((pawnMasks[square][WHITE] | pawnMasks[square][BLACK]) & pieces<PAWN>()) |
+            (pieceAttacks<KNIGHT>(square, occ) & pieces<KNIGHT>()) |
+            (pieceAttacks<BISHOP>(square, occ) & pieces<BISHOP>()) |
+            (pieceAttacks<ROOK>(square, occ) & pieces<ROOK>()) |
+            (pieceAttacks<QUEEN>(square, occ) & pieces<QUEEN>())) &
+           occ;
+}
+
+Bitboard Position::leastValuablePiece(Bitboard attackers, Color stm, PieceType &type) const {
+    
+    for (PieceType t : PIECE_TYPES_BY_VALUE) {
+        Bitboard s = attackers & pieces(stm, t);
+        if (s) {
+            type = t;
+            return s & -s.bb;
+        }
+    }
+    return 0;
+}
+
 Position::Position() {
     clearPosition();
 }

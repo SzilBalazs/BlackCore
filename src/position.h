@@ -237,6 +237,12 @@ public:
     // Loads the board position from a Position object
     void loadFromPosition(const Position &position);
 
+    // Get all the attackers of a square
+    Bitboard getAllAttackers(Square square, Bitboard occ) const;
+    
+    // Returns the least valuable 'stm' color piece among 'attackers'
+    Bitboard leastValuablePiece(Bitboard attackers, Color stm, PieceType &type) const;
+
     Position();
 
     Position(const std::string &fen);

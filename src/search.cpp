@@ -44,6 +44,7 @@ U64 getTotalNodes() {
     return totalNodes;
 }
 
+// Sumps up the TB hits of individual threads
 U64 getTotalTBHits() {
     U64 totalHits = 0;
     for (ThreadData &td : tds) {
@@ -60,27 +61,6 @@ void initLmr() {
             reductions[moveIndex][depth] = Depth(std::max(1, int(LMR_BASE + (log((double) moveIndex) * log((double) depth) / LMR_SCALE))));
         }
     }
-}
-
-Bitboard leastValuablePiece(const Position &pos, Bitboard attackers, Color stm, PieceType &type) {
-
-    for (PieceType t : PIECE_TYPES_BY_VALUE) {
-        Bitboard s = attackers & pos.pieces(stm, t);
-        if (s) {
-            type = t;
-            return s & -s.bb;
-        }
-    }
-    return 0;
-}
-
-Bitboard getAllAttackers(const Position &pos, Square square, Bitboard occ) {
-    return (((pawnMasks[square][WHITE] | pawnMasks[square][BLACK]) & pos.pieces<PAWN>()) |
-            (pieceAttacks<KNIGHT>(square, occ) & pos.pieces<KNIGHT>()) |
-            (pieceAttacks<BISHOP>(square, occ) & pos.pieces<BISHOP>()) |
-            (pieceAttacks<ROOK>(square, occ) & pos.pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(square, occ) & pos.pieces<QUEEN>())) &
-           occ;
 }
 
 /*
@@ -106,7 +86,7 @@ Score see(const Position &pos, Move move) {
     // Initialize the current attacker as the piece that made the capture
     Bitboard attacker = from;
     // Get all attackers to the destination square
-    Bitboard attackers = getAllAttackers(pos, to, occ);
+    Bitboard attackers = pos.getAllAttackers(to, occ);
 
     Color stm = pos.pieceAt(to).color;
     PieceType type = pos.pieceAt(from).type;
@@ -127,7 +107,7 @@ Score see(const Position &pos, Move move) {
         if (type == PAWN || type == BISHOP || type == QUEEN)
             attackers |= bishopAttacks(to, occ) & bishops & occ;
 
-        attacker = leastValuablePiece(pos, attackers, stm, type);
+        attacker = pos.leastValuablePiece(attackers, stm, type);
         stm = EnemyColor(stm);
 
     } while (attacker);
@@ -533,7 +513,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             R += !improving;
             R -= pvNode;
             R -= std::clamp(history / 3000, -1, 1);
-            R -= (td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move) || (ply >= 1 && td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move);
+            R -= td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move || td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move;
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
@@ -569,7 +549,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
                     // Update history heuristics
                     td.updateKillerMoves(move, ply);
-                    if (notRootNode && prevMove.isOk())
+                    if (prevMove.isOk())
                         td.updateCounterMoves(prevMove, move);
                     td.updateHH(move, color, depth * depth);
 
@@ -634,6 +614,12 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
     td.clear();
 
     SearchStack stateStack[MAX_PLY + 1];
+
+    for (int i = 0; i <= MAX_PLY; i++) {
+        stateStack[i].excludedMove = Move();
+        stateStack[i].move = Move();
+        stateStack[i].eval = UNKNOWN_SCORE;
+    }
 
     // Start at -inf and +inf bounds
     Score alpha = -INF_SCORE;
