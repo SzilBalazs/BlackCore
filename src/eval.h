@@ -20,10 +20,6 @@
 #include "constants.h"
 #include "position.h"
 
-// Internal piece values
-constexpr Score PIECE_VALUES[6] = {
-        0, 156, 561, 608, 736, 1022};
-
 // Returns the score of a position using NNUE.
 inline Score eval(const Position &pos) {
     return pos.getState()->accumulator.forward(pos.getSideToMove());

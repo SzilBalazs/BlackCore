@@ -361,7 +361,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     if (notRootNode && !inCheck) {
 
         // Internal iterative deepening to prevent search explosions.
-        if (!ttHit && depth >= 5)
+        if (!ttHit && depth >= 5 && !isSingularRoot)
             depth--;
 
         /*

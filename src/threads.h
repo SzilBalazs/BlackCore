@@ -101,7 +101,7 @@ struct ThreadData {
     }
 
     Score scoreRootNode(Move move) {
-        return nodesSearched[move.getFrom()][move.getTo()] / 1000;
+        return nodesSearched[move.getFrom()][move.getTo()];
     }
 
     Score scoreMove(const Position &pos, Move prevMove, Move move, Ply ply) {
@@ -120,7 +120,7 @@ struct ThreadData {
         } else if (move.isCapture()) {
             Score seeScore = see(pos, move);
 
-            if (see(pos, move) >= 0)
+            if (see(pos, move) > 0)
                 return 8000000 + seeScore;
             else
                 return 2000000 + seeScore;
