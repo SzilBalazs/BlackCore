@@ -105,7 +105,6 @@ struct ThreadData {
     }
 
     Score scoreMove(const Position &pos, Move prevMove, Move move, Ply ply) {
-
         Square from = move.getFrom();
         Square to = move.getTo();
         Color stm = pos.getSideToMove();
@@ -129,9 +128,10 @@ struct ThreadData {
             return 7000000;
         } else if (killerMoves[ply][1] == move) {
             return 6000000;
-        } else if (counterMoves[from][to] == move) {
+        } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == move) {
             return 5000000;
         }
+
         return historyTable[stm][from][to];
     }
 };
