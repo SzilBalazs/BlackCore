@@ -1,5 +1,5 @@
 // BlackCore is a chess engine
-// Copyright (c) 2022-2023 SzilBalazs
+// Copyright (c) 2023 SzilBalazs
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,34 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "bench.h"
-#include "tools.h"
-#include "uci.h"
-#include <iostream>
+#ifndef BLACKCORE_TOOLS_H
+#define BLACKCORE_TOOLS_H
 
-int main(int argc, char **argv) {
+#include <string>
 
-    srand(RANDOM_SEED);
-    std::string mode;
-    if (argc >= 2) {
-        mode = std::string(argv[1]);
-    }
+void processPlain(const std::string filename);
 
-    if (mode.empty()) {
-        std::cin >> mode;
-    }
-
-    if (mode == "bench") {
-        testSearch();
-    } else if (mode == "perft") {
-        testPerft();
-    } else if (mode == "uci") {
-        uciLoop();
-    } else if (mode == "filter") {
-        processPlain(argv[2]);
-    } else {
-        std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
-    }
-
-    return 0;
-}
+#endif //BLACKCORE_TOOLS_H

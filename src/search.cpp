@@ -738,7 +738,10 @@ void joinThreads(bool waitToFinish) {
 
 // Starts the process of finding the best move.
 void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
-
+#ifdef DATA_FILTER
+    out("Binary only for DATA_FILTER!");
+    return;
+#endif
     joinThreads(false);
 
     // Initializes ThreadData object for storing variables of threads.

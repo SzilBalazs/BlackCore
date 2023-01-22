@@ -213,7 +213,9 @@ void Position::loadPositionFromFen(const string &fen) {
     state->hash ^= castlingRandTable[state->castlingRights];
     state->hash ^= epRandTable[squareToFile(state->epSquare)];
 
+#ifndef DATA_FILTER
     state->accumulator.refresh(*this);
+#endif
 }
 
 Bitboard Position::getAllAttackers(Square square, Bitboard occ) const {
@@ -226,7 +228,7 @@ Bitboard Position::getAllAttackers(Square square, Bitboard occ) const {
 }
 
 Bitboard Position::leastValuablePiece(Bitboard attackers, Color stm, PieceType &type) const {
-    
+
     for (PieceType t : PIECE_TYPES_BY_VALUE) {
         Bitboard s = attackers & pieces(stm, t);
         if (s) {
