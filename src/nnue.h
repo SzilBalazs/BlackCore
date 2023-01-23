@@ -40,9 +40,22 @@ namespace NNUE {
  *
  */
 
-
-    constexpr int L_0_SIZE = 768;
+    constexpr int KING_BUCKET_COUNT = 4;
+    constexpr int L_0_SIZE = KING_BUCKET_COUNT * 768;
     constexpr int L_1_SIZE = 256;
+
+    // clang-format off
+    constexpr int KING_BUCKET[64]{
+        0, 0, 0, 0, 1, 1, 1, 1,
+        0, 0, 0, 0, 1, 1, 1, 1,
+        0, 0, 0, 0, 1, 1, 1, 1,
+        0, 0, 0, 0, 1, 1, 1, 1,
+        2, 2, 2, 2, 3, 3, 3, 3,
+        2, 2, 2, 2, 3, 3, 3, 3,
+        2, 2, 2, 2, 3, 3, 3, 3,
+        2, 2, 2, 2, 3, 3, 3, 3,
+    };
+    // clang-format on
 
     constexpr int regWidth = 256 / 16;
     constexpr int chunkNum = 256 / regWidth;
@@ -57,17 +70,17 @@ namespace NNUE {
 
         void refresh(const Position &pos);
 
-        void addFeature(Color pieceColor, PieceType pieceType, Square sq);
+        void addFeature(Color pieceColor, PieceType pieceType, Square sq, Square wKing, Square bKing);
 
-        void removeFeature(Color pieceColor, PieceType pieceType, Square sq);
+        void removeFeature(Color pieceColor, PieceType pieceType, Square sq, Square wKing, Square bKing);
 
         Score forward(Color stm);
     };
 
     // Returns the L_0 index of a feature.
-    constexpr int getInputIndex(Color perspective, Color pieceColor, PieceType pieceType, Square square) {
+    constexpr int getInputIndex(Color perspective, Color pieceColor, PieceType pieceType, Square sq, Square kingSquare) {
         return (perspective == WHITE ? pieceColor : 1 - pieceColor) * 384 + pieceType * 64 +
-               (perspective == WHITE ? square : square ^ 56);
+               (perspective == WHITE ? sq : sq ^ 56) + KING_BUCKET[kingSquare] * 768;
     }
 
     // Activation function used in BlackCore's NNUE.

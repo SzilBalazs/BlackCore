@@ -66,6 +66,10 @@ enum Square : int {
     NULL_SQUARE = 64
 };
 
+constexpr Square flipSquare(Square sq) {
+    return Square(int(sq) ^ 56);
+}
+
 constexpr unsigned char WK_MASK = 1;
 constexpr unsigned char WQ_MASK = 2;
 constexpr unsigned char BK_MASK = 4;

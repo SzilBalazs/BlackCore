@@ -239,7 +239,7 @@ public:
 
     // Get all the attackers of a square
     Bitboard getAllAttackers(Square square, Bitboard occ) const;
-    
+
     // Returns the least valuable 'stm' color piece among 'attackers'
     Bitboard leastValuablePiece(Bitboard attackers, Color stm, PieceType &type) const;
 
@@ -303,7 +303,9 @@ void Position::clearSquare(Square square) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.removeFeature(piece.color, piece.type, square);
+        Square wKing = pieces<WHITE, KING>().lsb();
+        Square bKing = pieces<BLACK, KING>().lsb();
+        state->accumulator.removeFeature(piece.color, piece.type, square, wKing, bKing);
     }
 }
 
@@ -319,7 +321,9 @@ void Position::setSquare(Square square, Piece piece) {
         state->hash ^= pieceRandTable[12 * square + 6 * p.color + p.type];
 
         if constexpr (updateAccumulator) {
-            state->accumulator.removeFeature(p.color, p.type, square);
+            Square wKing = pieces<WHITE, KING>().lsb();
+            Square bKing = pieces<BLACK, KING>().lsb();
+            state->accumulator.removeFeature(p.color, p.type, square, wKing, bKing);
         }
     }
 
@@ -330,7 +334,9 @@ void Position::setSquare(Square square, Piece piece) {
     state->hash ^= pieceRandTable[12 * square + 6 * piece.color + piece.type];
 
     if constexpr (updateAccumulator) {
-        state->accumulator.addFeature(piece.color, piece.type, square);
+        Square wKing = pieces<WHITE, KING>().lsb();
+        Square bKing = pieces<BLACK, KING>().lsb();
+        state->accumulator.addFeature(piece.color, piece.type, square, wKing, bKing);
     }
 }
 
@@ -430,6 +436,10 @@ void Position::makeMove(Move move) {
             piece.type = QUEEN;
         }
         setSquare<true>(to, piece);
+    }
+
+    if (pieceAt(to).type == KING) {
+        state->accumulator.refresh(*this);
     }
 }
 
