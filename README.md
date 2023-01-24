@@ -127,7 +127,7 @@ This project contains the following files:
 
 As of v2.0 BlackCore uses neural networks for the evaluation of positions with support for AVX2 vectorization. 
 There is no need to worry about installing networks separately as they are embedded using incbin. Every net 
-was trained by me with training code which <a href="https://github.com/SzilBalazs/CoreTrainer>">I wrote</a>. Unfortunately I lack the hardware resources which are needed
+was trained by me with training code which <a href="https://github.com/SzilBalazs/CoreTrainer">I wrote</a>. Unfortunately I lack the hardware resources which are needed
 to generate data, which means that external engines are used for that purpose. In my opinion this requires
 transparency about the origins of the training data and acknowledgement of these engines.
 
@@ -146,7 +146,7 @@ Since v6.0-dev BlackCore uses data from <a href="https://storage.lczero.org/file
 ### <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> by <a href="https://github.com/Disservin">Disservin</a>
 
 Smallbrain is an awesome engine that helped me understand many important concepts, and a very special thanks to Disservin for
-giving me many great ideas how can I further improve my BlackCore.
+giving me many great ideas how can I further improve BlackCore.
 
 ### <a href="https://www.chessprogramming.org/Main_Page">Chess Programming Wiki</a>
 
