@@ -48,7 +48,7 @@ struct ThreadData {
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
     Score hhTable[2][64][64];
-    Score chTable[6][64][64][64];
+    Score chTable[12][64][12][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -66,11 +66,11 @@ struct ThreadData {
             }
         }
 
-        for (int type = 0; type < 6; type++) {
+        for (int type = 0; type < 12; type++) {
             for (Square sq = A1; sq < 64; sq += 1) {
-                for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
+                for (int type2 = 0; type2 < 12; type2++) {
                     for (Square sq3 = A1; sq3 < 64; sq3 += 1) {
-                        chTable[type][sq][sq2][sq3] /= 4;
+                        chTable[type][sq][type2][sq3] /= 4;
                     }
                 }
             }
@@ -104,11 +104,17 @@ struct ThreadData {
 
         // TODO Clamp HH values
         hhTable[stm][move.getFrom()][move.getTo()] += hhBonus;
-        chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][move.getFrom()][move.getTo()] += hhBonus;
 
         for (Move m : quiets) {
             hhTable[stm][m.getFrom()][m.getTo()] -= hhBonus;
-            chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][m.getFrom()][m.getTo()] -= hhBonus;
+        }
+
+        if (stack->ply > 0) {
+            chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] += hhBonus;
+            for (Move m : quiets) {
+                Piece movedPiece = position.pieceAt(m.getFrom());
+                chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][movedPiece.toIndex()][m.getTo()] -= hhBonus;
+            }
         }
     }
 
@@ -117,9 +123,10 @@ struct ThreadData {
         const Move move = stack->move;
         const Move counterMove = (stack - 1)->move;
         const Color stm = position.getSideToMove();
+        const Piece movedPiece = position.pieceAt(move.getFrom());
 
         Score hhScore = hhTable[stm][move.getFrom()][move.getTo()];
-        Score chScore = chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][move.getFrom()][move.getTo()];
+        Score chScore = stack->ply > 0 ? chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][movedPiece.toIndex()][move.getTo()] : 0;
 
         return hhScore + chScore;
     }
@@ -131,7 +138,7 @@ struct ThreadData {
     }
 
     Score scoreRootNode(Move move) {
-        return nodesSearched[move.getFrom()][move.getTo()] / 1000;
+        return nodesSearched[move.getFrom()][move.getTo()];
     }
 
     Score scoreMove(SearchStack *stack) {

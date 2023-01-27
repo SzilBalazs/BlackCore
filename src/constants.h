@@ -179,6 +179,10 @@ struct Piece {
     constexpr bool isNull() const {
         return type == PIECE_EMPTY || color == COLOR_EMPTY;
     }
+
+    constexpr int toIndex() const {
+        return color * 6 + type;
+    }
 };
 
 // 2 colors * 6 types * 64 square = 768
