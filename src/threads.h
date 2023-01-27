@@ -121,7 +121,7 @@ struct ThreadData {
         Score hhScore = hhTable[stm][move.getFrom()][move.getTo()];
         Score chScore = chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][move.getFrom()][move.getTo()];
 
-        return hhScore;
+        return hhScore + chScore;
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
