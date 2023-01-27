@@ -56,6 +56,7 @@ struct SearchStack {
     Move move, excludedMove;
     Score eval = 0;
     Ply ply = 0;
+    Piece movedPiece;
 };
 
 U64 getTotalNodes();

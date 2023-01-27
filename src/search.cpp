@@ -438,7 +438,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.hhTable[color][move.getFrom()][move.getTo()];
+        Score history = td.getHistory(stack);
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
@@ -490,6 +490,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         stack->move = move;
+        stack->movedPiece = pos.pieceAt(move.getFrom());
 
         Depth newDepth = depth - 1 + extensions;
 
@@ -611,6 +612,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
         stateStack[i].move = Move();
         stateStack[i].eval = UNKNOWN_SCORE;
         stateStack[i].ply = i - 4;
+        stateStack[i].movedPiece = Piece();
     }
 
     // Start at -inf and +inf bounds

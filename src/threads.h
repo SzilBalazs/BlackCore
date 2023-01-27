@@ -48,6 +48,7 @@ struct ThreadData {
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
     Score hhTable[2][64][64];
+    Score chTable[6][64][64][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -64,6 +65,16 @@ struct ThreadData {
                 }
             }
         }
+
+        for (int type = 0; type < 6; type++) {
+            for (Square sq = A1; sq < 64; sq += 1) {
+                for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
+                    for (Square sq3 = A1; sq3 < 64; sq3 += 1) {
+                        chTable[type][sq][sq2][sq3] /= 4;
+                    }
+                }
+            }
+        }
     }
 
     inline void reset() {
@@ -71,6 +82,7 @@ struct ThreadData {
         tbHits = 0;
 
         std::memset(hhTable, 0, sizeof(hhTable));
+        std::memset(chTable, 0, sizeof(chTable));
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));
@@ -83,7 +95,6 @@ struct ThreadData {
 
         const Move move = stack->move;
         const Move counterMove = (stack - 1)->move;
-        const Move followUpMove = (stack - 2)->move;
         const Color stm = position.getSideToMove();
 
         killerMoves[stack->ply][1] = killerMoves[stack->ply][0];
@@ -93,10 +104,24 @@ struct ThreadData {
 
         // TODO Clamp HH values
         hhTable[stm][move.getFrom()][move.getTo()] += hhBonus;
+        chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][move.getFrom()][move.getTo()] += hhBonus;
 
         for (Move m : quiets) {
             hhTable[stm][m.getFrom()][m.getTo()] -= hhBonus;
+            chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][m.getFrom()][m.getTo()] -= hhBonus;
         }
+    }
+
+    Score getHistory(SearchStack *stack) {
+
+        const Move move = stack->move;
+        const Move counterMove = (stack - 1)->move;
+        const Color stm = position.getSideToMove();
+
+        Score hhScore = hhTable[stm][move.getFrom()][move.getTo()];
+        Score chScore = chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][move.getFrom()][move.getTo()];
+
+        return hhScore;
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
@@ -111,9 +136,6 @@ struct ThreadData {
 
     Score scoreMove(SearchStack *stack, Move move) {
         const Move counterMove = (stack - 1)->move;
-        const Square from = move.getFrom();
-        const Square to = move.getTo();
-        const Color stm = position.getSideToMove();
 
         if (move == getHashMove(position.getHash())) {
             return 10000000;
@@ -138,7 +160,7 @@ struct ThreadData {
             return 5000000;
         }
 
-        return hhTable[stm][from][to];
+        return getHistory(stack);
     }
 };
 
