@@ -17,7 +17,7 @@
 #ifndef BLACKCORE_SEARCH_H
 #define BLACKCORE_SEARCH_H
 
-#include "movegen.h"
+#include "position.h"
 #include "uci.h"
 #include <atomic>
 

@@ -24,8 +24,6 @@
 #include <cstring>
 #include <mutex>
 
-const int HISTORY_DIFF_SLOTS = 4;
-
 extern std::mutex mNodesSearched;
 extern U64 nodesSearched[64][64];
 
@@ -49,7 +47,7 @@ struct ThreadData {
     // Arrays used for move ordering.
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
-    Score historyTable[2][64][64];
+    Score hhTable[2][64][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -62,7 +60,7 @@ struct ThreadData {
         for (Color color : {WHITE, BLACK}) {
             for (Square sq = A1; sq < 64; sq += 1) {
                 for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
-                    historyTable[color][sq][sq2] /= 4;
+                    hhTable[color][sq][sq2] /= 4;
                 }
             }
         }
@@ -72,7 +70,7 @@ struct ThreadData {
         nodes = 0;
         tbHits = 0;
 
-        std::memset(historyTable, 0, sizeof(historyTable));
+        std::memset(hhTable, 0, sizeof(hhTable));
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));
@@ -81,17 +79,24 @@ struct ThreadData {
         clear();
     }
 
-    void updateKillerMoves(Move m, Ply ply) {
-        killerMoves[ply][1] = killerMoves[ply][0];
-        killerMoves[ply][0] = m;
-    }
+    void updateHistory(SearchStack *stack, const std::vector<Move> &quiets, Score hhBonus) {
 
-    void updateCounterMoves(Move prevMove, Move move) {
-        counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
-    }
+        const Move move = stack->move;
+        const Move counterMove = (stack - 1)->move;
+        const Move followUpMove = (stack - 2)->move;
+        const Color stm = position.getSideToMove();
 
-    void updateHH(Move move, Color color, Score bonus) {
-        historyTable[color][move.getFrom()][move.getTo()] = std::clamp(historyTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
+        killerMoves[stack->ply][1] = killerMoves[stack->ply][0];
+        killerMoves[stack->ply][0] = move;
+
+        counterMoves[counterMove.getFrom()][counterMove.getTo()] = move;
+
+        // TODO Clamp HH values
+        hhTable[stm][move.getFrom()][move.getTo()] += hhBonus;
+
+        for (Move m : quiets) {
+            hhTable[stm][m.getFrom()][m.getTo()] -= hhBonus;
+        }
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
@@ -104,12 +109,13 @@ struct ThreadData {
         return nodesSearched[move.getFrom()][move.getTo()] / 1000;
     }
 
-    Score scoreMove(const Position &pos, Move prevMove, Move move, Ply ply) {
-        Square from = move.getFrom();
-        Square to = move.getTo();
-        Color stm = pos.getSideToMove();
+    Score scoreMove(SearchStack *stack, Move move) {
+        const Move counterMove = (stack - 1)->move;
+        const Square from = move.getFrom();
+        const Square to = move.getTo();
+        const Color stm = position.getSideToMove();
 
-        if (move == getHashMove(pos.getHash())) {
+        if (move == getHashMove(position.getHash())) {
             return 10000000;
         } else if (move.isPromo()) {
             if (move.isSpecial1() && move.isSpecial2()) { // Queen promotion
@@ -118,21 +124,21 @@ struct ThreadData {
                 return -3000000;
             }
         } else if (move.isCapture()) {
-            Score seeScore = see(pos, move);
+            Score seeScore = see(position, move);
 
-            if (see(pos, move) >= 0)
+            if (see(position, move) >= 0)
                 return 8000000 + seeScore;
             else
                 return 2000000 + seeScore;
-        } else if (killerMoves[ply][0] == move) {
+        } else if (killerMoves[stack->ply][0] == move) {
             return 7000000;
-        } else if (killerMoves[ply][1] == move) {
+        } else if (killerMoves[stack->ply][1] == move) {
             return 6000000;
-        } else if (counterMoves[prevMove.getFrom()][prevMove.getTo()] == move) {
+        } else if (counterMoves[counterMove.getFrom()][counterMove.getTo()] == move) {
             return 5000000;
         }
 
-        return historyTable[stm][from][to];
+        return hhTable[stm][from][to];
     }
 };
 

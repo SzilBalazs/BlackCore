@@ -56,13 +56,13 @@ struct MoveList {
     unsigned int count;
 
     // Constructor that generates and scores legal moves.
-    MoveList(const Position &pos, ThreadData &td, Move prevMove, Ply ply) {
+    MoveList(const Position &pos, ThreadData &td, SearchStack *stack) {
         movesEnd = generateMoves(pos, moves, capturesOnly);
         index = 0;
         count = movesEnd - moves;
 
         for (unsigned int i = 0; i < count; i++) {
-            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(pos, prevMove, moves[i], ply);
+            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(stack, moves[i]);
         }
     }
 

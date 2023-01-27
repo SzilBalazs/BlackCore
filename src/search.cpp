@@ -17,6 +17,7 @@
 #include "search.h"
 #include "egtb.h"
 #include "eval.h"
+#include "movegen.h"
 #include "threads.h"
 #include "timeman.h"
 #include "tt.h"
@@ -182,7 +183,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Generate all legal capture
-    auto moves = MoveList<true, false>(pos, td, Move(), stack->ply);
+    auto moves = MoveList<true, false>(pos, td, stack);
 
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
@@ -410,7 +411,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    auto moves = MoveList<false, rootNode>(pos, td, prevMove, stack->ply);
+    auto moves = MoveList<false, rootNode>(pos, td, stack);
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
@@ -437,7 +438,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
+        Score history = td.hhTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
@@ -544,16 +545,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             if (!isSingularRoot) {
                 if (move.isQuiet()) {
-
                     // Update history heuristics
-                    td.updateKillerMoves(move, stack->ply);
-                    if (prevMove.isOk())
-                        td.updateCounterMoves(prevMove, move);
-                    td.updateHH(move, color, depth * depth);
-
-                    for (Move m : quiets) {
-                        td.updateHH(m, color, -depth * depth);
-                    }
+                    td.updateHistory(stack, quiets, depth * depth);
                 }
 
                 // Save the information gathered into the transposition table.
