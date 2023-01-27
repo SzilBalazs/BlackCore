@@ -55,6 +55,7 @@ constexpr Depth SINGULAR_DEPTH = 8;
 struct SearchStack {
     Move move, excludedMove;
     Score eval = 0;
+    Ply ply = 0;
 };
 
 U64 getTotalNodes();

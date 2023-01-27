@@ -127,7 +127,7 @@ Score see(const Position &pos, Move move) {
  * search.
  */
 template<NodeType type>
-Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply) {
+Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha, Score beta) {
 
     constexpr bool pvNode = type != NON_PV_NODE;
     constexpr bool nonPvNode = !pvNode;
@@ -137,9 +137,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
         return UNKNOWN_SCORE;
 
     // Update the maximum depth reached.
-    if (ply > td.selectiveDepth) {
-        td.selectiveDepth = ply;
-    }
+    td.selectiveDepth = std::max(td.selectiveDepth, stack->ply);
 
     /*
      * Transposition table probing
@@ -164,7 +162,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     Score staticEval = eval(pos);
 
     // Return the evaluation if maximum ply is reached
-    if (ply >= MAX_PLY) {
+    if (stack->ply >= MAX_PLY) {
         return staticEval;
     }
 
@@ -184,7 +182,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
     }
 
     // Generate all legal capture
-    auto moves = MoveList<true, false>(pos, td, Move(), ply);
+    auto moves = MoveList<true, false>(pos, td, Move(), stack->ply);
 
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
@@ -217,7 +215,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
 
         pos.makeMove(move);
 
-        Score score = -quiescence<type>(pos, td, -beta, -alpha, ply + 1);
+        Score score = -quiescence<type>(pos, td, stack + 1, -beta, -alpha);
 
         pos.undoMove(move);
 
@@ -247,7 +245,7 @@ Score quiescence(Position &pos, ThreadData &td, Score alpha, Score beta, Ply ply
 }
 
 template<NodeType type>
-Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Score alpha, Score beta, Ply ply) {
+Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Score alpha, Score beta) {
 
     constexpr bool rootNode = type == ROOT_NODE;
     constexpr bool pvNode = type != NON_PV_NODE;
@@ -256,12 +254,12 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     constexpr NodeType nextPv = rootNode ? PV_NODE : type;
     const bool isSingularRoot = stack->excludedMove.isOk();
     const Move prevMove = (stack - 1)->move;
-    const Score matePly = MATE_VALUE - ply;
+    const Score matePly = MATE_VALUE - stack->ply;
 
     Score maxAlpha = INF_SCORE;
-    td.pvLength[ply] = ply;
-    td.killerMoves[ply + 1][0] = Move();
-    td.killerMoves[ply + 1][1] = Move();
+    td.pvLength[stack->ply] = stack->ply;
+    td.killerMoves[stack->ply + 1][0] = Move();
+    td.killerMoves[stack->ply + 1][1] = Move();
 
     // Check if search should stop by asking the time manager
     if (shouldEnd(td.nodes, getTotalNodes()))
@@ -305,7 +303,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         return ttEntry.eval;
     }
 
-    if (ply >= MAX_PLY) {
+    if (stack->ply >= MAX_PLY) {
         return eval(pos);
     }
 
@@ -323,10 +321,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             if (result == TB_WIN) {
                 flag = TT_BETA;
-                score = TB_WIN_SCORE - ply;
+                score = TB_WIN_SCORE - stack->ply;
             } else if (result == TB_LOSS) {
                 flag = TT_ALPHA;
-                score = TB_LOSS_SCORE + ply;
+                score = TB_LOSS_SCORE + stack->ply;
             }
 
             if (flag == TT_EXACT || (flag == TT_ALPHA && score <= alpha) || (flag == TT_BETA && score >= beta)) {
@@ -346,7 +344,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     // At depth 0 drop into quiescence search.
     if (depth <= 0)
-        return quiescence<nextPv>(pos, td, alpha, beta, ply);
+        return quiescence<nextPv>(pos, td, stack, alpha, beta);
 
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
@@ -356,7 +354,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     // Improving boolean, first introduced by StockFish
     // If the position got better than 2 ply before, we can
     // except that it will further improve.
-    bool improving = ply >= 2 && staticEval >= (stack - 2)->eval;
+    bool improving = stack->ply >= 2 && staticEval >= (stack - 2)->eval;
 
     if (notRootNode && !inCheck) {
 
@@ -370,7 +368,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          * At depth 1 safely drop into quiescence search, if the static evaluation is very low.
          */
         if (depth == 1 && staticEval + RAZOR_MARGIN < alpha) {
-            return quiescence<NON_PV_NODE>(pos, td, alpha, beta, ply);
+            return quiescence<NON_PV_NODE>(pos, td, stack, alpha, beta);
         }
 
         /*
@@ -399,7 +397,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
                 stack->move = Move();
                 pos.makeNullMove();
-                Score score = -search<NON_PV_NODE>(pos, td, stack + 1, depth - R, -beta, -beta + 1, ply + 1);
+                Score score = -search<NON_PV_NODE>(pos, td, stack + 1, depth - R, -beta, -beta + 1);
                 pos.undoNullMove();
 
                 // If the score is still higher than beta, safely return score.
@@ -412,7 +410,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    auto moves = MoveList<false, rootNode>(pos, td, prevMove, ply);
+    auto moves = MoveList<false, rootNode>(pos, td, prevMove, stack->ply);
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
@@ -478,7 +476,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             Depth singularDepth = (depth - 1) / 2;
 
             stack->excludedMove = move;
-            score = search<NON_PV_NODE>(pos, td, stack, singularDepth, singularBeta - 1, singularBeta, ply);
+            score = search<NON_PV_NODE>(pos, td, stack, singularDepth, singularBeta - 1, singularBeta);
             stack->excludedMove = Move();
 
             if (score < singularBeta) {
@@ -513,23 +511,23 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             R += !improving;
             R -= pvNode;
             R -= std::clamp(history / 3000, -1, 1);
-            R -= td.killerMoves[ply][0] == move || td.killerMoves[ply][1] == move || td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move;
+            R -= td.killerMoves[stack->ply][0] == move || td.killerMoves[stack->ply][1] == move || td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move;
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
             score = -search<NON_PV_NODE>(pos, td, stack + 1, D,
-                                         -alpha - 1, -alpha, ply + 1);
+                                         -alpha - 1, -alpha);
 
             if (score > alpha && R > 0) {
-                score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
+                score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha);
             }
 
         } else if (nonPvNode || index != 0) {
-            score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha, ply + 1);
+            score = -search<NON_PV_NODE>(pos, td, stack + 1, newDepth, -alpha - 1, -alpha);
         }
 
         if (pvNode && (index == 0 || (score > alpha && score < beta))) {
-            score = -search<nextPv>(pos, td, stack + 1, newDepth, -beta, -alpha, ply + 1);
+            score = -search<nextPv>(pos, td, stack + 1, newDepth, -beta, -alpha);
         }
 
         pos.undoMove(move);
@@ -548,7 +546,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 if (move.isQuiet()) {
 
                     // Update history heuristics
-                    td.updateKillerMoves(move, ply);
+                    td.updateKillerMoves(move, stack->ply);
                     if (prevMove.isOk())
                         td.updateCounterMoves(prevMove, move);
                     td.updateHH(move, color, depth * depth);
@@ -570,11 +568,11 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             ttFlag = TT_EXACT;
 
             // Update PV-line
-            td.pvArray[ply][ply] = move;
-            for (int i = ply + 1; i < td.pvLength[ply + 1]; i++) {
-                td.pvArray[ply][i] = td.pvArray[ply + 1][i];
+            td.pvArray[stack->ply][stack->ply] = move;
+            for (int i = stack->ply + 1; i < td.pvLength[stack->ply + 1]; i++) {
+                td.pvArray[stack->ply][i] = td.pvArray[stack->ply + 1][i];
             }
-            td.pvLength[ply] = td.pvLength[ply + 1];
+            td.pvLength[stack->ply] = td.pvLength[stack->ply + 1];
         }
 
         if (move.isQuiet())
@@ -613,12 +611,13 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     td.clear();
 
-    SearchStack stateStack[MAX_PLY + 1];
+    SearchStack stateStack[MAX_PLY + 10];
 
-    for (int i = 0; i <= MAX_PLY; i++) {
+    for (Ply i = 0; i <= MAX_PLY; i++) {
         stateStack[i].excludedMove = Move();
         stateStack[i].move = Move();
         stateStack[i].eval = UNKNOWN_SCORE;
+        stateStack[i].ply = i - 4;
     }
 
     // Start at -inf and +inf bounds
@@ -643,7 +642,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
         if (beta > ASPIRATION_BOUND)
             beta = INF_SCORE;
 
-        Score score = search<ROOT_NODE>(pos, td, stateStack + 1, depth, alpha, beta, 0);
+        Score score = search<ROOT_NODE>(pos, td, stateStack + 4, depth, alpha, beta);
 
         if (score == UNKNOWN_SCORE)
             return UNKNOWN_SCORE;
