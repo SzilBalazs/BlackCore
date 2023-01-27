@@ -134,7 +134,8 @@ struct ThreadData {
         return nodesSearched[move.getFrom()][move.getTo()] / 1000;
     }
 
-    Score scoreMove(SearchStack *stack, Move move) {
+    Score scoreMove(SearchStack *stack) {
+        const Move move = stack->move;
         const Move counterMove = (stack - 1)->move;
 
         if (move == getHashMove(position.getHash())) {

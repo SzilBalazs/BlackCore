@@ -62,7 +62,8 @@ struct MoveList {
         count = movesEnd - moves;
 
         for (unsigned int i = 0; i < count; i++) {
-            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(stack, moves[i]);
+            stack->move = moves[i];
+            scores[i] = rootNode ? td.scoreRootNode(moves[i]) : td.scoreMove(stack);
         }
     }
 
