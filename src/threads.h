@@ -150,7 +150,7 @@ struct ThreadData {
         Score chScore = stack->ply > 0 ? chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][movedPiece.toIndex()][move.getTo()] : 0;
         Score fhScore = stack->ply > 1 ? fhTable[(stack - 2)->movedPiece.type][followUpMove.getTo()][movedPiece.toIndex()][move.getTo()] : 0;
 
-        return hhScore + 2 * chScore + fhScore;
+        return hhScore + chScore + fhScore;
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {
