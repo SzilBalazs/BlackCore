@@ -49,6 +49,7 @@ struct ThreadData {
     Move counterMoves[64][64];
     Score hhTable[2][64][64];
     Score chTable[12][64][12][64];
+    Score fhTable[12][64][12][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -71,6 +72,7 @@ struct ThreadData {
                 for (int type2 = 0; type2 < 12; type2++) {
                     for (Square sq3 = A1; sq3 < 64; sq3 += 1) {
                         chTable[type][sq][type2][sq3] /= 4;
+                        fhTable[type][sq][type2][sq3] /= 4;
                     }
                 }
             }
@@ -83,6 +85,7 @@ struct ThreadData {
 
         std::memset(hhTable, 0, sizeof(hhTable));
         std::memset(chTable, 0, sizeof(chTable));
+        std::memset(fhTable, 0, sizeof(fhTable));
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));
@@ -91,18 +94,27 @@ struct ThreadData {
         clear();
     }
 
-    void updateHistory(SearchStack *stack, const std::vector<Move> &quiets, Score hhBonus) {
+    void updateHistory(SearchStack *stack, const std::vector<Move> &quiets, Score bonus) {
 
         const Move move = stack->move;
         const Move counterMove = (stack - 1)->move;
+        const Move followUpMove = (stack - 2)->move;
         const Color stm = position.getSideToMove();
+
+        const Score hhScore = hhTable[stm][move.getFrom()][move.getTo()];
+        const Score chScore = stack->ply > 0 ? chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] : 0;
+        const Score fhScore = stack->ply > 1 ? fhTable[(stack - 2)->movedPiece.type][followUpMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] : 0;
+
+        const Score hhBonus = bonus - hhScore * std::abs(bonus) / 16384;
+        const Score chBonus = bonus - chScore * std::abs(bonus) / 16384;
+        const Score fhBonus = bonus - fhScore * std::abs(bonus) / 16384;
 
         killerMoves[stack->ply][1] = killerMoves[stack->ply][0];
         killerMoves[stack->ply][0] = move;
 
         counterMoves[counterMove.getFrom()][counterMove.getTo()] = move;
 
-        // TODO Clamp HH values
+
         hhTable[stm][move.getFrom()][move.getTo()] += hhBonus;
 
         for (Move m : quiets) {
@@ -110,10 +122,18 @@ struct ThreadData {
         }
 
         if (stack->ply > 0) {
-            chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] += hhBonus;
+            chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] += chBonus;
             for (Move m : quiets) {
                 Piece movedPiece = position.pieceAt(m.getFrom());
-                chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][movedPiece.toIndex()][m.getTo()] -= hhBonus;
+                chTable[(stack - 1)->movedPiece.toIndex()][counterMove.getTo()][movedPiece.toIndex()][m.getTo()] -= chBonus;
+            }
+        }
+
+        if (stack->ply > 1) {
+            fhTable[(stack - 2)->movedPiece.toIndex()][followUpMove.getTo()][stack->movedPiece.toIndex()][move.getTo()] += fhBonus;
+            for (Move m : quiets) {
+                Piece movedPiece = position.pieceAt(m.getFrom());
+                fhTable[(stack - 2)->movedPiece.toIndex()][followUpMove.getTo()][movedPiece.toIndex()][m.getTo()] -= fhBonus;
             }
         }
     }
@@ -122,13 +142,15 @@ struct ThreadData {
 
         const Move move = stack->move;
         const Move counterMove = (stack - 1)->move;
+        const Move followUpMove = (stack - 2)->move;
         const Color stm = position.getSideToMove();
         const Piece movedPiece = position.pieceAt(move.getFrom());
 
         Score hhScore = hhTable[stm][move.getFrom()][move.getTo()];
         Score chScore = stack->ply > 0 ? chTable[(stack - 1)->movedPiece.type][counterMove.getTo()][movedPiece.toIndex()][move.getTo()] : 0;
+        Score fhScore = stack->ply > 1 ? fhTable[(stack - 2)->movedPiece.type][followUpMove.getTo()][movedPiece.toIndex()][move.getTo()] : 0;
 
-        return hhScore + chScore;
+        return hhScore + 2 * chScore + fhScore;
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {

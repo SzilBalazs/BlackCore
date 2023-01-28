@@ -512,7 +512,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             R += !improving;
             R -= pvNode;
-            R -= std::clamp(history / 5000, -1, 1);
+            if (history > 8000)
+                R -= 1;
+            else if (history < -8000)
+                R += 1;
             R -= td.killerMoves[stack->ply][0] == move || td.killerMoves[stack->ply][1] == move || td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move;
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
@@ -547,7 +550,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             if (!isSingularRoot) {
                 if (move.isQuiet()) {
                     // Update history heuristics
-                    td.updateHistory(stack, quiets, depth * depth);
+                    td.updateHistory(stack, quiets, std::min(1300, 10 * depth * depth));
                 }
 
                 // Save the information gathered into the transposition table.
