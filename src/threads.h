@@ -24,8 +24,6 @@
 #include <cstring>
 #include <mutex>
 
-const int HISTORY_DIFF_SLOTS = 4;
-
 extern std::mutex mNodesSearched;
 extern U64 nodesSearched[64][64];
 
