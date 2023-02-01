@@ -15,15 +15,16 @@ BlackCore is a UCI compatible c++ chess engine written from scratch.
 Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
 move generator.
 
-### Playing strength - Last updated: 2023. 01. 23.
+### Playing strength - Last updated: 2023. 2. 1.
 
-| Version |   CCRL 2'+1" elo   |   CCRL 40/15 elo   | CEGT 40/4 elo |
-|:--------|:------------------:|:------------------:|:-------------:|
-| v5.0    | ~3250 (estimation) | ~3200 (estimation) |     3143      |
-| v4.0    |        3182        |        3135        |     3068      |
-| v3.0    |        3069        |        3035        |     2941      |
-| v2.0    |        N/A         |        2982        |      N/A      |
-| v1.0    |        2134        |        N/A         |      N/A      |
+| Version |   CCRL 2'+1" elo   |   CCRL 40/15 elo   |   CEGT 40/4 elo    |
+|:--------|:------------------:|:------------------:|:------------------:|
+| v5.1    | ~3300 (estimation) | ~3250 (estimation) | ~3200 (estimation) |
+| v5.0    |                    |        3167        |        3143        |
+| v4.0    |        3182        |        3135        |        3068        |
+| v3.0    |        3069        |        3035        |        2941        |
+| v2.0    |        N/A         |        2982        |                    |
+| v1.0    |        2134        |                    |                    |
 
 ## Installation
 
@@ -50,7 +51,8 @@ make clean build ARCH=native
 
 ARCH = popcnt/avx2/bmi2/native
 
-*If you wish to use another compiler than g++ set the CXX variable to for example clang. Warning: compatibility is not guaranteed.*
+*If you wish to use another compiler than g++ set the CXX variable to for example clang. Warning: compatibility is not
+guaranteed.*
 
 ## Usage
 
@@ -65,7 +67,6 @@ or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experienc
 - **Move Overhead** - The delay (in ms) between finding the best move and the GUI reacting to it. You may want to make
   this higher if you notice that the engine often runs out of time.
 - **SyzygyPath** (Optional) - The folder containing Syzygy tablebases
-
 
 ## Files
 
@@ -120,32 +121,36 @@ This project contains the following files:
             * SEE
             * Killer, counter and history heuristics
         * Multithreading support
-          * Lazy SMP
+            * Lazy SMP
     * Time management based on search stability
 
 ## NNUE Ethics
 
-As of v2.0 BlackCore uses neural networks for the evaluation of positions with support for AVX2 vectorization. 
-There is no need to worry about installing networks separately as they are embedded using incbin. Every net 
-was trained by me with training code which <a href="https://github.com/SzilBalazs/CoreTrainer">I wrote</a>. Unfortunately I lack the hardware resources which are needed
+As of v2.0 BlackCore uses neural networks for the evaluation of positions with support for AVX2 vectorization.
+There is no need to worry about installing networks separately as they are embedded using incbin. Every net
+was trained by me with training code which <a href="https://github.com/SzilBalazs/CoreTrainer">I wrote</a>.
+Unfortunately I lack the hardware resources which are needed
 to generate data, which means that external engines are used for that purpose. In my opinion this requires
 transparency about the origins of the training data and acknowledgement of these engines.
 
 ### <a href="https://github.com/jhonnold/berserk">Berserk</a> by <a href="https://github.com/jhonnold">Jay Honnold</a>
 
-Berserk is very strong chess engine that generated the training data with the contribution of Shaheryar Sohail which were used continuously throughout v2.0-v5.0.
+Berserk is very strong chess engine that generated the training data with the contribution of Shaheryar Sohail which
+were used continuously throughout v2.0-v5.0.
 
 ### <a href="https://lczero.org/">Leela Chess Zero</a> by The LC0 Team
 
-LC0 uses a different approach for playing high level chess. It's powered by MCTS and acquired all of her chess knowledge by selfplay. 
-Since v6.0-dev BlackCore uses data from <a href="https://storage.lczero.org/files/training_data/"> here</a>, which is licensed under <a href="https://storage.lczero.org/files/training_data/LICENSE.txt">Open Database License</a>.
-
+LC0 uses a different approach for playing high level chess. It's powered by MCTS and acquired all of her chess knowledge
+by selfplay.
+Since v6.0-dev BlackCore uses data from <a href="https://storage.lczero.org/files/training_data/"> here</a>, which is
+licensed under <a href="https://storage.lczero.org/files/training_data/LICENSE.txt">Open Database License</a>.
 
 ## Also thanks to...
 
 ### <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> by <a href="https://github.com/Disservin">Disservin</a>
 
-Smallbrain is an awesome engine that helped me understand many important concepts, and a very special thanks to Disservin for
+Smallbrain is an awesome engine that helped me understand many important concepts, and a very special thanks to
+Disservin for
 giving me many great ideas how can I further improve BlackCore.
 
 ### <a href="https://www.chessprogramming.org/Main_Page">Chess Programming Wiki</a>
@@ -160,8 +165,8 @@ OpenBench is a SPRT testing framework, used for the testing of different techniq
 
 ### <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>
 
-Sohail (developer of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo</a>) guided me through many problems regarding NNUE and without .
-
+Sohail (developer of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo</a>) guided me through many
+problems regarding NNUE and without .
 
 ### <a href="https://github.com/dsekercioglu/weather-factory">Weather factory</a> by <a href="https://github.com/dsekercioglu">Pali</a>
 
