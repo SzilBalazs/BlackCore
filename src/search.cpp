@@ -690,7 +690,7 @@ void iterativeDeepening(int id, Depth depth) {
     td.reset();
     pos.getState()->accumulator.refresh(pos);
 
-    Score prevScore;
+    Score prevScore = 0;
     Move bestMove;
 
     int stability = 0;
