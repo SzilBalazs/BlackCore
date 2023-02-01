@@ -40,6 +40,8 @@ namespace NNUE {
  *
  */
 
+    extern std::string EVALFILE;
+
     constexpr int KING_BUCKET_COUNT = 4;
     constexpr int L_0_SIZE = KING_BUCKET_COUNT * 768;
     constexpr int L_1_SIZE = 256;

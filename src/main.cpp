@@ -17,7 +17,6 @@
 #include "bench.h"
 #include "tools.h"
 #include "uci.h"
-#include <iostream>
 
 int main(int argc, char **argv) {
 
@@ -27,20 +26,14 @@ int main(int argc, char **argv) {
         mode = std::string(argv[1]);
     }
 
-    if (mode.empty()) {
-        std::cin >> mode;
-    }
-
     if (mode == "bench") {
         testSearch();
     } else if (mode == "perft") {
         testPerft();
-    } else if (mode == "uci") {
-        uciLoop();
     } else if (mode == "filter") {
         processPlain(argv[2]);
     } else {
-        std::cout << "Invalid option! (uci/bench/perft)" << std::endl;
+        uciLoop();
     }
 
     return 0;

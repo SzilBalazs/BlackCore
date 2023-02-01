@@ -24,6 +24,8 @@
 
 namespace NNUE {
 
+    std::string EVALFILE = "corenet.bin";
+
     INCBIN(Net, "corenet.bin");
 
     alignas(64) int16_t L_0_WEIGHTS[L_0_SIZE * L_1_SIZE];
@@ -179,28 +181,24 @@ namespace NNUE {
 
     void init() {
 
-        // Loads values from the embedded net.
-        int ptr = 0;
-        std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
-        ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;
-        std::memcpy(L_0_BIASES, gNetData + ptr, sizeof(int16_t) * L_1_SIZE);
-        ptr += sizeof(int16_t) * L_1_SIZE;
-        std::memcpy(L_1_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_1_SIZE * 2);
-        ptr += sizeof(int16_t) * L_1_SIZE * 2;
-        std::memcpy(L_1_BIASES, gNetData + ptr, sizeof(int16_t) * 1);
-
-        // Currently loading net from a file is not supported
-        // Legacy code:
-
-        /*FILE *file = fopen(filename.c_str(), "rb");
+        FILE *file = fopen(EVALFILE.c_str(), "rb");
 
         if (file != nullptr) {
-
+            // Loads values from an external net.
             fread(L_0_WEIGHTS, sizeof(int16_t), L_0_SIZE * L_1_SIZE, file);
             fread(L_0_BIASES, sizeof(int16_t), L_1_SIZE, file);
             fread(L_1_WEIGHTS, sizeof(int16_t), L_1_SIZE * 2, file);
             fread(L_1_BIASES, sizeof(int16_t), 1, file);
-
-        }*/
+        } else {
+            // Loads values from the embedded net.
+            int ptr = 0;
+            std::memcpy(L_0_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_0_SIZE * L_1_SIZE);
+            ptr += sizeof(int16_t) * L_0_SIZE * L_1_SIZE;
+            std::memcpy(L_0_BIASES, gNetData + ptr, sizeof(int16_t) * L_1_SIZE);
+            ptr += sizeof(int16_t) * L_1_SIZE;
+            std::memcpy(L_1_WEIGHTS, gNetData + ptr, sizeof(int16_t) * L_1_SIZE * 2);
+            ptr += sizeof(int16_t) * L_1_SIZE * 2;
+            std::memcpy(L_1_BIASES, gNetData + ptr, sizeof(int16_t) * 1);
+        }
     }
 } // namespace NNUE

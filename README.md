@@ -23,7 +23,7 @@ move generator.
 | v5.0    |                    |        3167        |        3143        |
 | v4.0    |        3182        |        3135        |        3068        |
 | v3.0    |        3069        |        3035        |        2941        |
-| v2.0    |        N/A         |        2982        |                    |
+| v2.0    |                    |        2982        |                    |
 | v1.0    |        2134        |                    |                    |
 
 ## Installation
@@ -66,7 +66,9 @@ or <a href="http://www.playwitharena.de/">Arena</a>) for the best user experienc
 - **Threads** - The amount of threads that can be used in the search
 - **Move Overhead** - The delay (in ms) between finding the best move and the GUI reacting to it. You may want to make
   this higher if you notice that the engine often runs out of time.
-- **SyzygyPath** (Optional) - The folder containing Syzygy tablebases
+- **SyzygyPath** (Optional) - The folder containing Syzygy tablebases.
+- **EvalFile** (Optional) - The file containing the neural network which should be use. If it isn't found BlackCore will
+  use the embedded network.
 
 ## Files
 

@@ -65,7 +65,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
     return {from, to, flags};
 }
 
-void uciLoop() {
+void uciInitProtocol() {
     // Identifying ourselves
 #ifdef VERSION
     out("id", "name", "BlackCore", VERSION);
@@ -75,12 +75,12 @@ void uciLoop() {
 
     out("id", "author", "SzilBalazs");
 
-    // We tell the GUI what options we have
+    // Tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
+    out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<none>");
     out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
-    out("option", "name", "Ponder", "type", "check", "default", "false");
 
 #ifdef TUNE
     tuneOut("DELTA_MARGIN", 400, 200, 500);
@@ -107,13 +107,14 @@ void uciLoop() {
     tuneOut("LMR_SCALE", 17, 10, 40);
 #endif
 
-    ttResize(32);
-
     // We have sent all the parameters
     out("uciok");
+}
 
-    // Only now we initialize stuff
+void uciLoop() {
+    // Initialize stuff
     initSearch();
+    ttResize(32);
 
     Position pos = {STARTING_FEN};
     int threadCount = 1;
@@ -131,7 +132,9 @@ void uciLoop() {
             tokens.emplace_back(token);
         }
 
-        if (command == "isready") {
+        if (command == "uci") {
+            uciInitProtocol();
+        } else if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
             joinThreads(false);
@@ -153,6 +156,9 @@ void uciLoop() {
                     threadCount = std::stoi(tokens[3]);
                 } else if (tokens[1] == "SyzygyPath") {
                     tb_init(tokens[3].c_str());
+                } else if (tokens[1] == "EvalFile") {
+                    NNUE::EVALFILE = tokens[3];
+                    NNUE::init();
                 } else {
                     out("info", "string", "Unknown value", tokens[1]);
                 }
