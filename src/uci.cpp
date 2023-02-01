@@ -21,8 +21,11 @@
 #include "search.h"
 #include "timeman.h"
 #include "tt.h"
+#include <iomanip>
 #include <sstream>
 #include <vector>
+
+bool guiCommunication = false;
 
 Move stringToMove(const Position &pos, const std::string &s) {
     Square from = stringToSquare(s.substr(0, 2));
@@ -65,7 +68,111 @@ Move stringToMove(const Position &pos, const std::string &s) {
     return {from, to, flags};
 }
 
+std::string asciiColor(int x) {
+    return "\u001b[38;5;" + std::to_string(x) + "m";
+}
+
+std::string scoreColor(Score score) {
+    if (WORST_MATE < std::abs(score))
+        return asciiColor(11);
+    else if (TB_WORST_WIN < std::abs(score))
+        return asciiColor(127);
+    else if (10 <= score)
+        return asciiColor(41);
+    else if (score <= -10)
+        return asciiColor(9);
+    else
+        return asciiColor(253);
+}
+
+std::string formatInt(U64 n) {
+    std::string str;
+    if (n < 1000) {
+        str = std::to_string(n);
+    } else if (n < 10000 * 1000) {
+        str = std::to_string(U64(n / 1000)) + "K";
+    } else {
+        str = std::to_string(U64(n / (1000 * 1000))) + "M";
+    }
+    return str;
+}
+
+std::string formatMillis(U64 milli) {
+    std::string str;
+    if (milli < 1000) {
+        str = std::to_string(milli) + "ms";
+    } else if (milli < (1000 * 60)) {
+        str = std::to_string(milli / 1000) + "s";
+    } else {
+        str = std::to_string(milli / (1000 * 60)) + "m";
+    }
+    return str;
+}
+
+std::string formatPercentage(int n) {
+    double x = double(n) / 10;
+    std::string str = std::to_string(x);
+    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+    str.erase(str.find_last_not_of('.') + 1, std::string::npos);
+    return str + "%";
+}
+
+std::string formatScore(Score score) {
+    std::string str = score >= 0 ? "+" : "-";
+
+    if (std::abs(score) > WORST_MATE) {
+        str += 'M' + std::to_string(MATE_VALUE - std::abs(score));
+    } else if (std::abs(score) > TB_WORST_WIN) {
+        str += "TB " + std::to_string(TB_WIN_SCORE - std::abs(score));
+    } else {
+        double x = std::abs(double(score) / 100);
+        str += std::to_string(x);
+    }
+
+    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+    str.erase(str.find_last_not_of('.') + 1, std::string::npos);
+    return str;
+}
+
+void printCurrMove(Depth depth, int index, Move move) {
+    if (guiCommunication)
+        out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
+}
+
+void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, U64 time, U64 nps, const std::string &pv) {
+    if (guiCommunication) {
+        out("info", "depth", int(depth), "seldepth", int(selectiveDepth), "nodes", nodes, "hashfull", hashFull, "tbhits", tbHits, "score", score, "time",
+            time, "nps", nps, "pv", pv);
+    } else {
+        std::string lineColor = depth & 1 ? asciiColor(247) : asciiColor(251);
+        std::string coloredPV = asciiColor(39);
+        bool bestMove = true;
+        for (char c : pv) {
+            if (bestMove && c == ' ') {
+                bestMove = false;
+                coloredPV += asciiColor(255);
+            }
+            coloredPV += c;
+        }
+
+        std::cout << lineColor;
+        std::cout << std::setw(5)
+                  << int(depth) << "" << scoreColor(score) << std::setw(10)
+                  << formatScore(score) << "" << lineColor << std::setw(10)
+                  << formatInt(nodes) << " " << std::setw(7)
+                  << formatMillis(time) << "   " << std::setw(6)
+                  << formatInt(nps) << "   " << std::setw(5)
+                  << formatPercentage(hashFull) << " " << std::setw(9)
+                  << formatInt(tbHits) << "   "
+                  << coloredPV << std::endl;
+        std::cout << asciiColor(255);
+    }
+}
+
 void uciInitProtocol() {
+
+    guiCommunication = true;
+
     // Identifying ourselves
 #ifdef VERSION
     out("id", "name", "BlackCore", VERSION);
@@ -217,6 +324,10 @@ void uciLoop() {
                     searchInfo.maxNodes = std::stoi(tokens[i + 1]);
                 } else if (tokens[i] == "infinite") {
                 }
+            }
+
+            if (!guiCommunication) {
+                out("Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS  ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }
 
             startSearch(searchInfo, pos, threadCount);

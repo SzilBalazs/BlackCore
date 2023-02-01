@@ -18,6 +18,7 @@
 #define BLACKCORE_UCI_H
 
 #include "constants.h"
+#include "move.h"
 #include <iostream>
 
 struct SearchInfo {
@@ -43,6 +44,10 @@ inline void out(T a, Args... args) {
     std::cout << a;
     BlackCore::_out(args...);
 }
+
+void printCurrMove(Depth depth, int index, Move move);
+
+void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, U64 time, U64 nps, const std::string &pv);
 
 inline void tuneOut(const std::string &name, int value, int min, int max) {
     out("option", "name", name, "type", "spin", "default", value, "min", min, "max", max);

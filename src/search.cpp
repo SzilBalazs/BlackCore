@@ -432,8 +432,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
         U64 nodesBefore = td.nodes;
 
-        if (rootNode && td.uciMode) {
-            if (getSearchTime() > 6000) out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
+        if (rootNode && td.uciMode && getSearchTime() > 2000) {
+            printCurrMove(depth, index, move);
         }
 
         Score score;
@@ -666,8 +666,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
                 }
 
                 // Output information to the GUI
-                out("info", "depth", int(depth), "seldepth", int(td.selectiveDepth), "nodes", getTotalNodes(), "hashfull", getTTFull(), "tbhits", getTotalTBHits(), "score", scoreStr, "time",
-                    getSearchTime(), "nps", getNps(getTotalNodes()), "pv", pvLine);
+                printNewDepth(depth, td.selectiveDepth, getTotalNodes(), getTTFull(), getTotalTBHits(), score, getSearchTime(), getNps(getTotalNodes()), pvLine);
             }
 
             return score;
