@@ -109,14 +109,6 @@ std::string formatMillis(U64 milli) {
     return str;
 }
 
-std::string formatPercentage(int n) {
-    double x = double(n) / 10;
-    std::string str = std::to_string(x);
-    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
-    str.erase(str.find_last_not_of('.') + 1, std::string::npos);
-    return str + "%";
-}
-
 std::string formatScore(Score score) {
     std::string str = score >= 0 ? "+" : "-";
 
@@ -126,11 +118,21 @@ std::string formatScore(Score score) {
         str += "TB " + std::to_string(TB_WIN_SCORE - std::abs(score));
     } else {
         double x = std::abs(double(score) / 100);
-        str += std::to_string(x);
+        std::string xstr = std::to_string(x);
+        int fPoints = -1;
+        for (char c : xstr) {
+            if (c == '.') {
+                fPoints = 0;
+            }
+
+            if (fPoints > 2) break;
+
+            str += c;
+
+            if (fPoints != -1) fPoints++;
+        }
     }
 
-    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
-    str.erase(str.find_last_not_of('.') + 1, std::string::npos);
     return str;
 }
 
@@ -155,14 +157,16 @@ void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U
             coloredPV += c;
         }
 
+        std::string d = std::to_string(depth) + '/' + std::to_string(selectiveDepth);
+
         std::cout << lineColor;
-        std::cout << std::setw(5)
-                  << int(depth) << "" << scoreColor(score) << std::setw(10)
+        std::cout << "   " << std::setw(5)
+                  << d << "" << scoreColor(score) << std::setw(10)
                   << formatScore(score) << "" << lineColor << std::setw(10)
                   << formatInt(nodes) << " " << std::setw(7)
                   << formatMillis(time) << "   " << std::setw(6)
-                  << formatInt(nps) << "   " << std::setw(5)
-                  << formatPercentage(hashFull) << " " << std::setw(9)
+                  << formatInt(nps) << "   " << std::setw(5) << std::fixed << std::setprecision(1)
+                  << double(hashFull) / 10 << "% " << std::setw(9)
                   << formatInt(tbHits) << "   "
                   << coloredPV << std::endl;
         std::cout << asciiColor(255);
@@ -327,7 +331,7 @@ void uciLoop() {
             }
 
             if (!guiCommunication) {
-                out("Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS  ", "Hash%  ", "TB Hits  ", "Principal Variation");
+                out("   Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS   ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }
 
             startSearch(searchInfo, pos, threadCount);
