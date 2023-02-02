@@ -136,7 +136,7 @@ void printCurrMove(Depth depth, int index, Move move) {
     if (guiCommunication)
         out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
     else
-        std::cout << asciiColor(252) << "Searching " << move << "...\r" << ASCII_RESET << std::flush;
+        std::cout << asciiColor(252) << "Searching " << move << "...\r\u001b[0m" << std::flush;
 }
 
 void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, U64 time, U64 nps, const std::string &pv) {
@@ -167,7 +167,7 @@ void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U
                   << double(hashFull) / 10 << "% " << std::setw(9)
                   << formatInt(tbHits) << "   "
                   << coloredPV << std::endl;
-        std::cout << ASCII_RESET;
+        std::cout << "\u001b[0m";
     }
 }
 

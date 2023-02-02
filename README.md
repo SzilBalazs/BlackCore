@@ -1,5 +1,5 @@
 <div align="center" style="padding-top: 50px">
-    <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%" style="padding: 10px">
+    <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%" style="padding: 2%; border-radius: 50%">
     <br>
     <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
     <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?style=for-the-badge">

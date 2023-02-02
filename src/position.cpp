@@ -108,7 +108,7 @@ void Position::display() const {
         cout << "\n " << i << " |";
         for (int j = 1; j <= 8; j++) {
             Piece piece = pieceAt(Square((i - 1) * 8 + (j - 1)));
-            cout << (piece.color == WHITE ? ASCII_WHITE_PIECE : (piece.color == BLACK ? ASCII_BLACK_PIECE : "")) << " " << pieceToChar(piece) << " " << ASCII_RESET << "|";
+            cout << (piece.color == WHITE ? ASCII_WHITE_PIECE : (piece.color == BLACK ? ASCII_BLACK_PIECE : "")) << " " << pieceToChar(piece) << " \u001b[0m|";
         }
         if (i <= 7 && !text.empty()) {
             cout << "        " << text.back();
