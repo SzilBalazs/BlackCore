@@ -78,7 +78,7 @@ bool Position::isRepetition() {
 void Position::display() const {
 
     std::vector<string> text;
-    text.emplace_back(string("Half-move counter: ") + std::to_string(getMove50()));
+    text.emplace_back(string("50-move draw counter: ") + std::to_string(getMove50()));
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
 
     if (getEpSquare() != NULL_SQUARE)
@@ -107,7 +107,8 @@ void Position::display() const {
         }
         cout << "\n " << i << " |";
         for (int j = 1; j <= 8; j++) {
-            cout << " " << pieceToChar(pieceAt(Square((i - 1) * 8 + (j - 1)))) << " |";
+            Piece piece = pieceAt(Square((i - 1) * 8 + (j - 1)));
+            cout << (piece.color == WHITE ? ASCII_WHITE_PIECE : (piece.color == BLACK ? ASCII_BLACK_PIECE : "")) << " " << pieceToChar(piece) << " " << ASCII_RESET << "|";
         }
         if (i <= 7 && !text.empty()) {
             cout << "        " << text.back();

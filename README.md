@@ -1,17 +1,16 @@
 <div align="center" style="padding-top: 50px">
-    <img src="https://github.com/SzilBalazs/BlackCore/blob/020c7fa5be444b0053faba37ff4b25918acb6a3e/icon.png" alt="BlackCore logo by Graham Banks" width="200px" height="auto">
-    <br>
+    <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%" style="padding: 10px">
     <br>
     <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
-    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?label=Latest%20release&style=for-the-badge">
-    <br>
     <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?style=for-the-badge">
+    <br>
+    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?label=Latest%20release&style=for-the-badge">
     <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?style=for-the-badge">
 </div>
 
-## Overview
+# BlackCore
 
-BlackCore is a UCI compatible c++ chess engine written from scratch.
+BlackCore is a c++ chess engine developed from scratch.
 Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
 move generator.
 

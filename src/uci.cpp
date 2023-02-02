@@ -68,10 +68,6 @@ Move stringToMove(const Position &pos, const std::string &s) {
     return {from, to, flags};
 }
 
-std::string asciiColor(int x) {
-    return "\u001b[38;5;" + std::to_string(x) + "m";
-}
-
 std::string scoreColor(Score score) {
     if (WORST_MATE < std::abs(score))
         return asciiColor(11);
@@ -82,7 +78,7 @@ std::string scoreColor(Score score) {
     else if (score <= -10)
         return asciiColor(9);
     else
-        return asciiColor(253);
+        return asciiColor(255);
 }
 
 std::string formatInt(U64 n) {
@@ -140,7 +136,7 @@ void printCurrMove(Depth depth, int index, Move move) {
     if (guiCommunication)
         out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
     else
-        std::cout << asciiColor(252) << "Searching " << move << "...\r" << asciiColor(255) << std::flush;
+        std::cout << asciiColor(252) << "Searching " << move << "...\r" << ASCII_RESET << std::flush;
 }
 
 void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, U64 time, U64 nps, const std::string &pv) {
@@ -171,7 +167,51 @@ void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U
                   << double(hashFull) / 10 << "% " << std::setw(9)
                   << formatInt(tbHits) << "   "
                   << coloredPV << std::endl;
-        std::cout << asciiColor(255);
+        std::cout << ASCII_RESET;
+    }
+}
+
+void playGame(Position &position) {
+    while (true) {
+#ifdef _WIN64
+        system("cls");
+#else
+        system("clear");
+#endif
+        position.display();
+
+        Move moves[200];
+        Move *endMove = generateMoves(position, moves, false);
+
+        if (endMove == moves) {
+            std::cout << "Checkmate!" << std::endl;
+            break;
+        } else if (position.isRepetition()) {
+            std::cout << "Repetition draw!" << std::endl;
+            break;
+        } else if (position.getMove50() >= 99) {
+            std::cout << "Fifty move draw!" << std::endl;
+            break;
+        }
+
+        std::cout << "Make a move: " << std::flush;
+        std::string moveStr;
+        std::getline(std::cin, moveStr);
+        if (moveStr.empty())
+            break;
+        Move move = stringToMove(position, moveStr);
+        bool match = false;
+        for (auto i : moves) {
+            if (i == move) {
+                match = true;
+                break;
+            }
+        }
+        if (!match) continue;
+        position.makeMove(move);
+        if (move.isCapture() || position.pieceAt(move.getTo()).type == PAWN) {
+            position.resetStack();
+        }
     }
 }
 
@@ -349,6 +389,8 @@ void uciLoop() {
             }
         } else if (command == "perft") {
             out("Total nodes:", perft<true>(pos, std::stoi(tokens[0])));
+        } else if (command == "play") {
+            playGame(pos);
         }
     }
     ttFree();

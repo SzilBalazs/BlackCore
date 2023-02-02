@@ -104,6 +104,14 @@ inline Square stringToSquare(std::string s) {
     return NULL_SQUARE;
 }
 
+inline std::string asciiColor(int a) {
+    return "\u001b[38;5;" + std::to_string(a) + "m";
+}
+
+constexpr std::string ASCII_RESET = "\u001b[0m";
+constexpr std::string ASCII_WHITE_PIECE = "\u001b[90;107m";
+constexpr std::string ASCII_BLACK_PIECE = "\u001b[100;97m";
+
 inline std::istream &operator>>(std::istream &is, Square &square) {
     std::string s;
     is >> s;
