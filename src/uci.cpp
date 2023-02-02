@@ -76,9 +76,9 @@ std::string scoreColor(Score score) {
     if (WORST_MATE < std::abs(score))
         return asciiColor(11);
     else if (TB_WORST_WIN < std::abs(score))
-        return asciiColor(127);
+        return asciiColor(141);
     else if (10 <= score)
-        return asciiColor(41);
+        return asciiColor(42);
     else if (score <= -10)
         return asciiColor(9);
     else
@@ -139,6 +139,8 @@ std::string formatScore(Score score) {
 void printCurrMove(Depth depth, int index, Move move) {
     if (guiCommunication)
         out("info", "depth", int(depth), "currmove", move, "currmovenumber", index + 1);
+    else
+        std::cout << asciiColor(252) << "Searching " << move << "...\r" << asciiColor(255) << std::flush;
 }
 
 void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, U64 time, U64 nps, const std::string &pv) {
@@ -329,7 +331,6 @@ void uciLoop() {
                 } else if (tokens[i] == "infinite") {
                 }
             }
-
             if (!guiCommunication) {
                 out("   Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS   ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }

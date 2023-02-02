@@ -18,9 +18,22 @@
 #include "tools.h"
 #include "uci.h"
 
+#ifdef _WIN64
+#include <windows.h>
+#endif
+
+
 int main(int argc, char **argv) {
 
     srand(RANDOM_SEED);
+
+#ifdef _WIN64
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD f;
+    GetConsoleMode(hConsole, &f);
+    SetConsoleMode(hConsole, f | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+#endif
+
     std::string mode;
     if (argc >= 2) {
         mode = std::string(argv[1]);
