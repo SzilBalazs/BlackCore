@@ -33,8 +33,6 @@ U64 getTime() {
 
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
 
-    movesToGo = movesToGo == 0 ? 25 : movesToGo;
-
     startedSearch = getTime();
     stopped = false;
 
@@ -50,8 +48,13 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
         maxTime = 0;
     } else {
 
-        idealTime = time / (movesToGo + 5) + inc - MOVE_OVERHEAD;
-        maxTime = time / (movesToGo) + inc - MOVE_OVERHEAD;
+        if (movesToGo == 0) {
+            idealTime = 1 * inc + (time - MOVE_OVERHEAD) / 25;
+            maxTime = 3 * inc + (time - MOVE_OVERHEAD) / 15;
+        } else {
+            idealTime = inc + (time - MOVE_OVERHEAD) / movesToGo;
+            maxTime = inc + 5 * (time - MOVE_OVERHEAD) / (movesToGo + 10);
+        }
 
         idealTime = std::min(idealTime, time - MOVE_OVERHEAD);
         maxTime = std::min(maxTime, time - MOVE_OVERHEAD);

@@ -700,7 +700,7 @@ void iterativeDeepening(int id, Depth depth) {
             break;
 
         // Only care about time management if we searched enough depth, and we are the main thread.
-        if (currDepth >= 7 && td.threadId == 0) {
+        if (td.threadId == 0) {
 
             if (bestMove != td.pvArray[0][0]) {
                 bmStability = 0;
@@ -708,7 +708,7 @@ void iterativeDeepening(int id, Depth depth) {
                 bmStability++;
             }
 
-            double factor = 1.2 - 0.04 * bmStability;
+            double factor = std::max(0.5, 1.1 - 0.03 * bmStability);
 
             if (score - prevScore > ASPIRATION_DELTA)
                 factor *= 1.1;
@@ -717,7 +717,7 @@ void iterativeDeepening(int id, Depth depth) {
             double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
             factor *= std::max(0.5, 2 * notBestMove + 0.4);
 
-            if (manageTime(factor)) break;
+            if (manageTime(factor) && currDepth >= 10) break;
         }
 
         prevScore = score;
