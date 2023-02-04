@@ -27,7 +27,7 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes);
 
 bool shouldEnd(U64 nodes, U64 totalNodes);
 
-void allocateTime(int stability);
+bool manageTime(double factor);
 
 bool isInfiniteSearch();
 
