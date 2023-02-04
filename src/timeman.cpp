@@ -53,7 +53,7 @@ void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
             maxTime = 3 * inc + (time - MOVE_OVERHEAD) / 15;
         } else {
             idealTime = inc + (time - MOVE_OVERHEAD) / movesToGo;
-            maxTime = inc + 5 * (time - MOVE_OVERHEAD) / (movesToGo + 10);
+            maxTime = 2 * idealTime;
         }
 
         idealTime = std::min(idealTime, time - MOVE_OVERHEAD);
