@@ -44,7 +44,7 @@ namespace NNUE {
 
     constexpr int KING_BUCKET_COUNT = 4;
     constexpr int L_0_SIZE = KING_BUCKET_COUNT * 768;
-    constexpr int L_1_SIZE = 256;
+    constexpr int L_1_SIZE = 384;
 
     // clang-format off
     constexpr int KING_BUCKET[64]{
@@ -60,7 +60,7 @@ namespace NNUE {
     // clang-format on
 
     constexpr int regWidth = 256 / 16;
-    constexpr int chunkNum = 256 / regWidth;
+    constexpr int chunkNum = L_1_SIZE / regWidth;
 
     // Stores the hidden layer of the NNUE.
     struct Accumulator {
