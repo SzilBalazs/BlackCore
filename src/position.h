@@ -438,7 +438,7 @@ void Position::makeMove(Move move) {
         setSquare<true>(to, piece);
     }
 
-    if (pieceAt(to).type == KING) {
+    if (pieceAt(to).type == KING && NNUE::KING_BUCKET[from] != NNUE::KING_BUCKET[to]) {
         state->accumulator.refresh(*this);
     }
 }
