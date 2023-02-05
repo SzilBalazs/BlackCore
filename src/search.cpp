@@ -68,16 +68,22 @@ void initLmr() {
  *
  * Returns the material change, after playing out every resulting capture of the move.
  */
-Score see(const Position &pos, Move move) {
+bool see(const Position &pos, Move move, Score threshold) {
     assert(move.isCapture()); // Make sure move is a capture
 
-    Score e[32];
-    Depth d = 0;
     Square from = move.getFrom();
     Square to = move.getTo();
 
-    // Initialize the first value in the array to the value of the piece captured
-    e[0] = move.equalFlag(EP_CAPTURE) ? PIECE_VALUES[PAWN] : PIECE_VALUES[pos.pieceAt(to).type];
+    // TODO EP captures
+    if (move.isPromo()) return true;
+
+    Score value = PIECE_VALUES[pos.pieceAt(to).type] - threshold;
+
+    if (value < 0) return false;
+
+    value -= PIECE_VALUES[pos.pieceAt(from).type];
+
+    if (value >= 0) return true;
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
@@ -88,35 +94,38 @@ Score see(const Position &pos, Move move) {
     // Get all attackers to the destination square
     Bitboard attackers = pos.getAllAttackers(to, occ);
 
-    Color stm = pos.pieceAt(to).color;
-    PieceType type = pos.pieceAt(from).type;
+    Color stm = EnemyColor(pos.pieceAt(from).color);
 
-    do {
-        d++;
-        e[d] = PIECE_VALUES[type] - e[d - 1];
+    while (true) {
 
-        // If the maximum of the last two values is less than 0, it means the capture is not profitable
-        if (std::max(-e[d - 1], e[d]) < 0)
+        attackers &= occ;
+
+        PieceType type;
+        attacker = pos.leastValuablePiece(attackers, stm, type);
+
+        if (!attacker)
             break;
 
+        value = -value - 1 - PIECE_VALUES[type];
+        stm = EnemyColor(stm);
+
+        if (value >= 0) {
+            if (type == KING && (attackers & pos.friendly(stm))) {
+                stm = EnemyColor(stm);
+            }
+            break;
+        }
+
+
         occ ^= attacker;
-        attackers ^= attacker;
 
         if (type == ROOK || type == QUEEN)
             attackers |= rookAttacks(to, occ) & rooks & occ;
         if (type == PAWN || type == BISHOP || type == QUEEN)
             attackers |= bishopAttacks(to, occ) & bishops & occ;
-
-        attacker = pos.leastValuablePiece(attackers, stm, type);
-        stm = EnemyColor(stm);
-
-    } while (attacker);
-
-    while (--d) {
-        e[d - 1] = -std::max(-e[d - 1], e[d]);
     }
 
-    return e[0];
+    return stm != pos.pieceAt(from).color;
 }
 
 /*
@@ -208,7 +217,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
          *
          * If the move loses material we skip its evaluation
          */
-        if (alpha > TB_BEST_LOSS && see(pos, move) < 0)
+        if (alpha > TB_BEST_LOSS && !see(pos, move, 0))
             continue;
 
         td.nodes++; // Update total number of nodes searched

@@ -21,8 +21,8 @@
 #include "position.h"
 
 // Internal piece values
-constexpr Score PIECE_VALUES[6] = {
-        0, 156, 561, 608, 736, 1022};
+constexpr Score PIECE_VALUES[7] = {
+        0, 156, 561, 608, 736, 1022, 0};
 
 // Returns the score of a position using NNUE.
 inline Score eval(const Position &pos) {

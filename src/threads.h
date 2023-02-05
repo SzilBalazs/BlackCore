@@ -27,7 +27,18 @@
 extern std::mutex mNodesSearched;
 extern U64 nodesSearched[64][64];
 
-Score see(const Position &pos, Move move);
+bool see(const Position &pos, Move move, Score threshold);
+
+// clang-format off
+constexpr int MVVLVA[6][6] = {
+                              {0,  0,  0,  0,  0,  0},      // KING
+                              {0, 14, 13, 12, 11, 10},      // PAWN
+                              {0, 24, 23, 22, 21, 20},      // KNIGHT
+                              {0, 34, 33, 32, 31, 30},      // BISHOP
+                              {0, 44, 43, 42, 41, 40},      // ROOK
+                              {0, 54, 53, 52, 51, 50}       // QUEEN
+};
+// clang-format on
 
 struct ThreadData {
 
@@ -116,12 +127,8 @@ struct ThreadData {
                 return -3000000;
             }
         } else if (move.isCapture()) {
-            Score seeScore = see(pos, move);
-
-            if (see(pos, move) >= 0)
-                return 8000000 + seeScore;
-            else
-                return 2000000 + seeScore;
+            bool good = see(pos, move, 0);
+            return (good ? 8000000 : 2000000) + MVVLVA[pos.pieceAt(to).type][pos.pieceAt(from).type];
         } else if (killerMoves[ply][0] == move) {
             return 7000000;
         } else if (killerMoves[ply][1] == move) {
