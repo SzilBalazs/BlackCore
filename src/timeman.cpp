@@ -17,9 +17,9 @@
 #include "timeman.h"
 #include <chrono>
 
-unsigned int MOVE_OVERHEAD = 5;
+unsigned int MOVE_OVERHEAD = 20;
 
-constexpr U64 mask = 2047;
+constexpr U64 mask = 1023;
 
 U64 startedSearch, idealTime, maxTime, maxNodes;
 
