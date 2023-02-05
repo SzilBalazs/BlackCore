@@ -692,21 +692,32 @@ void iterativeDeepening(int id, Depth depth) {
     Score prevScore = 0;
     Move bestMove;
 
-    int stability = 0;
+    int bmStability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
         Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 1));
         if (score == UNKNOWN_SCORE)
             break;
 
-        // Only care about stability if we searched enough depth, and we are the main thread.
-        if (currDepth >= 10 && td.threadId == 0) {
+        // Only care about time management if we searched enough depth, and we are the main thread.
+        if (td.threadId == 0) {
+
             if (bestMove != td.pvArray[0][0]) {
-                stability = -10;
+                bmStability = 0;
             } else {
-                stability++;
+                bmStability++;
             }
-            allocateTime(stability);
+
+            double factor = std::max(0.5, 1.1 - 0.03 * bmStability);
+
+            if (score - prevScore > ASPIRATION_DELTA)
+                factor *= 1.1;
+
+            U64 bestMoveEffort = nodesSearched[td.pvArray[0][0].getFrom()][td.pvArray[0][0].getTo()];
+            double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
+            factor *= std::max(0.5, 2 * notBestMove + 0.4);
+
+            if (manageTime(factor) && currDepth >= 10) break;
         }
 
         prevScore = score;

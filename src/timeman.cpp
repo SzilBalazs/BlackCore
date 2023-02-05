@@ -17,11 +17,11 @@
 #include "timeman.h"
 #include <chrono>
 
-unsigned int MOVE_OVERHEAD = 10;
+unsigned int MOVE_OVERHEAD = 5;
 
 constexpr U64 mask = 2047;
 
-U64 startedSearch, shouldSearch, searchTime, maxSearch, stabilityTime, maxNodes;
+U64 startedSearch, idealTime, maxTime, maxNodes;
 
 std::atomic<bool> stopped = true;
 
@@ -33,47 +33,46 @@ U64 getTime() {
 
 void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
 
-    movesToGo = movesToGo == 0 ? 20 : movesToGo + 1;
-
     startedSearch = getTime();
-    stabilityTime = 0;
     stopped = false;
 
     maxNodes = nodes;
 
     if (moveTime != 0) {
         // We are limited how much can we search
-        shouldSearch = moveTime - MOVE_OVERHEAD;
-        maxSearch = moveTime - MOVE_OVERHEAD;
+        idealTime = moveTime - MOVE_OVERHEAD;
+        maxTime = moveTime - MOVE_OVERHEAD;
     } else if (time == 0) {
         // We have infinite time
-        shouldSearch = 0;
-        maxSearch = 0;
+        idealTime = 0;
+        maxTime = 0;
     } else {
 
-        U64 panicTime = time / (movesToGo + 10) + 2 * inc;
-        stabilityTime = (time / movesToGo + inc) / 40;
+        if (movesToGo == 0) {
+            idealTime = 1 * inc + (time - MOVE_OVERHEAD) / 25;
+            maxTime = 3 * inc + (time - MOVE_OVERHEAD) / 15;
+        } else {
+            idealTime = inc + (time - MOVE_OVERHEAD) / movesToGo;
+            maxTime = 2 * idealTime;
+        }
 
-        shouldSearch = std::min(time - MOVE_OVERHEAD, time / movesToGo + inc * 3 / 4 - MOVE_OVERHEAD);
-        maxSearch = std::min(time - MOVE_OVERHEAD, shouldSearch + panicTime);
+        idealTime = std::min(idealTime, time - MOVE_OVERHEAD);
+        maxTime = std::min(maxTime, time - MOVE_OVERHEAD);
     }
-
-    searchTime = shouldSearch;
-}
-
-void allocateTime(int stability) {
-    U64 newSearchTime = shouldSearch - stability * stabilityTime;
-    searchTime = std::min(maxSearch, newSearchTime);
 }
 
 bool shouldEnd(U64 nodes, U64 totalNodes) {
     if ((nodes & mask) == 0 && !stopped) {
-        stopped = (maxSearch != 0 && getSearchTime() >= searchTime) || (maxNodes != 0 && totalNodes > maxNodes);
+        stopped = (maxTime != 0 && getSearchTime() >= maxTime) || (maxNodes != 0 && totalNodes > maxNodes);
     }
     return stopped;
 }
 
-bool isInfiniteSearch() { return maxSearch == 0; }
+bool manageTime(double factor) {
+    return getSearchTime() > std::min(U64(double(idealTime) * factor), maxTime) && maxTime != 0;
+}
+
+bool isInfiniteSearch() { return maxTime == 0; }
 
 U64 getSearchTime() {
     return getTime() - startedSearch;

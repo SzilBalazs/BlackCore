@@ -233,7 +233,7 @@ void uciInitProtocol() {
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<none>");
-    out("option", "name", "Move Overhead", "type", "spin", "default", 10, "min", 0, "max", 10000);
+    out("option", "name", "Move Overhead", "type", "spin", "default", 5, "min", 0, "max", 10000);
 
 #ifdef TUNE
     tuneOut("DELTA_MARGIN", 400, 200, 500);
