@@ -87,7 +87,7 @@ bool see(const Position &pos, Move move, Score threshold) {
 
     Bitboard rooks = pos.pieces<ROOK>() | pos.pieces<QUEEN>();
     Bitboard bishops = pos.pieces<BISHOP>() | pos.pieces<QUEEN>();
-    Bitboard occ = pos.occupied() ^ Bitboard(to);
+    Bitboard occ = pos.occupied() ^ Bitboard(from) ^ Bitboard(to);
 
     // Initialize the current attacker as the piece that made the capture
     Bitboard attacker = from;
@@ -97,7 +97,6 @@ bool see(const Position &pos, Move move, Score threshold) {
     Color stm = EnemyColor(pos.pieceAt(from).color);
 
     while (true) {
-
         attackers &= occ;
 
         PieceType type;

@@ -391,6 +391,8 @@ void uciLoop() {
             out("Total nodes:", perft<true>(pos, std::stoi(tokens[0])));
         } else if (command == "play") {
             playGame(pos);
+        } else if (command == "see") {
+            out(see(pos, stringToMove(pos, tokens[0]), 0));
         }
     }
     ttFree();
