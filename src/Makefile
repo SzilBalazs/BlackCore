@@ -32,14 +32,15 @@ endif
 
 ifeq ($(ARCH), avx2)
 	ARCH_FLAGS = -march=x86-64 -mpopcnt -msse -msse2 -mssse3 -msse4.1 -mavx2 -mbmi
-    	DEFINE_FLAGS = -DAVX2
+    DEFINE_FLAGS = -DAVX2
 endif
 
 ifeq ($(ARCH), popcnt)
     ARCH_FLAGS = -march=x86-64 -mpopcnt
 endif
 
-CXXFLAGS = -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess -DVERSION=\"v$(VERSION_MAJOR).$(VERSION_MINOR)\" $(DEFINE_FLAGS) $(ARCH_FLAGS) -DNDEBUG
+DEFINE_FLAGS += -DVERSION=\"v$(VERSION_MAJOR).$(VERSION_MINOR)\" -DNDEBUG
+CXXFLAGS = $(DEFINE_FLAGS) $(ARCH_FLAGS) -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess
 EXE = $(NAME)-v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
@@ -67,6 +68,6 @@ all: clean build
 build: $(EXE)
 
 clean:
-	@rm -r objects $(EXE) || true
+	@rm -r objects $(EXE) *.gcda || true
 
 .PHONY: all build clean
