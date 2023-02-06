@@ -224,7 +224,8 @@ Bitboard Position::getAllAttackers(Square square, Bitboard occ) const {
             (pieceAttacks<KNIGHT>(square, occ) & pieces<KNIGHT>()) |
             (pieceAttacks<BISHOP>(square, occ) & pieces<BISHOP>()) |
             (pieceAttacks<ROOK>(square, occ) & pieces<ROOK>()) |
-            (pieceAttacks<QUEEN>(square, occ) & pieces<QUEEN>())) &
+            (pieceAttacks<QUEEN>(square, occ) & pieces<QUEEN>()) |
+            (pieceAttacks<KING>(square, occ) & pieces<KING>())) &
            occ;
 }
 
