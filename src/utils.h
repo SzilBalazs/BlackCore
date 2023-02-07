@@ -56,6 +56,32 @@ constexpr Piece decodePiece(unsigned char encodedPiece) {
     return {indexToType[encodedPiece & 7], indexToColor[encodedPiece >> 3]};
 }
 
+// Function that converts an uci format square string into an actual square.
+inline Square stringToSquare(std::string s) {
+    if (s[0] == '-') {
+        return NULL_SQUARE;
+    } else if ('a' <= s[0] && s[0] <= 'z') {
+        return Square((s[0] - 'a') + (s[1] - '1') * 8);
+    } else if ('A' <= s[0] && s[0] <= 'Z') {
+        return Square((s[0] - 'A') + (s[1] - '1') * 8);
+    }
+
+    return NULL_SQUARE;
+}
+
+inline std::string asciiColor(int a) {
+    return "\u001b[38;5;" + std::to_string(a) + "m";
+}
+
+inline std::istream &operator>>(std::istream &is, Square &square) {
+    std::string s;
+    is >> s;
+
+    square = stringToSquare(s);
+
+    return is;
+}
+
 std::string formatSquare(Square square);
 
 char pieceToChar(Piece piece);

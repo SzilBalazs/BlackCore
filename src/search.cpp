@@ -167,11 +167,11 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Get the evaluation of the position, which will be used as the stand pat score
-    Score staticEval = eval(pos);
+    Score bestScore = eval(pos);
 
     // Return the evaluation if maximum ply is reached
     if (stack->ply >= MAX_PLY) {
-        return staticEval;
+        return bestScore;
     }
 
     /*
@@ -181,12 +181,12 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
      * lower-bound of the position score.
      */
 
-    if (staticEval >= beta) {
+    if (bestScore >= beta) {
         return beta;
     }
 
-    if (staticEval > alpha) {
-        alpha = staticEval;
+    if (bestScore > alpha) {
+        alpha = bestScore;
     }
 
     // Generate all legal capture
@@ -207,7 +207,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
          * less than alpha the move can be safely skipped.
          */
         if (move.isPromo() * PIECE_VALUES[QUEEN] + PIECE_VALUES[pos.pieceAt(move.getTo()).type] +
-                    staticEval + DELTA_MARGIN <
+                    bestScore + DELTA_MARGIN <
             alpha)
             continue;
 
@@ -216,7 +216,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
          *
          * If the move loses material we skip its evaluation
          */
-        if (alpha > TB_BEST_LOSS && !see(pos, move, 0))
+        if (bestScore > TB_BEST_LOSS && !see(pos, move, 0))
             continue;
 
         td.nodes++; // Update total number of nodes searched
@@ -230,6 +230,8 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
         // Check if search should stop by asking the time manager
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
+
+        bestScore = std::max(bestScore, score);
 
         // If the score is too good to be acceptable by our opponent return beta
         if (score >= beta) {
@@ -248,8 +250,8 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Save information to the transposition table
-    ttSave(pos.getHash(), 0, alpha, ttFlag, bestMove);
-    return alpha;
+    ttSave(pos.getHash(), 0, bestScore, ttFlag, bestMove);
+    return bestScore;
 }
 
 template<NodeType type>
@@ -264,7 +266,9 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     const Move prevMove = (stack - 1)->move;
     const Score matePly = MATE_VALUE - stack->ply;
 
-    Score maxAlpha = INF_SCORE;
+    Score bestScore = -INF_SCORE;
+    Score maxScore = INF_SCORE;
+
     td.pvLength[stack->ply] = stack->ply;
     td.killerMoves[stack->ply + 1][0] = Move();
     td.killerMoves[stack->ply + 1][1] = Move();
@@ -344,7 +348,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 if (flag == TT_BETA) {
                     alpha = std::max(alpha, score);
                 } else {
-                    maxAlpha = score;
+                    maxScore = score;
                 }
             }
         }
@@ -448,7 +452,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         Score history = td.historyTable[color][move.getFrom()][move.getTo()];
 
         // Prune quiet moves if ...
-        if (notRootNode && nonPvNode && !inCheck && alpha > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
+        if (notRootNode && nonPvNode && !inCheck && bestScore > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
 
             // Futility pruning
             // ... the static evaluation is far below alpha.
@@ -548,6 +552,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if (shouldEnd(td.nodes, getTotalNodes()))
             return UNKNOWN_SCORE;
 
+        bestScore = std::max(bestScore, score);
+
         if (score >= beta) {
 
             if (!isSingularRoot) {
@@ -588,13 +594,13 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         index++;
     }
 
-    alpha = std::min(alpha, maxAlpha);
+    bestScore = std::min(bestScore, maxScore);
 
     // Only save the information gathered into the transposition table, if the node isn't a singular search root.
     if (!isSingularRoot)
-        ttSave(pos.getHash(), depth, alpha, ttFlag, bestMove);
+        ttSave(pos.getHash(), depth, bestScore, ttFlag, bestMove);
 
-    return alpha;
+    return bestScore;
 }
 
 // Returns the PV-line of the selected thread
