@@ -67,18 +67,19 @@ void ttResize(unsigned int MBSize) {
 }
 
 // Probes a Zobrish hash and sets ttHit to true, if it succeeds.
-TTEntry ttProbe(U64 hash, bool &ttHit) {
-    TTEntry *entry = getEntry(hash);
+TTEntry ttProbe(U64 hash, Ply ply, bool &ttHit) {
+    TTEntry entry = *getEntry(hash);
 
-    if (entry->hash != hash || std::abs(entry->eval) > WORST_MATE)
+    if (entry.hash != hash)
         return {};
 
+    entry.eval = scoreFromTT(entry.eval, ply);
     ttHit = true;
-    return *entry;
+    return entry;
 }
 
 // Saves an entry into the transposition table.
-void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
+void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove, Ply ply) {
     TTEntry *entry = getEntry(hash);
 
     if (entry->hash != hash || bestMove.isOk()) {
@@ -88,7 +89,7 @@ void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove) {
     if (entry->hash != hash || flag == TT_EXACT || entry->depth <= depth + 4) {
         entry->hash = hash;
         entry->depth = depth;
-        entry->eval = eval;
+        entry->eval = scoreToTT(eval, ply);
         entry->flag = flag;
     }
 }

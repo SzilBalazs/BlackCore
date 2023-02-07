@@ -154,7 +154,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
      * the transposition table
      */
     bool ttHit = false;
-    TTEntry ttEntry = ttProbe(pos.getHash(), ttHit);
+    TTEntry ttEntry = ttProbe(pos.getHash(), stack->ply, ttHit);
 
     /*
      * TT cutoffs
@@ -236,7 +236,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
         // If the score is too good to be acceptable by our opponent return beta
         if (score >= beta) {
             // If beta cutoff happens save the information to the transposition table
-            ttSave(pos.getHash(), 0, score, TT_BETA, move);
+            ttSave(pos.getHash(), 0, score, TT_BETA, move, stack->ply);
 
             return beta;
         }
@@ -250,7 +250,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Save information to the transposition table
-    ttSave(pos.getHash(), 0, bestScore, ttFlag, bestMove);
+    ttSave(pos.getHash(), 0, bestScore, ttFlag, bestMove, stack->ply);
     return bestScore;
 }
 
@@ -302,7 +302,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
      * node is a singular search root skip this step.
      */
     bool ttHit = false;
-    TTEntry ttEntry = isSingularRoot ? TTEntry() : ttProbe(pos.getHash(), ttHit);
+    TTEntry ttEntry = isSingularRoot ? TTEntry() : ttProbe(pos.getHash(), stack->ply, ttHit);
 
     /*
      * TT cutoffs
@@ -340,7 +340,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             }
 
             if (flag == TT_EXACT || (flag == TT_ALPHA && score <= alpha) || (flag == TT_BETA && score >= beta)) {
-                ttSave(pos.getHash(), depth, score, flag, Move());
+                ttSave(pos.getHash(), depth, score, flag, Move(), stack->ply);
                 return score;
             }
 
@@ -571,7 +571,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 }
 
                 // Save the information gathered into the transposition table.
-                ttSave(pos.getHash(), depth, beta, TT_BETA, move);
+                ttSave(pos.getHash(), depth, beta, TT_BETA, move, stack->ply);
             }
             return beta;
         }
@@ -598,7 +598,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     // Only save the information gathered into the transposition table, if the node isn't a singular search root.
     if (!isSingularRoot)
-        ttSave(pos.getHash(), depth, bestScore, ttFlag, bestMove);
+        ttSave(pos.getHash(), depth, bestScore, ttFlag, bestMove, stack->ply);
 
     return bestScore;
 }
@@ -640,7 +640,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
 
     // If ASPIRATION_DEPTH is reached, assume that the previous iteration
     // gave us a close enough score.
-    if (depth >= ASPIRATION_DEPTH && std::abs(prevScore) < TB_WORST_WIN) {
+    if (depth >= ASPIRATION_DEPTH) {
         alpha = prevScore - ASPIRATION_DELTA;
         beta = prevScore + ASPIRATION_DELTA;
     }

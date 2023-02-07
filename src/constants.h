@@ -38,8 +38,8 @@ typedef int32_t Score;
 typedef int8_t Depth;
 typedef int8_t Ply;
 
-constexpr Score UNKNOWN_SCORE = 100002;
-constexpr Score INF_SCORE = 100001;
+constexpr Score UNKNOWN_SCORE = 300000;
+constexpr Score INF_SCORE = 200000;
 constexpr Score MATE_VALUE = 100000;
 constexpr Score TB_WIN_SCORE = 50000;
 constexpr Score TB_WORST_WIN = 49000;

@@ -51,9 +51,9 @@ void ttClear();
 
 void ttFree();
 
-TTEntry ttProbe(U64 hash, bool &ttHit);
+TTEntry ttProbe(U64 hash, Ply ply, bool &ttHit);
 
-void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove);
+void ttSave(U64 hash, Depth depth, Score eval, EntryFlag flag, Move bestMove, Ply ply);
 
 int getTTFull();
 

@@ -82,6 +82,14 @@ inline std::istream &operator>>(std::istream &is, Square &square) {
     return is;
 }
 
+constexpr Score scoreToTT(Score score, Ply ply) {
+    return (score > TB_WORST_WIN) ? (score + ply) : (score < TB_BEST_LOSS ? (score - ply) : score);
+}
+
+constexpr Score scoreFromTT(Score score, Ply ply) {
+    return (score > TB_WORST_WIN) ? (score - ply) : (score < TB_BEST_LOSS ? (score + ply) : score);
+}
+
 std::string formatSquare(Square square);
 
 char pieceToChar(Piece piece);
