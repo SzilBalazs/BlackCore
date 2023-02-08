@@ -163,11 +163,11 @@ struct Piece {
 };
 
 // 2 colors * 6 types * 64 square = 768
-// 4 for castling rights
+// 16 for castling rights
 // 8 number for the file of the epSquare
 // 1 number if the side is black
 
-const U64 randTable[781] = {
+const U64 randTable[793] = {
         0x4ef488bfae17abbaULL, 0x1b608e38d5cf7308ULL,
         0x851dabc8d9c029daULL, 0x62ff3fd5ca1fe189ULL,
         0xb58f435e51ec54d9ULL, 0xd6478aa5957c39eaULL,
@@ -553,6 +553,12 @@ const U64 randTable[781] = {
         0x226c13cbd1250359ULL, 0x461bb153206c4873ULL,
         0xa4db6d1e7e5149c9ULL, 0x777fb8c818e291d3ULL,
         0xb0d6aa720023a65dULL, 0xc05627e6e6dc7e5aULL,
+        0x42dceb0bad1add5aULL, 0xa7a027f9e6972e1eULL,
+        0x61f340e127ab18c9ULL, 0xca4be23b32aa18faULL,
+        0xbd0ca082fce82378ULL, 0x332009413ffbfed0ULL,
+        0x895a9dfa328ea051ULL, 0xf7dfcdc1deafeb7aULL,
+        0x8c4b31b849b78cafULL, 0xc12720d84f4babe2ULL,
+        0xc039152efc003ac7ULL, 0xefa2e63896d932e9ULL,
         0x94d4ffa4be9b396eULL, 0x4555350c053c2784ULL,
         0x64d2a6987f2dc66dULL, 0x9e559eb47d85fd3bULL,
         0xe88998a1757985ULL, 0x94e721fa69ef3f64ULL,
@@ -562,7 +568,7 @@ const U64 randTable[781] = {
 
 constexpr U64 const *pieceRandTable = randTable;
 constexpr U64 const *castlingRandTable = randTable + 768;
-constexpr U64 const *epRandTable = randTable + 772;
-constexpr U64 const *blackRand = randTable + 780;
+constexpr U64 const *epRandTable = randTable + 784;
+constexpr U64 const *blackRand = randTable + 792;
 
 #endif //BLACKCORE_CONSTANTS_H

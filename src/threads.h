@@ -128,7 +128,7 @@ struct ThreadData {
             }
         } else if (move.isCapture()) {
             bool good = see(pos, move, 0);
-            return (good ? 8000000 : 2000000) + MVVLVA[pos.pieceAt(to).type][pos.pieceAt(from).type];
+            return (good ? 8000000 : 2000000) + MVVLVA[move.equalFlag(EP_CAPTURE) ? PAWN : pos.pieceAt(to).type][pos.pieceAt(from).type];
         } else if (killerMoves[ply][0] == move) {
             return 7000000;
         } else if (killerMoves[ply][1] == move) {
