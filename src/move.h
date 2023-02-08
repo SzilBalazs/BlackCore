@@ -132,6 +132,8 @@ private:
     uint16_t data = 0;
 };
 
+constexpr Move MOVE_NULL = Move();
+
 std::ostream &operator<<(std::ostream &os, const Move &move);
 
 #endif //BLACKCORE_MOVE_H

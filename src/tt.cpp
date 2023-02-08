@@ -108,7 +108,7 @@ Move getHashMove(U64 hash) {
     TTEntry *entry = getEntry(hash);
     if (entry->hash == hash)
         return entry->hashMove;
-    return {};
+    return MOVE_NULL;
 }
 
 // Prefetches a transposition table entry.

@@ -49,7 +49,7 @@ Move stringToMove(const Position &pos, const std::string &s) {
                 return {from, to, flags | PROMO_KNIGHT};
             default:
                 out("Invalid move!");
-                return {};
+                return MOVE_NULL;
         }
     }
 

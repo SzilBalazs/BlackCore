@@ -190,7 +190,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Generate all legal capture
-    auto moves = MoveList<true, false>(pos, td, Move(), stack->ply);
+    auto moves = MoveList<true, false>(pos, td, MOVE_NULL, stack->ply);
 
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
@@ -270,8 +270,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     Score maxScore = INF_SCORE;
 
     td.pvLength[stack->ply] = stack->ply;
-    td.killerMoves[stack->ply + 1][0] = Move();
-    td.killerMoves[stack->ply + 1][1] = Move();
+    td.killerMoves[stack->ply + 1][0] = MOVE_NULL;
+    td.killerMoves[stack->ply + 1][1] = MOVE_NULL;
 
     // Check if search should stop by asking the time manager
     if (shouldEnd(td.nodes, getTotalNodes()))
@@ -340,7 +340,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             }
 
             if (flag == TT_EXACT || (flag == TT_ALPHA && score <= alpha) || (flag == TT_BETA && score >= beta)) {
-                ttSave(pos.getHash(), depth, score, flag, Move(), stack->ply);
+                ttSave(pos.getHash(), depth, score, flag, MOVE_NULL, stack->ply);
                 return score;
             }
 
@@ -407,7 +407,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
                 Depth R = NULL_MOVE_BASE_R + depth / NULL_MOVE_R_SCALE;
 
-                stack->move = Move();
+                stack->move = MOVE_NULL;
                 pos.makeNullMove();
                 Score score = -search<NON_PV_NODE>(pos, td, stack + 1, depth - R, -beta, -beta + 1);
                 pos.undoNullMove();
@@ -489,7 +489,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             stack->excludedMove = move;
             score = search<NON_PV_NODE>(pos, td, stack, singularDepth, singularBeta - 1, singularBeta);
-            stack->excludedMove = Move();
+            stack->excludedMove = MOVE_NULL;
 
             if (score < singularBeta) {
                 extensions = 1;
@@ -628,8 +628,8 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
     SearchStack stateStack[MAX_PLY + 10];
 
     for (Ply i = 0; i <= MAX_PLY; i++) {
-        stateStack[i].excludedMove = Move();
-        stateStack[i].move = Move();
+        stateStack[i].excludedMove = MOVE_NULL;
+        stateStack[i].move = MOVE_NULL;
         stateStack[i].eval = UNKNOWN_SCORE;
         stateStack[i].ply = i - 4;
     }
