@@ -40,7 +40,7 @@ ifeq ($(ARCH), popcnt)
 endif
 
 DEFINE_FLAGS += -DVERSION=\"v$(VERSION_MAJOR).$(VERSION_MINOR)\" -DNDEBUG
-CXXFLAGS = -g $(DEFINE_FLAGS) $(ARCH_FLAGS) -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess
+CXXFLAGS = $(DEFINE_FLAGS) $(ARCH_FLAGS) -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess
 EXE = $(NAME)-v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)
 
 default: $(EXE)
