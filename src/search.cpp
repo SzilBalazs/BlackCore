@@ -434,8 +434,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     Move bestMove;
     EntryFlag ttFlag = TT_ALPHA;
-    int index = 0;
-    std::vector<Move> quiets;
+    Move quiets[64];
+    int index = 0, madeQuiets = 0;
     while (!moves.empty()) {
 
         Move move = moves.nextMove(); // Currently searched move
@@ -565,8 +565,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                         td.updateCounterMoves(prevMove, move);
                     td.updateHH(move, color, depth * depth);
 
-                    for (Move m : quiets) {
-                        td.updateHH(m, color, -depth * depth);
+                    for (int i = 0; i < madeQuiets; i++) {
+                        td.updateHH(quiets[i], color, -depth * depth);
                     }
                 }
 
@@ -589,8 +589,9 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             td.pvLength[stack->ply] = td.pvLength[stack->ply + 1];
         }
 
-        if (move.isQuiet())
-            quiets.push_back(move);
+        if (move.isQuiet()) {
+            quiets[madeQuiets++] = move;
+        }
         index++;
     }
 
@@ -797,5 +798,9 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     // Starts every thread.
     for (int idx = 0; idx < threadCount; idx++) {
         ths.emplace_back(iterativeDeepening, idx, searchInfo.maxDepth);
+    }
+
+    if (!searchInfo.uciMode) {
+        ths[0].join();
     }
 }

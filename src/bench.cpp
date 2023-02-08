@@ -84,9 +84,6 @@ void testSearch() {
 
         startSearch(info, pos, 1);
 
-        // Wait the search to finish.
-        while (!stopped) {}
-
         // Record the node count and the nps.
         totalNodes += getTotalNodes();
         nps += getNps(getTotalNodes());
