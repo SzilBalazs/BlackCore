@@ -65,12 +65,32 @@ void Position::undoNullMove() {
 }
 
 // Returns true if one more instance of this position was found before.
-bool Position::isRepetition() {
+bool Position::isRepetition() const {
     for (BoardState *ptr = state->lastIrreversibleMove; ptr != state; ptr++) {
         if (state->hash == ptr->hash) {
             return true;
         }
     }
+    return false;
+}
+
+// Returns true if the position is a draw
+bool Position::isDraw() const {
+    if (isRepetition())
+        return true;
+    if (getMove50() >= 99)
+        return true;
+
+    // Two kings + one piece
+    Bitboard occ = occupied();
+    if (occ.popCount() <= 3) {
+        int knight = pieces<KNIGHT>().popCount();
+        int bishop = pieces<BISHOP>().popCount();
+
+        if (knight || bishop)
+            return true;
+    }
+
     return false;
 }
 
@@ -122,7 +142,7 @@ void Position::display() const {
 
 // Displays the NNUE's take on the current position.
 void Position::displayEval() {
-    Score score = eval(*this);
+    Score score = evaluate(*this);
     cout << "\n      A     B     C     D     E     F     G     H    \n";
     for (int i = 8; i >= 1; i--) {
         cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+";
@@ -138,7 +158,7 @@ void Position::displayEval() {
             string evalStr = " ";
             if (!piece.isNull() && piece.type != KING) {
                 clearSquare<true>(square);
-                Score newScore = eval(*this);
+                Score newScore = evaluate(*this);
                 Score scoreDiff = score - newScore;
                 evalStr = std::to_string(scoreDiff);
                 setSquare<true>(square, piece);
