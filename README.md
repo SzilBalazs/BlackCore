@@ -1,6 +1,7 @@
 <div align="center" style="padding-top: 50px">
     <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%">
-    <h3>BlackCore</h3>
+    <br>
+    <br>
     <i>Powerful C++ Chess Engine - to conquer the chess board</i>
     <br>
     <br>
@@ -14,7 +15,7 @@
 # Overview
 
 BlackCore is a neural network based chess engine developed from scratch.
-Its alpha beta search uses a neural network evaluation, powered by various pruning techniques and a blazing fast
+Its alpha beta search uses various pruning techniques, powered by blazing fast
 move generator.
 
 ### Playing strength - Last updated: 2023. 2. 2.
