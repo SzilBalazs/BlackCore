@@ -31,7 +31,7 @@ constexpr Score RFP_IMPROVING_MULTIPLIER = 66;
 
 constexpr Depth NULL_MOVE_DEPTH = 2;
 constexpr Depth NULL_MOVE_BASE_R = 4;
-constexpr Depth NULL_MOVE_R_SCALE = 2;
+constexpr Depth NULL_MOVE_R_SCALE = 3;
 
 constexpr Depth LMR_DEPTH = 3;
 constexpr double LMR_BASE = 0.1;
