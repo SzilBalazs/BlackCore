@@ -53,37 +53,40 @@ inline void addParam(const std::string &name, int defaultValue, int minValue, in
 
 #endif
 
+#define TUNING_PARAMETERS                      \
+    SCORE_PARAM(DELTA_MARGIN, 252)             \
+                                               \
+    SCORE_PARAM(RAZOR_MARGIN, 155)             \
+                                               \
+    DEPTH_PARAM(RFP_DEPTH, 8)                  \
+    SCORE_PARAM(RFP_DEPTH_MULTIPLIER, 42)      \
+    SCORE_PARAM(RFP_IMPROVING_MULTIPLIER, 66)  \
+                                               \
+    DEPTH_PARAM(NULL_MOVE_DEPTH, 2)            \
+    DEPTH_PARAM(NULL_MOVE_BASE_R, 4)           \
+    DEPTH_PARAM(NULL_MOVE_R_SCALE, 3)          \
+                                               \
+    DEPTH_PARAM(LMR_DEPTH, 3)                  \
+    SCORE_PARAM(LMR_INDEX, 3)                  \
+                                               \
+    DEPTH_PARAM(LMP_DEPTH, 4)                  \
+    SCORE_PARAM(LMP_MOVES, 5)                  \
+                                               \
+    DEPTH_PARAM(FUTILITY_DEPTH, 5)             \
+    SCORE_PARAM(FUTILITY_MARGIN, 33)           \
+    SCORE_PARAM(FUTILITY_MARGIN_DEPTH, 53)     \
+    SCORE_PARAM(FUTILITY_MARGIN_IMPROVING, 71) \
+                                               \
+    DEPTH_PARAM(ASPIRATION_DEPTH, 9)           \
+    SCORE_PARAM(ASPIRATION_DELTA, 28)          \
+    SCORE_PARAM(ASPIRATION_BOUND, 3000)        \
+                                               \
+    DEPTH_PARAM(SINGULAR_DEPTH, 8)
+
 constexpr double LMR_BASE = 0.1;
 constexpr double LMR_SCALE = 1.6;
 
-SCORE_PARAM(DELTA_MARGIN, 252)
-
-SCORE_PARAM(RAZOR_MARGIN, 155);
-
-DEPTH_PARAM(RFP_DEPTH, 8)
-SCORE_PARAM(RFP_DEPTH_MULTIPLIER, 42)
-SCORE_PARAM(RFP_IMPROVING_MULTIPLIER, 66)
-
-DEPTH_PARAM(NULL_MOVE_DEPTH, 2)
-DEPTH_PARAM(NULL_MOVE_BASE_R, 4)
-DEPTH_PARAM(NULL_MOVE_R_SCALE, 3)
-
-DEPTH_PARAM(LMR_DEPTH, 3)
-SCORE_PARAM(LMR_INDEX, 3)
-
-DEPTH_PARAM(LMP_DEPTH, 4)
-SCORE_PARAM(LMP_MOVES, 5)
-
-DEPTH_PARAM(FUTILITY_DEPTH, 5)
-SCORE_PARAM(FUTILITY_MARGIN, 33)
-SCORE_PARAM(FUTILITY_MARGIN_DEPTH, 53)
-SCORE_PARAM(FUTILITY_MARGIN_IMPROVING, 71)
-
-DEPTH_PARAM(ASPIRATION_DEPTH, 9)
-SCORE_PARAM(ASPIRATION_DELTA, 28)
-SCORE_PARAM(ASPIRATION_BOUND, 3000)
-
-DEPTH_PARAM(SINGULAR_DEPTH, 8)
+TUNING_PARAMETERS
 
 #undef DEPTH_PARAM
 #undef SCORE_PARAM
