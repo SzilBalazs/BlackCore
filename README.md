@@ -5,11 +5,11 @@
     <b><i>Powerful C++ Chess Engine - to conquer the chess board</i></b>
     <br>
     <br>
-    <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
-    <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?style=for-the-badge">
+    <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?color=critical&style=for-the-badge">
+    <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?color=blue&style=for-the-badge">
     <br>
-    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?label=Latest%20release&style=for-the-badge">
-    <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?style=for-the-badge">
+    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?color=blue&label=Latest%20release&style=for-the-badge">
+    <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?color=critical&style=for-the-badge">
 </div>
 
 # Overview
