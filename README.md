@@ -149,6 +149,10 @@ licensed under <a href="https://storage.lczero.org/files/training_data/LICENSE.t
 
 ## Also thanks to...
 
+### <a href="https://github.com/PGG106">Zuppa Cippole</a>
+
+For teaching me SPRT and letting me use his OB instance.
+
 ### <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> by <a href="https://github.com/Disservin">Disservin</a>
 
 Smallbrain is an awesome engine that helped me understand many important concepts, and a very special thanks to
