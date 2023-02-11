@@ -1,6 +1,6 @@
 <div align="center" style="padding-top: 50px">
     <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%">
-    <p style="font-size: 30px">BlackCore</p>
+    <h3>BlackCore</h3>
     <i>Powerful C++ Chess Engine - to conquer the chess board</i>
     <br>
     <br>
