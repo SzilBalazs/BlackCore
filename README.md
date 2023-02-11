@@ -2,7 +2,7 @@
     <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%">
     <br>
     <br>
-    <i>Powerful C++ Chess Engine - to conquer the chess board</i>
+    <b><i>Powerful C++ Chess Engine - to conquer the chess board</i></b>
     <br>
     <br>
     <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
