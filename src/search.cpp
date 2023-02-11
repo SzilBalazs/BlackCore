@@ -379,8 +379,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
          *
          * At depth 1 safely drop into quiescence search, if the static evaluation is very low.
          */
-        if (depth == 1 && staticEval + RAZOR_MARGIN < alpha) {
-            return quiescence<NON_PV_NODE>(pos, td, stack, alpha, beta);
+        if (depth <= 3 && staticEval + RAZOR_MARGIN * depth < alpha) {
+            Score score = quiescence<NON_PV_NODE>(pos, td, stack, alpha, beta);
+            if (score <= alpha)
+                return score;
         }
 
         /*
