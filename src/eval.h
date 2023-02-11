@@ -21,12 +21,6 @@
 #include "position.h"
 
 // Evaluates a position
-inline Score evaluate(const Position &pos) {
-
-    if (pos.isDraw())
-        return DRAW_VALUE;
-
-    return pos.getState()->accumulator.forward(pos.getSideToMove());
-}
+Score evaluate(const Position &pos);
 
 #endif //BLACKCORE_EVAL_H

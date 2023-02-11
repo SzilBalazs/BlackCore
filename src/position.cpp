@@ -82,8 +82,8 @@ bool Position::isDraw() const {
         return true;
 
     // Two kings + one piece
-    Bitboard occ = occupied();
-    if (occ.popCount() <= 3) {
+    int pieceCount = occupied().popCount();
+    if (pieceCount == 3) {
         int knight = pieces<KNIGHT>().popCount();
         int bishop = pieces<BISHOP>().popCount();
 
@@ -91,7 +91,7 @@ bool Position::isDraw() const {
             return true;
     }
 
-    return false;
+    return pieceCount == 2;
 }
 
 // Displays the current position in the console.
