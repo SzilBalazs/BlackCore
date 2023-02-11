@@ -149,7 +149,7 @@ licensed under <a href="https://storage.lczero.org/files/training_data/LICENSE.t
 
 ## Also thanks to...
 
-### <a href="https://github.com/PGG106">Zuppa Cippole</a>
+### <a href="https://github.com/PGG106">Zuppa Cipolle</a>
 
 For teaching me SPRT and letting me use his OB instance.
 

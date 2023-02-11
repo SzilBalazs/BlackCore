@@ -18,39 +18,9 @@
 #define BLACKCORE_SEARCH_H
 
 #include "movegen.h"
+#include "tune.h"
 #include "uci.h"
 #include <atomic>
-
-constexpr Score DELTA_MARGIN = 252;
-
-constexpr Score RAZOR_MARGIN = 155;
-
-constexpr Depth RFP_DEPTH = 8;
-constexpr Score RFP_DEPTH_MULTIPLIER = 42;
-constexpr Score RFP_IMPROVING_MULTIPLIER = 66;
-
-constexpr Depth NULL_MOVE_DEPTH = 2;
-constexpr Depth NULL_MOVE_BASE_R = 4;
-constexpr Depth NULL_MOVE_R_SCALE = 3;
-
-constexpr Depth LMR_DEPTH = 3;
-constexpr double LMR_BASE = 0.1;
-constexpr double LMR_SCALE = 1.6;
-constexpr int LMR_INDEX = 3;
-
-constexpr Depth LMP_DEPTH = 4;
-constexpr int LMP_MOVES = 5;
-
-constexpr Depth FUTILITY_DEPTH = 5;
-constexpr Score FUTILITY_MARGIN = 33;
-constexpr Score FUTILITY_MARGIN_DEPTH = 53;
-constexpr Score FUTILITY_MARGIN_IMPROVING = 71;
-
-constexpr Depth ASPIRATION_DEPTH = 9;
-constexpr Score ASPIRATION_DELTA = 28;
-constexpr Score ASPIRATION_BOUND = 3000;
-
-constexpr Depth SINGULAR_DEPTH = 8;
 
 struct SearchStack {
     Move move, excludedMove;

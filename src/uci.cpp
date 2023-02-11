@@ -236,28 +236,7 @@ void uciInitProtocol() {
     out("option", "name", "Move Overhead", "type", "spin", "default", 20, "min", 0, "max", 10000);
 
 #ifdef TUNE
-    tuneOut("DELTA_MARGIN", 400, 200, 500);
-    tuneOut("RAZOR_MARGIN", 130, 50, 200);
-    tuneOut("RFP_DEPTH", 5, 3, 10);
-    tuneOut("RFP_DEPTH_MULTIPLIER", 70, 30, 200);
-    tuneOut("RFP_IMPROVING_MULTIPLIER", 80, 30, 200);
-    tuneOut("NULL_MOVE_DEPTH", 3, 1, 6);
-    tuneOut("NULL_MOVE_BASE_R", 4, 2, 6);
-    tuneOut("NULL_MOVE_R_SCALE", 5, 2, 10);
-    tuneOut("LMR_DEPTH", 4, 2, 10);
-    tuneOut("LMR_INDEX", 3, 1, 10);
-    tuneOut("LMP_DEPTH", 4, 1, 10);
-    tuneOut("LMP_MOVES", 5, 1, 10);
-    tuneOut("ASPIRATION_DEPTH", 9, 5, 20);
-    tuneOut("ASPIRATION_DELTA", 30, 10, 100);
-    tuneOut("SEE_MARGIN", 0, 0, 200);
-    tuneOut("PAWN_VALUE", 150, 100, 200);
-    tuneOut("KNIGHT_VALUE", 750, 300, 1000);
-    tuneOut("BISHOP_VALUE", 850, 300, 1000);
-    tuneOut("ROOK_VALUE", 800, 300, 1000);
-    tuneOut("QUEEN_VALUE", 1000, 500, 1500);
-    tuneOut("LMR_BASE", 10, 1, 30);
-    tuneOut("LMR_SCALE", 17, 10, 40);
+    tuneInit();
 #endif
 
     // We have sent all the parameters
@@ -313,7 +292,19 @@ void uciLoop() {
                     NNUE::EVALFILE = tokens[3];
                     NNUE::init();
                 } else {
-                    out("info", "string", "Unknown value", tokens[1]);
+                    bool found = false;
+#ifdef TUNE
+                    for (const auto &param : params) {
+                        if (tokens[1] == param.name) {
+                            *param.ptr = std::stoi(tokens[3]);
+                            found = true;
+                            break;
+                        }
+                    }
+#endif
+
+                    if (!found)
+                        out("info", "string", "Unknown value", tokens[1]);
                 }
             }
         } else if (command == "position" || command == "pos") {
