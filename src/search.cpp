@@ -561,15 +561,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
             if (!isSingularRoot) {
                 if (move.isQuiet()) {
 
-                    // Update history heuristics
-                    td.updateKillerMoves(move, stack->ply);
-                    if (prevMove.isOk())
-                        td.updateCounterMoves(prevMove, move);
-                    td.updateHH(move, color, depth * depth);
-
-                    for (int i = 0; i < madeQuiets; i++) {
-                        td.updateHH(quiets[i], color, -depth * depth);
-                    }
+                    // Update histories
+                    td.updateHistory(move, stack, quiets, color, madeQuiets, depth * depth);
                 }
 
                 // Save the information gathered into the transposition table.

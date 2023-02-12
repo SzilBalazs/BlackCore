@@ -132,6 +132,12 @@ private:
     uint16_t data = 0;
 };
 
+struct SearchStack {
+    Move move, excludedMove;
+    Score eval = 0;
+    Ply ply = 0;
+};
+
 constexpr Move MOVE_NULL = Move();
 
 std::ostream &operator<<(std::ostream &os, const Move &move);

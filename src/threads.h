@@ -91,16 +91,30 @@ struct ThreadData {
     }
 
     void updateKillerMoves(Move m, Ply ply) {
-        killerMoves[ply][1] = killerMoves[ply][0];
-        killerMoves[ply][0] = m;
+        if (killerMoves[ply][0] != m) {
+            killerMoves[ply][1] = killerMoves[ply][0];
+            killerMoves[ply][0] = m;
+        }
     }
 
     void updateCounterMoves(Move prevMove, Move move) {
-        counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
+        if (prevMove.isOk())
+            counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
     }
 
-    void updateHH(Move move, Color color, Score bonus) {
+    void updateMainHistory(Move move, Color color, Score bonus) {
         historyTable[color][move.getFrom()][move.getTo()] = std::clamp(historyTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
+    }
+
+    void updateHistory(Move move, SearchStack *stack, Move *quiets, Color stm, int madeQuiets, Score bonus) {
+        updateKillerMoves(move, stack->ply);
+        updateCounterMoves((stack - 1)->move, move);
+
+        updateMainHistory(move, stm, bonus);
+
+        for (int i = 0; i < madeQuiets; i++) {
+            updateMainHistory(quiets[i], stm, -bonus);
+        }
     }
 
     void updateNodesSearched(Move move, U64 totalNodes) {

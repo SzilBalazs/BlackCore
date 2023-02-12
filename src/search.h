@@ -22,12 +22,6 @@
 #include "uci.h"
 #include <atomic>
 
-struct SearchStack {
-    Move move, excludedMove;
-    Score eval = 0;
-    Ply ply = 0;
-};
-
 U64 getTotalNodes();
 
 void initLmr();
