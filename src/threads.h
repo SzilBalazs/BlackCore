@@ -58,7 +58,8 @@ struct ThreadData {
     // Arrays used for move ordering.
     Move killerMoves[MAX_PLY + 1][2];
     Move counterMoves[64][64];
-    Score historyTable[2][64][64];
+    Score mainHistoryTable[2][64][64];
+    Score counterHistoryTable[2][6][64][6][64];
 
     inline void clear() {
         selectiveDepth = 0;
@@ -68,10 +69,12 @@ struct ThreadData {
         std::memset(killerMoves, 0, sizeof(killerMoves));
         std::memset(counterMoves, 0, sizeof(counterMoves));
 
+        std::memset(counterHistoryTable, 0, sizeof(counterHistoryTable));
+
         for (Color color : {WHITE, BLACK}) {
             for (Square sq = A1; sq < 64; sq += 1) {
                 for (Square sq2 = A1; sq2 < 64; sq2 += 1) {
-                    historyTable[color][sq][sq2] /= 4;
+                    mainHistoryTable[color][sq][sq2] /= 4;
                 }
             }
         }
@@ -81,7 +84,7 @@ struct ThreadData {
         nodes = 0;
         tbHits = 0;
 
-        std::memset(historyTable, 0, sizeof(historyTable));
+        std::memset(mainHistoryTable, 0, sizeof(mainHistoryTable));
 
         mNodesSearched.lock();
         std::memset(nodesSearched, 0, sizeof(nodesSearched));
@@ -103,12 +106,24 @@ struct ThreadData {
     }
 
     void updateMainHistory(Move move, Color color, Score bonus) {
-        historyTable[color][move.getFrom()][move.getTo()] = std::clamp(historyTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
+        mainHistoryTable[color][move.getFrom()][move.getTo()] = std::clamp(mainHistoryTable[color][move.getFrom()][move.getTo()] + bonus, -30000, 30000);
     }
 
-    void updateHistory(Move move, SearchStack *stack, Move *quiets, Color stm, int madeQuiets, Score bonus) {
+    void updateHistory(const Position &pos, Move move, SearchStack *stack, Move *quiets, int madeQuiets, Score bonus) {
+
+        const Color stm = pos.getSideToMove();
+        const Move prevMove = (stack - 1)->move;
+
         updateKillerMoves(move, stack->ply);
-        updateCounterMoves((stack - 1)->move, move);
+        updateCounterMoves(prevMove, move);
+
+        if (prevMove.isOk()) {
+            counterHistoryTable[pos.getSideToMove()][(stack - 1)->movedPiece.type][prevMove.getTo()][pos.pieceAt(move.getFrom()).type][move.getTo()] += bonus;
+
+            for (int i = 0; i < madeQuiets; i++) {
+                counterHistoryTable[pos.getSideToMove()][(stack - 1)->movedPiece.type][prevMove.getTo()][pos.pieceAt(quiets[i].getFrom()).type][quiets[i].getTo()] -= bonus;
+            }
+        }
 
         updateMainHistory(move, stm, bonus);
 
@@ -123,14 +138,24 @@ struct ThreadData {
         mNodesSearched.unlock();
     }
 
+    Score getQuietHistory(const Position &pos, Move move, SearchStack *stack) {
+        Score history = mainHistoryTable[pos.getSideToMove()][move.getFrom()][move.getTo()];
+
+        const Move prevMove = (stack - 1)->move;
+        if (prevMove.isOk())
+            history += counterHistoryTable[pos.getSideToMove()][(stack - 1)->movedPiece.type][prevMove.getTo()][pos.pieceAt(move.getFrom()).type][move.getTo()];
+        return history;
+    }
+
     Score scoreRootNode(Move move) {
         return nodesSearched[move.getFrom()][move.getTo()] / 1000;
     }
 
-    Score scoreMove(const Position &pos, Move prevMove, Move move, Ply ply) {
-        Square from = move.getFrom();
-        Square to = move.getTo();
-        Color stm = pos.getSideToMove();
+    Score scoreMove(const Position &pos, Move move, SearchStack *stack) {
+        const Ply ply = stack->ply;
+        const Move prevMove = (stack - 1)->move;
+        const Square from = move.getFrom();
+        const Square to = move.getTo();
 
         if (move == getHashMove(pos.getHash())) {
             return 10000000;
@@ -151,7 +176,7 @@ struct ThreadData {
             return 5000000;
         }
 
-        return historyTable[stm][from][to];
+        return getQuietHistory(pos, move, stack);
     }
 };
 

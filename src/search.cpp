@@ -190,7 +190,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Generate all legal capture
-    auto moves = MoveList<true, false>(pos, td, MOVE_NULL, stack->ply);
+    auto moves = MoveList<true, false>(pos, td, stack);
 
     EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
@@ -424,7 +424,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
     }
 
-    auto moves = MoveList<false, rootNode>(pos, td, prevMove, stack->ply);
+    auto moves = MoveList<false, rootNode>(pos, td, stack);
 
     // If there is no legal moves the position is either a checkmate or a stalemate.
     if (moves.count == 0) {
@@ -451,7 +451,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         Score score;
-        Score history = td.historyTable[color][move.getFrom()][move.getTo()];
+        Score history = td.getQuietHistory(pos, move, stack);
 
         // Prune quiet moves if ...
         if (notRootNode && nonPvNode && !inCheck && bestScore > TB_BEST_LOSS && move.isQuiet() && !move.isPromo()) {
@@ -503,6 +503,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         }
 
         stack->move = move;
+        stack->movedPiece = pos.pieceAt(move.getFrom());
 
         Depth newDepth = depth - 1 + extensions;
 
@@ -562,7 +563,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
                 if (move.isQuiet()) {
 
                     // Update histories
-                    td.updateHistory(move, stack, quiets, color, madeQuiets, depth * depth);
+                    td.updateHistory(pos, move, stack, quiets, madeQuiets, depth * depth);
                 }
 
                 // Save the information gathered into the transposition table.

@@ -134,6 +134,7 @@ private:
 
 struct SearchStack {
     Move move, excludedMove;
+    Piece movedPiece;
     Score eval = 0;
     Ply ply = 0;
 };
