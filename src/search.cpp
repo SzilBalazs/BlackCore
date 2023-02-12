@@ -647,7 +647,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
         beta = prevScore + ASPIRATION_DELTA;
     }
 
-    int iter = 1;
+    Score delta = ASPIRATION_DELTA;
     while (true) {
         // Check if search should stop by asking the time manager
         if (shouldEnd(td.nodes, getTotalNodes()))
@@ -664,9 +664,10 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
             return UNKNOWN_SCORE;
 
         if (score <= alpha) {
-            alpha = std::max(alpha - iter * iter * ASPIRATION_DELTA, -INF_SCORE);
+            beta = (alpha + beta) / 2;
+            alpha = std::max(-ASPIRATION_BOUND, score - delta);
         } else if (score >= beta) {
-            beta = std::min(beta + iter * iter * ASPIRATION_DELTA, INF_SCORE);
+            beta = std::min(ASPIRATION_BOUND, score + delta);
         } else {
 
             std::string pvLine = getPvLine(td);
@@ -688,7 +689,7 @@ Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
             return score;
         }
 
-        iter++;
+        delta += delta / 2;
     }
 }
 

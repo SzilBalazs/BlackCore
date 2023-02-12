@@ -2,29 +2,32 @@
     <img src="logo.png" alt="BlackCore logo by Midjourney" width="30%">
     <br>
     <br>
-    <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?style=for-the-badge">
-    <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?style=for-the-badge">
+    <b><i>Powerful C++ Chess Engine - to conquer the chess board</i></b>
     <br>
-    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?label=Latest%20release&style=for-the-badge">
-    <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?style=for-the-badge">
+    <br>
+    <img src="https://img.shields.io/github/downloads/SzilBalazs/BlackCore/total?color=critical&style=for-the-badge">
+    <img src="https://img.shields.io/github/license/SzilBalazs/BlackCore?color=blue&style=for-the-badge">
+    <br>
+    <img src="https://img.shields.io/github/v/release/SzilBalazs/BlackCore?color=blue&label=Latest%20release&style=for-the-badge">
+    <img src="https://img.shields.io/github/last-commit/SzilBalazs/BlackCore?color=critical&style=for-the-badge">
 </div>
 
-# BlackCore
+# Overview
 
-BlackCore is a c++ chess engine developed from scratch.
-Its alpha beta search uses various pruning techniques, powered by a neural network evaluation and a blazing fast
+BlackCore is a neural network based chess engine developed from scratch.
+Its alpha beta search uses various pruning techniques, powered by blazing fast
 move generator.
 
-### Playing strength - Last updated: 2023. 2. 2.
+### Playing strength - Last updated: 2023. 2. 12.
 
-| Version |   CCRL 2'+1" elo   |   CCRL 40/15 elo   |   CEGT 40/4 elo    | SPCC 3'+1" |
-|:--------|:------------------:|:------------------:|:------------------:|:----------:|
-| v5.1    | ~3300 (estimation) | ~3250 (estimation) | ~3200 (estimation) |            |
-| v5.0    |                    |        3167        |        3143        |    3251    |
-| v4.0    |        3182        |        3135        |        3068        |            |
-| v3.0    |        3069        |        3035        |        2941        |            |
-| v2.0    |                    |        2982        |                    |            |
-| v1.0    |        2134        |                    |                    |            |
+| Version | CCRL 2'+1" elo | CCRL 40/15 elo | CEGT 40/4 elo | SPCC 3'+1" |
+|:--------|:--------------:|:--------------:|:-------------:|:----------:|
+| v5.1    |                |      3281      |     3242      |            |
+| v5.0    |                |      3167      |     3143      |    3251    |
+| v4.0    |      3182      |      3135      |     3068      |            |
+| v3.0    |      3069      |      3035      |     2941      |            |
+| v2.0    |                |      2982      |               |            |
+| v1.0    |      2134      |                |               |            |
 
 ## Installation
 
@@ -148,6 +151,10 @@ Since v6.0-dev BlackCore uses data from <a href="https://storage.lczero.org/file
 licensed under <a href="https://storage.lczero.org/files/training_data/LICENSE.txt">Open Database License</a>.
 
 ## Also thanks to...
+
+### <a href="https://github.com/PGG106">Zuppa Cipolle</a>
+
+For teaching me SPRT and letting me use his OB instance.
 
 ### <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> by <a href="https://github.com/Disservin">Disservin</a>
 
