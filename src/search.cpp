@@ -525,8 +525,8 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
             R += !improving;
             R -= pvNode;
-            R -= std::clamp(history / 3000, -1, 1);
             R -= td.killerMoves[stack->ply][0] == move || td.killerMoves[stack->ply][1] == move || td.counterMoves[prevMove.getFrom()][prevMove.getTo()] == move;
+            R -= std::min(1, history / 5000);
 
             Depth D = std::clamp(newDepth - R, 1, newDepth + 1);
 
