@@ -77,9 +77,9 @@ inline void addParam(const std::string &name, int defaultValue, int minValue, in
     SCORE_PARAM(FUTILITY_MARGIN_DEPTH, 53)     \
     SCORE_PARAM(FUTILITY_MARGIN_IMPROVING, 71) \
                                                \
-    DEPTH_PARAM(ASPIRATION_DEPTH, 9)           \
-    SCORE_PARAM(ASPIRATION_DELTA, 28)          \
-    SCORE_PARAM(ASPIRATION_BOUND, 3000)        \
+    DEPTH_PARAM(ASPIRATION_DEPTH, 5)           \
+    SCORE_PARAM(ASPIRATION_DELTA, 23)          \
+    SCORE_PARAM(ASPIRATION_BOUND, 2000)        \
                                                \
     DEPTH_PARAM(SINGULAR_DEPTH, 8)
 
