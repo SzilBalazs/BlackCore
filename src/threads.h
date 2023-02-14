@@ -48,8 +48,8 @@ struct ThreadData {
     Position position;
 
     int multiPV = 1;
-    Score multiScores[MAX_MULTIPV];
-    Move multiMove[MAX_MULTIPV];
+    Score variationScores[MAX_MULTIPV];
+    Move variationMoves[MAX_MULTIPV];
 
     U64 nodes = 0;
     Depth selectiveDepth = 0;

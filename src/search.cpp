@@ -447,7 +447,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
         if constexpr (rootNode) {
             bool skip = false;
             for (int multiPV = 0; multiPV < td.multiPV; multiPV++)
-                if (td.multiMove[multiPV] == move) skip = true;
+                if (td.variationMoves[multiPV] == move) skip = true;
 
             if (skip) continue;
         }
@@ -635,7 +635,7 @@ std::string getPvLine(ThreadData &td) {
 Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
 
     for (int i = 0; i < MAX_MULTIPV; i++) {
-        td.multiMove[i] = Move();
+        td.variationMoves[i] = Move();
     }
 
     Move moves[200];
@@ -661,8 +661,8 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
         // If ASPIRATION_DEPTH is reached, assume that the previous iteration
         // gave us a close enough score.
         if (depth >= ASPIRATION_DEPTH) {
-            alpha = td.multiScores[multiPV] - ASPIRATION_DELTA;
-            beta = td.multiScores[multiPV] + ASPIRATION_DELTA;
+            alpha = td.variationScores[multiPV] - ASPIRATION_DELTA;
+            beta = td.variationScores[multiPV] + ASPIRATION_DELTA;
         }
 
         Score delta = ASPIRATION_DELTA;
@@ -688,8 +688,8 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
                 beta = std::min(ASPIRATION_BOUND, score + delta);
             } else {
 
-                td.multiScores[multiPV] = score;
-                td.multiMove[multiPV] = td.pvArray[0][0];
+                td.variationScores[multiPV] = score;
+                td.variationMoves[multiPV] = td.pvArray[0][0];
 
                 if (td.uciMode) {
                     std::string pvLine = getPvLine(td);
@@ -714,7 +714,7 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
         }
     }
 
-    return td.multiScores[0];
+    return td.variationScores[0];
 }
 
 /*
@@ -743,7 +743,7 @@ void iterativeDeepening(int id, Depth depth) {
         // Only care about time management if we searched enough depth, and we are the main thread.
         if (td.threadId == 0) {
 
-            if (bestMove != td.multiMove[0]) {
+            if (bestMove != td.variationMoves[0]) {
                 bmStability = 0;
             } else {
                 bmStability++;
@@ -754,7 +754,7 @@ void iterativeDeepening(int id, Depth depth) {
             if (score - prevScore > ASPIRATION_DELTA)
                 factor *= 1.1;
 
-            U64 bestMoveEffort = nodesSearched[td.multiMove[0].getFrom()][td.multiMove[0].getTo()];
+            U64 bestMoveEffort = nodesSearched[td.variationMoves[0].getFrom()][td.variationMoves[0].getTo()];
             double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
             factor *= std::max(0.5, 2 * notBestMove + 0.4);
 
@@ -762,7 +762,7 @@ void iterativeDeepening(int id, Depth depth) {
         }
 
         prevScore = score;
-        bestMove = td.multiMove[0];
+        bestMove = td.variationMoves[0];
     }
 
     if (td.uciMode) {
