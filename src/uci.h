@@ -25,6 +25,7 @@ struct SearchInfo {
     U64 wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0, movetime = 0, maxNodes = 0;
     Depth maxDepth = MAX_PLY;
     bool uciMode = true;
+    int multiPV = 1;
 };
 
 namespace BlackCore {
@@ -47,7 +48,7 @@ inline void out(T a, Args... args) {
 
 void printCurrMove(Depth depth, int index, Move move);
 
-void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, const std::string &scoreStr, U64 time, U64 nps, const std::string &pv);
+void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, const std::string &scoreStr, U64 time, U64 nps, int multiPV, const std::string &pv);
 
 inline void tuneOut(const std::string &name, int value, int min, int max) {
     out("option", "name", name, "type", "spin", "default", value, "min", min, "max", max);

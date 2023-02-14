@@ -444,6 +444,14 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
         if (move == stack->excludedMove) continue;
 
+        if constexpr (rootNode) {
+            bool skip = false;
+            for (int multiPV = 0; multiPV < td.multiPV; multiPV++)
+                if (td.variationMoves[multiPV] == move) skip = true;
+
+            if (skip) continue;
+        }
+
         U64 nodesBefore = td.nodes;
 
         if (rootNode && td.uciMode && getSearchTime() > 2000) {
@@ -624,74 +632,89 @@ std::string getPvLine(ThreadData &td) {
  * stay close to the previous iteration of iterative deepening.
  * https://www.chessprogramming.org/Aspiration_Windows
  */
-Score searchRoot(Position &pos, ThreadData &td, Score prevScore, Depth depth) {
+Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
 
-    td.clear();
-
-    SearchStack stateStack[MAX_PLY + 10];
-
-    for (Ply i = 0; i <= MAX_PLY; i++) {
-        stateStack[i].excludedMove = MOVE_NULL;
-        stateStack[i].move = MOVE_NULL;
-        stateStack[i].eval = UNKNOWN_SCORE;
-        stateStack[i].ply = i - 4;
+    for (int i = 0; i < MAX_MULTIPV; i++) {
+        td.variationMoves[i] = Move();
     }
 
-    // Start at -inf and +inf bounds
-    Score alpha = -INF_SCORE;
-    Score beta = INF_SCORE;
+    Move moves[200];
+    int moveCount = generateMoves(pos, moves, false) - moves;
 
-    // If ASPIRATION_DEPTH is reached, assume that the previous iteration
-    // gave us a close enough score.
-    if (depth >= ASPIRATION_DEPTH) {
-        alpha = prevScore - ASPIRATION_DELTA;
-        beta = prevScore + ASPIRATION_DELTA;
-    }
+    for (int multiPV = 0; multiPV < std::min(moveCount, td.multiPV); multiPV++) {
 
-    Score delta = ASPIRATION_DELTA;
-    while (true) {
-        // Check if search should stop by asking the time manager
-        if (shouldEnd(td.nodes, getTotalNodes()))
-            return UNKNOWN_SCORE;
+        td.clear();
 
-        if (alpha < -ASPIRATION_BOUND)
-            alpha = -INF_SCORE;
-        if (beta > ASPIRATION_BOUND)
-            beta = INF_SCORE;
+        SearchStack stateStack[MAX_PLY + 10];
 
-        Score score = search<ROOT_NODE>(pos, td, stateStack + 4, depth, alpha, beta);
-
-        if (score == UNKNOWN_SCORE)
-            return UNKNOWN_SCORE;
-
-        if (score <= alpha) {
-            beta = (alpha + beta) / 2;
-            alpha = std::max(-ASPIRATION_BOUND, score - delta);
-        } else if (score >= beta) {
-            beta = std::min(ASPIRATION_BOUND, score + delta);
-        } else {
-
-            std::string pvLine = getPvLine(td);
-            if (td.uciMode) {
-                Score absScore = std::abs(score);
-                int mateDepth = MATE_VALUE - absScore;
-                std::string scoreStr = "cp " + std::to_string(score);
-
-                // Calculate mate depth if a mate was found.
-                if (mateDepth <= 64) {
-                    int matePly = score > 0 ? mateDepth / 2 + 1 : -(mateDepth / 2);
-                    scoreStr = "mate " + std::to_string(matePly);
-                }
-
-                // Output information to the GUI
-                printNewDepth(depth, td.selectiveDepth, getTotalNodes(), getTTFull(), getTotalTBHits(), score, scoreStr, getSearchTime(), getNps(getTotalNodes()), pvLine);
-            }
-
-            return score;
+        for (Ply i = 0; i <= MAX_PLY; i++) {
+            stateStack[i].excludedMove = MOVE_NULL;
+            stateStack[i].move = MOVE_NULL;
+            stateStack[i].eval = UNKNOWN_SCORE;
+            stateStack[i].ply = i - 4;
         }
 
-        delta += delta / 2;
+        // Start at -inf and +inf bounds
+        Score alpha = -INF_SCORE;
+        Score beta = INF_SCORE;
+
+        // If ASPIRATION_DEPTH is reached, assume that the previous iteration
+        // gave us a close enough score.
+        if (depth >= ASPIRATION_DEPTH) {
+            alpha = td.variationScores[multiPV] - ASPIRATION_DELTA;
+            beta = td.variationScores[multiPV] + ASPIRATION_DELTA;
+        }
+
+        Score delta = ASPIRATION_DELTA;
+        while (true) {
+            // Check if search should stop by asking the time manager
+            if (shouldEnd(td.nodes, getTotalNodes()))
+                return UNKNOWN_SCORE;
+
+            if (alpha < -ASPIRATION_BOUND)
+                alpha = -INF_SCORE;
+            if (beta > ASPIRATION_BOUND)
+                beta = INF_SCORE;
+
+            Score score = search<ROOT_NODE>(pos, td, stateStack + 4, depth, alpha, beta);
+
+            if (score == UNKNOWN_SCORE)
+                return UNKNOWN_SCORE;
+
+            if (score <= alpha) {
+                beta = (alpha + beta) / 2;
+                alpha = std::max(-ASPIRATION_BOUND, score - delta);
+            } else if (score >= beta) {
+                beta = std::min(ASPIRATION_BOUND, score + delta);
+            } else {
+
+                td.variationScores[multiPV] = score;
+                td.variationMoves[multiPV] = td.pvArray[0][0];
+
+                if (td.uciMode) {
+                    std::string pvLine = getPvLine(td);
+                    Score absScore = std::abs(score);
+                    int mateDepth = MATE_VALUE - absScore;
+                    std::string scoreStr = "cp " + std::to_string(score);
+
+                    // Calculate mate depth if a mate was found.
+                    if (mateDepth <= 64) {
+                        int matePly = score > 0 ? mateDepth / 2 + 1 : -(mateDepth / 2);
+                        scoreStr = "mate " + std::to_string(matePly);
+                    }
+
+                    // Output information to the GUI
+                    printNewDepth(depth, td.selectiveDepth, getTotalNodes(), getTTFull(), getTotalTBHits(), score, scoreStr, getSearchTime(), getNps(getTotalNodes()), multiPV, pvLine);
+                }
+
+                break;
+            }
+
+            delta += delta / 2;
+        }
     }
+
+    return td.variationScores[0];
 }
 
 /*
@@ -713,14 +736,14 @@ void iterativeDeepening(int id, Depth depth) {
     int bmStability = 0;
 
     for (Depth currDepth = 1; currDepth <= depth; currDepth++) {
-        Score score = searchRoot(pos, td, prevScore, currDepth + (td.threadId & 1));
+        Score score = searchRoot(pos, td, currDepth + (td.threadId & 1));
         if (score == UNKNOWN_SCORE)
             break;
 
         // Only care about time management if we searched enough depth, and we are the main thread.
         if (td.threadId == 0) {
 
-            if (bestMove != td.pvArray[0][0]) {
+            if (bestMove != td.variationMoves[0]) {
                 bmStability = 0;
             } else {
                 bmStability++;
@@ -731,7 +754,7 @@ void iterativeDeepening(int id, Depth depth) {
             if (score - prevScore > ASPIRATION_DELTA)
                 factor *= 1.1;
 
-            U64 bestMoveEffort = nodesSearched[td.pvArray[0][0].getFrom()][td.pvArray[0][0].getTo()];
+            U64 bestMoveEffort = nodesSearched[td.variationMoves[0].getFrom()][td.variationMoves[0].getTo()];
             double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
             factor *= std::max(0.5, 2 * notBestMove + 0.4);
 
@@ -739,7 +762,7 @@ void iterativeDeepening(int id, Depth depth) {
         }
 
         prevScore = score;
-        bestMove = td.pvArray[0][0];
+        bestMove = td.variationMoves[0];
     }
 
     if (td.uciMode) {
@@ -775,6 +798,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     for (int idx = 0; idx < threadCount; idx++) {
         ThreadData td;
         td.threadId = idx;
+        td.multiPV = idx == 0 ? searchInfo.multiPV : 1;
         td.uciMode = searchInfo.uciMode && idx == 0;
         tds.emplace_back(td);
     }

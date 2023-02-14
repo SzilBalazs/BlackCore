@@ -40,10 +40,16 @@ constexpr int MVVLVA[6][6] = {
 };
 // clang-format on
 
+constexpr int MAX_MULTIPV = 20;
+
 struct ThreadData {
 
     int threadId;
     Position position;
+
+    int multiPV = 1;
+    Score variationScores[MAX_MULTIPV];
+    Move variationMoves[MAX_MULTIPV];
 
     U64 nodes = 0;
     Depth selectiveDepth = 0;

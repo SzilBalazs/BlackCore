@@ -139,9 +139,9 @@ void printCurrMove(Depth depth, int index, Move move) {
         std::cout << asciiColor(252) << "Searching " << move << "...\r\u001b[0m" << std::flush;
 }
 
-void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, const std::string &scoreStr, U64 time, U64 nps, const std::string &pv) {
+void printNewDepth(Depth depth, Depth selectiveDepth, U64 nodes, int hashFull, U64 tbHits, Score score, const std::string &scoreStr, U64 time, U64 nps, int multiPV, const std::string &pv) {
     if (guiCommunication) {
-        out("info", "depth", int(depth), "seldepth", int(selectiveDepth), "nodes", nodes, "hashfull", hashFull, "tbhits", tbHits, "score", scoreStr, "time",
+        out("info", "depth", int(depth), "seldepth", int(selectiveDepth), "multipv", multiPV + 1, "score", scoreStr, "nodes", nodes, "hashfull", hashFull, "tbhits", tbHits, "time",
             time, "nps", nps, "pv", pv);
     } else {
         std::string lineColor = depth & 1 ? asciiColor(247) : asciiColor(251);
@@ -231,6 +231,7 @@ void uciInitProtocol() {
     // Tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
+    out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<none>");
     out("option", "name", "Move Overhead", "type", "spin", "default", 20, "min", 0, "max", 10000);
@@ -249,7 +250,7 @@ void uciLoop() {
     ttResize(32);
 
     Position pos = {STARTING_FEN};
-    int threadCount = 1;
+    int threadCount = 1, multiPV = 1;
 
     while (true) {
         std::string line, command, token;
@@ -286,6 +287,8 @@ void uciLoop() {
 
                 } else if (tokens[1] == "Threads") {
                     threadCount = std::stoi(tokens[3]);
+                } else if (tokens[1] == "MultiPV") {
+                    multiPV = std::stoi(tokens[3]);
                 } else if (tokens[1] == "SyzygyPath") {
                     tb_init(tokens[3].c_str());
                 } else if (tokens[1] == "EvalFile") {
@@ -362,6 +365,9 @@ void uciLoop() {
                 } else if (tokens[i] == "infinite") {
                 }
             }
+
+            searchInfo.multiPV = multiPV;
+
             if (!guiCommunication) {
                 out("   Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS   ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }
