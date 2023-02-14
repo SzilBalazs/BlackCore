@@ -754,7 +754,7 @@ void iterativeDeepening(int id, Depth depth) {
             if (score - prevScore > ASPIRATION_DELTA)
                 factor *= 1.1;
 
-            U64 bestMoveEffort = nodesSearched[td.pvArray[0][0].getFrom()][td.pvArray[0][0].getTo()];
+            U64 bestMoveEffort = nodesSearched[td.multiMove[0].getFrom()][td.multiMove[0].getTo()];
             double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
             factor *= std::max(0.5, 2 * notBestMove + 0.4);
 
