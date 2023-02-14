@@ -743,7 +743,7 @@ void iterativeDeepening(int id, Depth depth) {
         // Only care about time management if we searched enough depth, and we are the main thread.
         if (td.threadId == 0) {
 
-            if (bestMove != td.pvArray[0][0]) {
+            if (bestMove != td.multiMove[0]) {
                 bmStability = 0;
             } else {
                 bmStability++;
@@ -762,7 +762,7 @@ void iterativeDeepening(int id, Depth depth) {
         }
 
         prevScore = score;
-        bestMove = td.pvArray[0][0];
+        bestMove = td.multiMove[0];
     }
 
     if (td.uciMode) {
