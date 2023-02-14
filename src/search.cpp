@@ -638,7 +638,10 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
         td.multiMove[i] = Move();
     }
 
-    for (int multiPV = 0; multiPV < td.multiPV; multiPV++) {
+    Move moves[200];
+    int moveCount = generateMoves(pos, moves, false) - moves;
+
+    for (int multiPV = 0; multiPV < std::min(moveCount, td.multiPV); multiPV++) {
 
         td.clear();
 
