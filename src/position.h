@@ -223,7 +223,10 @@ public:
     void undoNullMove();
 
     // Checks if the current position is a 2-fold repetition
-    bool isRepetition();
+    bool isRepetition() const;
+
+    // Checks if the current position is a draw
+    bool isDraw() const;
 
     // Displays the current board state
     void display() const;
