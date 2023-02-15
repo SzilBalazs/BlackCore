@@ -76,7 +76,7 @@ jobs:
       - name: Collecting bench number
         run: |
           echo "BENCH_SIGNATURE=$(git log | grep -o 'Bench: [0-9]*' | grep -o '[0-9]*' | head -1)" >> $GITHUB_OUTPUT
-          id: bench
+        id: bench
       - name: Running benchmark test
         run: |
           cd src
