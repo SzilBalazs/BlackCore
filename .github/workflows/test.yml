@@ -1,4 +1,4 @@
-name: Build
+name: Build & Run Tests
 
 on:
   push:
@@ -16,21 +16,21 @@ jobs:
           - {
             name: "Ubuntu g++ popcnt",
             os: ubuntu-latest,
-            compiler: g++-11,
+            compiler: g++,
             arch: popcnt,
             target: BlackCore-popcnt-linux,
           }
           - {
             name: "Ubuntu g++ avx2",
             os: ubuntu-latest,
-            compiler: g++-11,
+            compiler: g++,
             arch: avx2,
             target: BlackCore-avx2-linux,
           }
           - {
             name: "Ubuntu g++ bmi2",
             os: ubuntu-latest,
-            compiler: g++-11,
+            compiler: g++,
             arch: bmi2,
             target: BlackCore-bmi2-linux,
           }
@@ -58,26 +58,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Installing packages
+      - name: Installing required packages
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install g++-11
-          g++-11 --version
+          sudo apt-get install g++-multilib
+          g++ --version
 
-      - name: Making BlackCore
+      - name: Building BlackCore
         run: |
           cd src
           make CXX=${{matrix.config.compiler}} EXE=${{matrix.config.target}} ARCH=${{matrix.config.target}}
-      - name: Running perft
+      - name: Running perft test
         run: |
           cd src
           ./${{matrix.config.target}} perft
-      - name: Running bench
+      - name: Running benchmark test
         run: |
           cd src
           ./${{matrix.config.target}} bench
-      - name: Upload artifact
+      - name: Uploading artifacts
         uses: actions/upload-artifact@v3
         with:
           name: BlackCore
