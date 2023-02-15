@@ -139,9 +139,12 @@ void testSearch(U64 expectedResult) {
     }
 
     std::cout << totalNodes << " nodes " << nps / benchPosCount << " nps" << std::endl;
-
-    if (expectedResult && expectedResult != totalNodes) {
-        std::cout << "Incorrect benchmark signature: expected " << expectedResult << " nodes!" << std::endl;
-        exit(1);
+    if (expectedResult) {
+        if (expectedResult != totalNodes) {
+            std::cout << "SIGNATURE FAILED" << std::endl;
+            exit(1);
+        } else {
+            std::cout << "SIGNATURE OK" << std::endl;
+        }
     }
 }
