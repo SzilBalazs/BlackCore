@@ -19,7 +19,7 @@
 #include <cstring>
 #include <iostream>
 
-// Lookup tables generated, when the initBitboard() function gets called.
+// Lookup tables generated when the initBitboard() function gets called.
 Bitboard bitMasks[64], pawnMasks[64][2], knightMasks[64], kingMasks[64], fileMasks[64], rankMasks[64], rookMasks[64],
         diagonalMasks[64], antiDiagonalMasks[64], bishopMasks[64],
         rookAttackTable[102400], bishopAttackTable[5248], commonRay[64][64], adjacentFileMasks[64], adjacentNorthMasks[64],

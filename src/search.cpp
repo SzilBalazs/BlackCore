@@ -167,7 +167,7 @@ Score quiescence(Position &pos, ThreadData &td, SearchStack *stack, Score alpha,
     }
 
     // Get the evaluation of the position, which will be used as the stand pat score
-    Score bestScore = eval(pos);
+    Score bestScore = evaluate(pos);
 
     // Return the evaluation if maximum ply is reached
     if (stack->ply >= MAX_PLY) {
@@ -279,10 +279,9 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
 
     if (notRootNode) {
 
-        // If a repetition or fifty move rule happens return DRAW_VALUE.
-        if (pos.isRepetition() || pos.getMove50() >= 99)
+        // If the position is a draw return a randomized value
+        if (pos.isDraw())
             return 1 - (td.nodes & 3);
-
 
         /*
          * Mate distance pruning
@@ -316,7 +315,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     }
 
     if (stack->ply >= MAX_PLY) {
-        return eval(pos);
+        return evaluate(pos);
     }
 
     /*
@@ -361,7 +360,7 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     Color color = pos.getSideToMove();
     bool inCheck = bool(getAttackers(pos, pos.pieces<KING>(color).lsb()));
 
-    Score staticEval = stack->eval = eval(pos);
+    Score staticEval = stack->eval = evaluate(pos);
 
     // Improving boolean, first introduced by StockFish
     // If the position got better than 2 ply before, we can

@@ -162,6 +162,10 @@ struct Piece {
     }
 };
 
+// Internal piece values
+constexpr Score PIECE_VALUES[7] = {
+        0, 156, 561, 608, 736, 1022, 0};
+
 // 2 colors * 6 types * 64 square = 768
 // 16 for castling rights
 // 8 number for the file of the epSquare
