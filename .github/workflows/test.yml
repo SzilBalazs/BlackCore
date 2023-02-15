@@ -80,7 +80,6 @@ jobs:
       - name: Running benchmark test
         run: |
           cd src
-          echo "Expecting ${{steps.bench.outputs.BENCH_SIGNATURE}} nodes"
           ./${{matrix.config.target}} bench ${{steps.bench.outputs.BENCH_SIGNATURE}}
       - name: Uploading artifacts
         uses: actions/upload-artifact@v3

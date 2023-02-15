@@ -140,6 +140,7 @@ void testSearch(U64 expectedResult) {
 
     std::cout << totalNodes << " nodes " << nps / benchPosCount << " nps" << std::endl;
     if (expectedResult) {
+        std::cout << "Expected " << expectedResult << " nodes\n";
         if (expectedResult != totalNodes) {
             std::cout << "SIGNATURE FAILED" << std::endl;
             exit(1);
