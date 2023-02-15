@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "bench.h"
+#include "tests.h"
 #include "tools.h"
 #include "uci.h"
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     }
 
     if (mode == "bench") {
-        testSearch();
+        testSearch(argc >= 3 ? std::stoi(argv[2]) : 0);
     } else if (mode == "perft") {
         testPerft();
     } else if (mode == "filter") {

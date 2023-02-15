@@ -14,42 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-#ifndef BLACKCORE_BENCH_H
-#define BLACKCORE_BENCH_H
-
-#include "movegen.h"
-
+#include "tests.h"
+#include "search.h"
+#include "timeman.h"
+#include "tt.h"
+#include <chrono>
+#include <functional>
 #include <iostream>
-
-/*
- * Outputs the number of positions which can be got into,
- * in depth number of legal moves. Used for validating the move generator.
- * For more information: https://www.chessprogramming.org/Perft
- */
-template<bool output>
-U64 perft(Position &position, Depth depth) {
-
-    Move moves[200]; // Stores the legal moves in the position
-    Move *movesEnd = generateMoves(position, moves, false);
-
-    // Bulk counting the number of moves at depth 1.
-    if (depth == 1)
-        return movesEnd - moves;
-
-    // DFS like routine, calling itself recursively with lowered depth.
-    U64 nodes = 0;
-    for (Move *it = moves; it != movesEnd; it++) {
-        position.makeMove(*it);
-        U64 nodeCount = perft<false>(position, depth - 1);
-        if constexpr (output) {
-            std::cout << *it << ": " << nodeCount << std::endl; // Used for debugging purposes.
-        }
-        nodes += nodeCount;
-        position.undoMove(*it);
-    }
-    return nodes;
-}
+#include <string>
 
 // Stores positions for perft test
 struct TestPosition {
@@ -61,7 +33,7 @@ struct TestPosition {
 const unsigned int posCount = 10;           // Number of test positions
 const unsigned int benchPosCount = 20;      // Number of bench positions
 const unsigned int searchTestHashSize = 32; // Transposition table size for benchmarking
-const Depth SEARCH_DEPTH = 15;              // Depth used in benchmarks
+const Depth searchTestDepth = 15;           // Depth used in benchmarks
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
@@ -98,7 +70,78 @@ const std::string benchPositions[benchPosCount] = {
         {"8/3K4/4pk1p/7P/4P3/8/8/8 b - - 4 70"},
         {"8/2p3p1/3n4/1p6/3kpPB1/PP6/2PK1P2/8 w - - 5 45"}};
 
-void testPerft();
-void testSearch();
+/*
+ * Exits the program with exit code -1, if the movegen produces an
+ * illegal move. Outputs a nodes per second value, which can be used to determine
+ * the speed of the move generator.
+ */
+void testPerft() {
 
-#endif //BLACKCORE_BENCH_H
+    // Initialize values
+    initSearch();
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    U64 totalNodes = 0;
+    bool ok = true;
+
+    // Iterating over the positions
+    for (const TestPosition &tPos : testPositions) {
+
+        Position pos = {tPos.fen};
+        U64 nodes = perft<false>(pos, tPos.perftDepth);
+        totalNodes += nodes;
+
+        // If the node count doesn't match with the recorded value notify the user about it.
+        if (nodes != tPos.perftResult) {
+            ok = false;
+            std::cout << tPos.fen << " failed! Result: " << nodes << " Expected: " << tPos.perftResult << std::endl;
+        }
+    }
+
+    // Stopping the clock and calculating the nps
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    U64 elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+    U64 nps = totalNodes * 1000 / elapsedTime;
+
+    if (ok) {
+        std::cout << "PERFT OK\n"
+                  << totalNodes << " nodes " << nps << " nps" << std::endl;
+    } else {
+        std::cout << "PERFT FAILED" << std::endl;
+        exit(1);
+    }
+}
+
+// Outputs a node count for identifying the binary and a nodes per second,
+// which shows the speed of the search.
+void testSearch(U64 expectedResult) {
+    initSearch();
+    ttResize(searchTestHashSize);
+
+    U64 totalNodes = 0, nps = 0;
+
+    for (const std::string &fen : benchPositions) {
+
+        // Clear the transposition table for a deterministic behaviour.
+        ttClear();
+
+        Position pos = {fen};
+        SearchInfo info;
+        info.maxDepth = searchTestDepth;
+        info.uciMode = false;
+
+        startSearch(info, pos, 1);
+
+        // Record the node count and the nps.
+        totalNodes += getTotalNodes();
+        nps += getNps(getTotalNodes());
+
+        joinThreads(true);
+    }
+
+    std::cout << totalNodes << " nodes " << nps / benchPosCount << " nps" << std::endl;
+
+    if (expectedResult && expectedResult != totalNodes) {
+        std::cout << "Incorrect benchmark signature: expected " << expectedResult << " nodes!" << std::endl;
+        exit(1);
+    }
+}

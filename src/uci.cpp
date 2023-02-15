@@ -15,10 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "uci.h"
-#include "bench.h"
 #include "fathom/src/tbprobe.h"
 #include "position.h"
 #include "search.h"
+#include "tests.h"
 #include "timeman.h"
 #include "tt.h"
 #include <iomanip>
