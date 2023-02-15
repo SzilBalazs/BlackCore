@@ -269,6 +269,10 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     Score bestScore = -INF_SCORE;
     Score maxScore = INF_SCORE;
 
+    if (stack->ply >= MAX_PLY) {
+        return eval(pos);
+    }
+
     td.pvLength[stack->ply] = stack->ply;
     td.killerMoves[stack->ply + 1][0] = MOVE_NULL;
     td.killerMoves[stack->ply + 1][1] = MOVE_NULL;
@@ -313,10 +317,6 @@ Score search(Position &pos, ThreadData &td, SearchStack *stack, Depth depth, Sco
     if (ttHit && nonPvNode && ttEntry.depth >= depth && prevMove.isOk() && pos.getMove50() < 90 &&
         (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
         return ttEntry.eval;
-    }
-
-    if (stack->ply >= MAX_PLY) {
-        return eval(pos);
     }
 
     /*
@@ -645,13 +645,13 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
 
         td.clear();
 
-        SearchStack stateStack[MAX_PLY + 10];
+        SearchStack  stack[MAX_PLY + 10], *stateStack = stack + 7;
 
-        for (Ply i = 0; i <= MAX_PLY; i++) {
-            stateStack[i].excludedMove = MOVE_NULL;
-            stateStack[i].move = MOVE_NULL;
-            stateStack[i].eval = UNKNOWN_SCORE;
-            stateStack[i].ply = i - 4;
+        for (Ply i = -7; i <= MAX_PLY + 2; i++) {
+            (stateStack + i)->excludedMove = MOVE_NULL;
+            (stateStack + i)->move = MOVE_NULL;
+            (stateStack + i)->eval = UNKNOWN_SCORE;
+            (stateStack + i)->ply = i;
         }
 
         // Start at -inf and +inf bounds
@@ -676,7 +676,7 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
             if (beta > ASPIRATION_BOUND)
                 beta = INF_SCORE;
 
-            Score score = search<ROOT_NODE>(pos, td, stateStack + 4, depth, alpha, beta);
+            Score score = search<ROOT_NODE>(pos, td, stateStack, depth, alpha, beta);
 
             if (score == UNKNOWN_SCORE)
                 return UNKNOWN_SCORE;

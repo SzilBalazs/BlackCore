@@ -39,6 +39,14 @@ ifeq ($(ARCH), popcnt)
     ARCH_FLAGS = -march=x86-64 -mpopcnt
 endif
 
+# Native build with debug symbols
+ifeq ($(build), debug)
+	TARGET_FLAGS = -g3 -fno-omit-frame-pointer
+	ARCH_FLAGS   = -march=native
+	DEFINE_FLAGS=-DNATIVE
+endif
+
+
 DEFINE_FLAGS += -DVERSION=\"v$(VERSION_MAJOR).$(VERSION_MINOR)\" -DNDEBUG
 CXXFLAGS = $(DEFINE_FLAGS) $(ARCH_FLAGS) -flto -std=c++20 -O3 -pthread -Wall -Wno-class-memaccess
 EXE = $(NAME)-v$(VERSION_MAJOR)-$(VERSION_MINOR)$(SUFFIX)

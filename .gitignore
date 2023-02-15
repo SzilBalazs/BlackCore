@@ -2,3 +2,5 @@
 /release/
 /testing/
 /.idea/
+*.o
+BlackCore-v*
