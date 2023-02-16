@@ -645,7 +645,7 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
 
         td.clear();
 
-        SearchStack  stack[MAX_PLY + 10], *stateStack = stack + 7;
+        SearchStack stack[MAX_PLY + 10], *stateStack = stack + 7;
 
         for (Ply i = -7; i <= MAX_PLY + 2; i++) {
             (stateStack + i)->excludedMove = MOVE_NULL;
@@ -758,7 +758,7 @@ void iterativeDeepening(int id, Depth depth) {
             double notBestMove = 1.0 - double(bestMoveEffort) / double(getTotalNodes());
             factor *= std::max(0.5, 2 * notBestMove + 0.4);
 
-            if (manageTime(factor) && currDepth >= 10) break;
+            if (manageTime(factor) && currDepth >= 5) break;
         }
 
         prevScore = score;
@@ -811,9 +811,9 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     // Initializes time manager.
     Color stm = pos.getSideToMove();
     if (stm == WHITE) {
-        initTimeMan(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+        initTimeManager(searchInfo.wtime, searchInfo.winc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     } else {
-        initTimeMan(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
+        initTimeManager(searchInfo.btime, searchInfo.binc, searchInfo.movestogo, searchInfo.movetime, searchInfo.maxNodes);
     }
 
     if (!isInfiniteSearch() && searchInfo.uciMode) {

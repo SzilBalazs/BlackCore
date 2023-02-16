@@ -23,7 +23,7 @@
 extern unsigned int MOVE_OVERHEAD;
 extern std::atomic<bool> stopped;
 
-void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes);
+void initTimeManager(long long time, long long inc, long long movesToGo, long long moveTime, long long nodes);
 
 bool shouldEnd(U64 nodes, U64 totalNodes);
 
@@ -31,7 +31,7 @@ bool manageTime(double factor);
 
 bool isInfiniteSearch();
 
-U64 getSearchTime();
+long long getSearchTime();
 
 U64 getNps(U64 nodes);
 
