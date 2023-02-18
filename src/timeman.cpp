@@ -20,61 +20,67 @@
 unsigned int MOVE_OVERHEAD = 20;
 
 constexpr U64 mask = 1023;
+constexpr long long INFINITE_LIMIT = LONG_LONG_MAX / 2;
 
-U64 startedSearch, idealTime, maxTime, maxNodes;
+bool minimalDepthReached;
+
+long long startedSearch, idealTime, maxTime;
+U64 maxNodes;
 
 std::atomic<bool> stopped = true;
 
-U64 getTime() {
+long long getTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
                    std::chrono::system_clock::now().time_since_epoch())
             .count();
 }
 
-void initTimeMan(U64 time, U64 inc, U64 movesToGo, U64 moveTime, U64 nodes) {
+void initTimeManager(long long time, long long inc, long long movesToGo, long long moveTime, long long nodes) {
 
     startedSearch = getTime();
     stopped = false;
+    minimalDepthReached = false;
 
-    maxNodes = nodes;
+    maxNodes = nodes == -1 ? INFINITE_LIMIT : nodes;
 
-    if (moveTime != 0) {
+    if (moveTime != -1) {
         // We are limited how much can we search
         idealTime = moveTime - MOVE_OVERHEAD;
         maxTime = moveTime - MOVE_OVERHEAD;
-    } else if (time == 0) {
+    } else if (time == -1) {
         // We have infinite time
-        idealTime = 0;
-        maxTime = 0;
+        idealTime = INFINITE_LIMIT;
+        maxTime = INFINITE_LIMIT;
     } else {
 
         if (movesToGo == 0) {
             idealTime = 1 * inc + (time - MOVE_OVERHEAD) / 25;
-            maxTime = 3 * inc + (time - MOVE_OVERHEAD) / 15;
+            maxTime = 2 * inc + (time - MOVE_OVERHEAD) / 15;
         } else {
             idealTime = inc + (time - MOVE_OVERHEAD) / movesToGo;
             maxTime = 2 * idealTime;
         }
-
         idealTime = std::min(idealTime, time - MOVE_OVERHEAD);
         maxTime = std::min(maxTime, time - MOVE_OVERHEAD);
     }
 }
 
 bool shouldEnd(U64 nodes, U64 totalNodes) {
-    if ((nodes & mask) == 0 && !stopped) {
-        stopped = (maxTime != 0 && getSearchTime() >= maxTime) || (maxNodes != 0 && totalNodes > maxNodes);
+    if ((nodes & mask) == 0 && !stopped && minimalDepthReached && !isInfiniteSearch()) {
+        stopped = getSearchTime() >= maxTime || totalNodes > maxNodes;
     }
     return stopped;
 }
 
 bool manageTime(double factor) {
-    return getSearchTime() > std::min(U64(double(idealTime) * factor), maxTime) && maxTime != 0;
+    minimalDepthReached = true; // First time management is called at depth 5
+
+    return getSearchTime() > std::min((long long) (double(idealTime) * factor), maxTime) && maxTime != INFINITE_LIMIT;
 }
 
-bool isInfiniteSearch() { return maxTime == 0; }
+bool isInfiniteSearch() { return maxTime == INFINITE_LIMIT && maxNodes == INFINITE_LIMIT; }
 
-U64 getSearchTime() {
+long long getSearchTime() {
     return getTime() - startedSearch;
 }
 
