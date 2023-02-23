@@ -80,6 +80,7 @@ void Position::display() const {
     std::vector<string> text;
     text.emplace_back(string("50-move draw counter: ") + std::to_string(getMove50()));
     text.emplace_back(string("Hash: ") + std::to_string(state->hash));
+    text.emplace_back(string("Fen: ") + getFen());
 
     if (getEpSquare() != NULL_SQUARE)
         text.emplace_back(string("En passant square: ") + formatSquare(getEpSquare()));
@@ -151,6 +152,39 @@ void Position::displayEval() {
          << std::endl;
 
     cout << "Eval: " << score << std::endl;
+}
+
+string Position::getFen() const {
+    string fen;
+
+    Square sq = A8;
+    int empty = 0;
+    while (true) {
+        if (board[sq].isNull()) empty++;
+        else {
+            if (empty) fen += std::to_string(empty);
+            fen += pieceToChar(board[sq]);
+            empty = 0;
+        }
+
+        if (sq == H1) break;
+
+        if (squareToFile(sq) == 7) {
+            sq -= 15;
+            if (empty) fen += std::to_string(empty);
+            fen += '/';
+            empty = 0;
+        } else {
+            sq += 1;
+        }
+    }
+
+    fen += " ";
+    fen += (getSideToMove() == WHITE ? "w" : "b");
+
+    // TODO add more info
+
+    return fen;
 }
 
 // Loads the board from a FEN.

@@ -17,7 +17,8 @@
 #ifndef BLACKCORE_SEARCH_H
 #define BLACKCORE_SEARCH_H
 
-#include "movegen.h"
+#include "nnue.h"
+#include "position.h"
 #include "tune.h"
 #include "uci.h"
 #include <atomic>
@@ -27,6 +28,16 @@ struct SearchStack {
     Score eval = 0;
     Ply ply = 0;
 };
+
+struct SearchResult {
+    Score score = 0;
+    Move bestMove;
+
+    SearchResult() = default;
+
+    SearchResult(Score _score, Move _bestMove) : score(_score), bestMove(_bestMove) {}
+};
+
 
 U64 getTotalNodes();
 
@@ -43,6 +54,6 @@ bool see(const Position &pos, Move move, Score threshold);
 
 void joinThreads(bool waitToFinish);
 
-void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
+SearchResult startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
 
 #endif //BLACKCORE_SEARCH_H

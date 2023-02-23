@@ -17,6 +17,7 @@
 #include "search.h"
 #include "egtb.h"
 #include "eval.h"
+#include "movegen.h"
 #include "threads.h"
 #include "timeman.h"
 #include "tt.h"
@@ -770,6 +771,8 @@ void iterativeDeepening(int id, Depth depth) {
     }
 
     stopped = true;
+
+    td.result = SearchResult(prevScore, bestMove);
 }
 
 // Join all the threads to the main thread.
@@ -787,7 +790,7 @@ void joinThreads(bool waitToFinish) {
 }
 
 // Starts the process of finding the best move.
-void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
+SearchResult startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 #ifdef DATA_FILTER
     out("Binary only for DATA_FILTER!");
     return;
@@ -819,7 +822,7 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
     if (!isInfiniteSearch() && searchInfo.uciMode) {
         bool tbHit = TBProbeRoot(pos);
         if (tbHit)
-            return;
+            return {};
     }
 
     // Starts every thread.
@@ -829,5 +832,8 @@ void startSearch(SearchInfo &searchInfo, Position &pos, int threadCount) {
 
     if (!searchInfo.uciMode) {
         ths[0].join();
+        return tds[0].result;
     }
+
+    return {};
 }
