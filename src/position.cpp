@@ -179,6 +179,7 @@ string Position::getFen() const {
         }
     }
 
+    if (empty) fen += std::to_string(empty);
     fen += " ";
     fen += (getSideToMove() == WHITE ? "w" : "b");
 

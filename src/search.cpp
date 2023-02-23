@@ -672,9 +672,9 @@ Score searchRoot(Position &pos, ThreadData &td, Depth depth) {
             if (shouldEnd(td.nodes, getTotalNodes()))
                 return UNKNOWN_SCORE;
 
-            if (alpha < -ASPIRATION_BOUND)
+            if (alpha <= -ASPIRATION_BOUND)
                 alpha = -INF_SCORE;
-            if (beta > ASPIRATION_BOUND)
+            if (beta >= ASPIRATION_BOUND)
                 beta = INF_SCORE;
 
             Score score = search<ROOT_NODE>(pos, td, stateStack, depth, alpha, beta);
