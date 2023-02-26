@@ -1,6 +1,7 @@
 # Project exclude paths
 /release/
 /testing/
+/datagen/
 /.idea/
 *.o
 BlackCore-v*

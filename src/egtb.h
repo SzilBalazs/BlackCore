@@ -17,8 +17,9 @@
 #ifndef BLACKCORE_EGTB_H
 #define BLACKCORE_EGTB_H
 
-#include "constants.h"
 #include "fathom/src/tbprobe.h"
+#include "position.h"
+#include "uci.h"
 
 inline unsigned int TBProbe(const Position &pos) {
     // Initialize bitboards for friendly white and black pieces
@@ -38,6 +39,7 @@ inline unsigned int TBProbe(const Position &pos) {
                         pos.getMove50(), pos.getCastlingRights(), ep, pos.getSideToMove() == WHITE);
 }
 
+template<bool print>
 inline bool TBProbeRoot(const Position &pos) {
     // Initialize bitboards for friendly white and black pieces
     Bitboard white = pos.friendly<WHITE>();
@@ -101,9 +103,11 @@ inline bool TBProbeRoot(const Position &pos) {
         return false;
     }
 
-    // Output information to the GUI
-    out("info", "depth", 1, "seldepth", 1, "nodes", 1, "tbhits", 1, "score", "cp", score, "time", 1, "pv", Move(from, to, flags));
-    out("bestmove", Move(from, to, flags));
+    if (print) {
+        // Output information to the GUI
+        out("info", "depth", 1, "seldepth", 1, "nodes", 1, "tbhits", 1, "score", "cp", score, "time", 1, "pv", Move(from, to, flags));
+        out("bestmove", Move(from, to, flags));
+    }
     return true;
 }
 

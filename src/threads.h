@@ -27,8 +27,6 @@
 extern std::mutex mNodesSearched;
 extern U64 nodesSearched[64][64];
 
-bool see(const Position &pos, Move move, Score threshold);
-
 // clang-format off
 constexpr int MVVLVA[6][6] = {
                               {0,  0,  0,  0,  0,  0},      // KING
@@ -56,6 +54,8 @@ struct ThreadData {
     U64 tbHits = 0;
 
     bool uciMode = false;
+
+    SearchResult result;
 
     // Arrays used for retrieving the principal variation.
     Move pvArray[MAX_PLY + 1][MAX_PLY + 1];

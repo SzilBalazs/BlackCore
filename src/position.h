@@ -231,6 +231,9 @@ public:
     // Displays the current evaluation of the board
     void displayEval();
 
+    // Returns the fen of the board
+    std::string getFen() const;
+
     // Loads the board position from a FEN string
     void loadPositionFromFen(const std::string &fen);
 
