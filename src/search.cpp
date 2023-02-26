@@ -820,8 +820,7 @@ SearchResult startSearch(SearchInfo &searchInfo, Position &pos, int threadCount)
     }
 
     if (!isInfiniteSearch() && searchInfo.uciMode) {
-        bool tbHit = TBProbeRoot(pos);
-        if (tbHit)
+        if (TBProbeRoot<true>(pos))
             return {};
     }
 

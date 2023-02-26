@@ -41,11 +41,13 @@ int main(int argc, char **argv) {
     }
 
     if (mode == "datagen") {
-        if (argc < 3) {
-            std::cout << "./BlackCore datagen entryCount" << std::endl;
+        if (argc < 4) {
+            std::cout << "./BlackCore datagen entryCount threadId" << std::endl;
+            return 0;
         }
         int entryCount = std::stoi(argv[2]);
-        startDataGen(entryCount);
+        int threadId = std::stoi(argv[3]);
+        startDataGen(entryCount, threadId);
     } else if (mode == "bench") {
         testSearch(argc >= 3 ? std::stoi(argv[2]) : 0);
     } else if (mode == "perft") {

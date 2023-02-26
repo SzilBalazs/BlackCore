@@ -15,19 +15,23 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "datagen.h"
+#include "egtb.h"
 #include "movegen.h"
 #include "position.h"
 #include "search.h"
 
 #include <fstream>
 #include <random>
+#include <utility>
 
 struct DataEntry {
     std::string fen;
     Score score;
     int wdl;
 
-    DataEntry(std::string _fen, Score _score) : fen(_fen), score(_score) {}
+    Color stm;
+
+    DataEntry(std::string _fen, Score _score, Color _stm) : fen(std::move(_fen)), score(_score), stm(_stm) {}
 };
 
 constexpr int RANDOM_PLY = 10;
@@ -108,22 +112,45 @@ void playGame(Position &pos, std::vector<DataEntry> &entries) {
         }
 
         if (result.bestMove.isQuiet() && !inCheck) {
-            entries.emplace_back(pos.getFen(), result.score);
+            entries.emplace_back(pos.getFen(), result.score, pos.getSideToMove());
         }
 
         ply++;
         pos.makeMove(result.bestMove);
+        if (result.bestMove.isCapture() || pos.pieceAt(result.bestMove.getTo()).type == PAWN)
+            pos.resetStack();
+
+        unsigned int tbResult = TBProbe(pos);
+        if (tbResult != TB_RESULT_FAILED) {
+            if (tbResult == TB_WIN) {
+                wdl = stm == WHITE ? 1 : -1;
+            } else if (tbResult == TB_LOSS) {
+                wdl = stm == BLACK ? 1 : -1;
+            } else {
+                wdl = 0;
+            }
+
+            break;
+        }
     }
 
     for (DataEntry &entry : entries) {
-        entry.wdl = wdl;
+        if (wdl == 1) {
+            entry.wdl = entry.stm == WHITE ? 1 : -1;
+        } else if (wdl == -1) {
+            entry.wdl = entry.stm == BLACK ? 1 : -1;
+        } else {
+            entry.wdl = 0;
+        }
     }
 }
 
-void startDataGen(int entryCount) {
+void startDataGen(int entryCount, int id) {
     std::ofstream outFile;
-    std::string outPath = "data_" + std::to_string(1) + ".plain";
+    std::string outPath = "data/data" + std::to_string(id) + ".plain";
     outFile.open(outPath, std::ios::app);
+
+    tb_init("tb/");
 
     initSearch();
     ttResize(HASH_SIZE);
@@ -132,6 +159,8 @@ void startDataGen(int entryCount) {
     int games = 0, finished = 0;
 
     std::vector<DataEntry> entries;
+
+    auto start = std::chrono::system_clock::now();
     while (finished < entryCount) {
         entries.clear();
 
@@ -139,6 +168,12 @@ void startDataGen(int entryCount) {
 
         for (const DataEntry &entry : entries) {
             outFile << entry.fen << "<" << entry.score << ">" << entry.wdl << "\n";
+        }
+
+        if (games % 50 == 0) {
+            auto now = std::chrono::system_clock::now();
+            auto t = std::chrono::duration_cast<std::chrono::seconds>(now - start).count();
+            std::cout << "[" << finished << "/" << entryCount << "] " << (finished / (t + 1)) << " fen/sec" << std::endl;
         }
 
         finished += entries.size();

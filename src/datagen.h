@@ -19,6 +19,6 @@
 
 #include "constants.h"
 
-void startDataGen(int entryCount);
+void startDataGen(int entryCount, int id);
 
 #endif //BLACKCORE_DATAGEN_H
