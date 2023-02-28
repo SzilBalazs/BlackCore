@@ -248,10 +248,6 @@ void Position::loadPositionFromFen(const string &fen) {
 
     state->hash ^= castlingRandTable[state->castlingRights];
     state->hash ^= epRandTable[squareToFile(state->epSquare)];
-
-#ifndef DATA_FILTER
-    state->accumulator.refresh(*this);
-#endif
 }
 
 Bitboard Position::getAllAttackers(Square square, Bitboard occ) const {

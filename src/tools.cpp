@@ -29,6 +29,8 @@ void processPlain(const std::string filename) {
     std::ifstream file(filename);
     std::ofstream out("filtered.plain");
 
+    initSearch();
+
     Position pos;
     std::random_device rd;
     std::mt19937 g(rd());
@@ -39,6 +41,7 @@ void processPlain(const std::string filename) {
         int filteredCapture = 0;
         int filteredChecks = 0;
         int filteredLowPly = 0;
+        int filteredHighScores = 0;
 
         std::vector<std::string> lines;
 
@@ -55,6 +58,7 @@ void processPlain(const std::string filename) {
                 std::cout << "File end reached!" << std::endl;
                 file.close();
                 out.close();
+                break;
             }
 
             fen = fen.substr(4);
@@ -88,13 +92,18 @@ void processPlain(const std::string filename) {
                 continue;
             }
 
+            if (std::abs(std::stoi(score)) > 2000) {
+                filteredHighScores++;
+                continue;
+            }
+
             std::string entry = fen + "<" + score + ">" + result + "\n";
             totalPositions++;
             lines.push_back(entry);
         }
 
         std::shuffle(lines.begin(), lines.end(), g);
-        std::cout << "Total positions: " << totalPositions << " - Filtered captures: " << filteredCapture << " - Filtered early positions: " << filteredLowPly << " - Filtered checks: " << filteredChecks << std::endl;
+        std::cout << "Total positions: " << totalPositions << " - Filtered captures: " << filteredCapture << " - Filtered early positions: " << filteredLowPly << " - Filtered checks: " << filteredChecks << " - Filtered out high score: " << filteredHighScores << std::endl;
 
         for (const std::string &line : lines) {
             out << line;
