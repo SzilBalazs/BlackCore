@@ -123,6 +123,7 @@ void Position::display() const {
 
 // Displays the NNUE's take on the current position.
 void Position::displayEval() {
+    getState()->accumulator.refresh(*this);
     Score score = eval(*this);
     cout << "\n      A     B     C     D     E     F     G     H    \n";
     for (int i = 8; i >= 1; i--) {
