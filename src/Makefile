@@ -1,5 +1,5 @@
 CXX = g++
-TARGET_FLAGS =
+TARGET_FLAGS = -static -static-libgcc -static-libstdc++
 ARCH=native
 NAME = BlackCore
 VERSION_MAJOR = 6
