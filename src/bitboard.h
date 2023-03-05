@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_BITBOARD_H
-#define BLACKCORE_BITBOARD_H
+#pragma once
 
 #include "constants.h"
 #include <cassert>
@@ -526,5 +525,3 @@ Bitboard slidingAttacks(Square square, Bitboard occupied, PieceType type);
 void initMagic(const Magic *magics, PieceType type);
 
 void findMagics(Bitboard *attackTable, Magic *magics, PieceType type);
-
-#endif //BLACKCORE_BITBOARD_H

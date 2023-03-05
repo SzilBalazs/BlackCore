@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-#ifndef BLACKCORE_TESTS_H
-#define BLACKCORE_TESTS_H
+#pragma once
 
 #include "movegen.h"
 
@@ -54,5 +52,3 @@ U64 perft(Position &position, Depth depth) {
 
 void testPerft();
 void testSearch(U64 expectedResult);
-
-#endif //BLACKCORE_TESTS_H

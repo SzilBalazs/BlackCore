@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_POSITION_H
-#define BLACKCORE_POSITION_H
+#pragma once
 
 #include "bitboard.h"
 #include "move.h"
@@ -501,5 +500,3 @@ inline void Position::undoMove(Move move) {
 }
 
 #undef state
-
-#endif //BLACKCORE_POSITION_H

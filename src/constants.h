@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_CONSTANTS_H
-#define BLACKCORE_CONSTANTS_H
+#pragma once
 
 #include <string>
 
@@ -568,5 +567,3 @@ constexpr U64 const *pieceRandTable = randTable;
 constexpr U64 const *castlingRandTable = randTable + 768;
 constexpr U64 const *epRandTable = randTable + 784;
 constexpr U64 const *blackRand = randTable + 792;
-
-#endif //BLACKCORE_CONSTANTS_H

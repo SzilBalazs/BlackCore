@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_EVAL_H
-#define BLACKCORE_EVAL_H
+#pragma once
 
 #include "constants.h"
 #include "position.h"
@@ -28,5 +27,3 @@ constexpr Score PIECE_VALUES[7] = {
 inline Score eval(const Position &pos) {
     return pos.getState()->accumulator.forward(pos.getSideToMove());
 }
-
-#endif //BLACKCORE_EVAL_H

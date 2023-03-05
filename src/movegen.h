@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_MOVEGEN_H
-#define BLACKCORE_MOVEGEN_H
+#pragma once
 
 #include "move.h"
 #include "position.h"
@@ -85,5 +84,3 @@ struct MoveList {
         return moves[index++];
     }
 };
-
-#endif //BLACKCORE_MOVEGEN_H

@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_SEARCH_H
-#define BLACKCORE_SEARCH_H
+#pragma once
 
 #include "nnue.h"
 #include "position.h"
@@ -55,5 +54,3 @@ bool see(const Position &pos, Move move, Score threshold);
 void joinThreads(bool waitToFinish);
 
 SearchResult startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);
-
-#endif //BLACKCORE_SEARCH_H

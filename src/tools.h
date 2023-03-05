@@ -14,11 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_TOOLS_H
-#define BLACKCORE_TOOLS_H
+#pragma once
 
 #include <string>
 
 void processPlain(const std::string filename);
-
-#endif //BLACKCORE_TOOLS_H

@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_UTILS_H
-#define BLACKCORE_UTILS_H
+#pragma once
 
 #include "bitboard.h"
 #include "constants.h"
@@ -103,5 +102,3 @@ void displayBB(Bitboard b);
 Bitboard randBB();
 
 std::string BBToHex(Bitboard bb);
-
-#endif //BLACKCORE_UTILS_H

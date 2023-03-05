@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_TIMEMAN_H
-#define BLACKCORE_TIMEMAN_H
+#pragma once
 
 #include "constants.h"
 #include <atomic>
@@ -34,5 +33,3 @@ bool isInfiniteSearch();
 long long getSearchTime();
 
 U64 getNps(U64 nodes);
-
-#endif //BLACKCORE_TIMEMAN_H

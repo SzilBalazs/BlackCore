@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_UCI_H
-#define BLACKCORE_UCI_H
+#pragma once
 
 #include "constants.h"
 #include "move.h"
@@ -57,5 +56,3 @@ inline void tuneOut(const std::string &name, int value, int min, int max) {
 }
 
 void uciLoop();
-
-#endif //BLACKCORE_UCI_H

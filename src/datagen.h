@@ -14,11 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_DATAGEN_H
-#define BLACKCORE_DATAGEN_H
+#pragma once
 
 #include "constants.h"
 
 void startDataGen(int entryCount, int id);
-
-#endif //BLACKCORE_DATAGEN_H

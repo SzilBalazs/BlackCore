@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_NNUE_H
-#define BLACKCORE_NNUE_H
+#pragma once
 
 #include "bitboard.h"
 
@@ -92,5 +91,3 @@ namespace NNUE {
 
     void init();
 } // namespace NNUE
-
-#endif //BLACKCORE_NNUE_H

@@ -15,8 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // The concept of this class is from https://www.chessprogramming.org/Encoding_Moves
-#ifndef BLACKCORE_MOVE_H
-#define BLACKCORE_MOVE_H
+
+#pragma once
 
 #include "constants.h"
 #include "utils.h"
@@ -135,5 +135,3 @@ private:
 constexpr Move MOVE_NULL = Move();
 
 std::ostream &operator<<(std::ostream &os, const Move &move);
-
-#endif //BLACKCORE_MOVE_H

@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_EGTB_H
-#define BLACKCORE_EGTB_H
+#pragma once
 
 #include "fathom/src/tbprobe.h"
 #include "position.h"
@@ -110,5 +109,3 @@ inline bool TBProbeRoot(const Position &pos) {
     }
     return true;
 }
-
-#endif //BLACKCORE_EGTB_H

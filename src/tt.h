@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_TT_H
-#define BLACKCORE_TT_H
+#pragma once
 
 #include "constants.h"
 #include "move.h"
@@ -60,5 +59,3 @@ int getTTFull();
 Move getHashMove(U64 hash);
 
 void ttPrefetch(U64 hash);
-
-#endif //BLACKCORE_TT_H

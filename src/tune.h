@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_TUNE_H
-#define BLACKCORE_TUNE_H
+#pragma once
 
 #include <string>
 #include <utility>
@@ -90,5 +89,3 @@ TUNING_PARAMETERS
 
 #undef DEPTH_PARAM
 #undef SCORE_PARAM
-
-#endif //BLACKCORE_TUNE_H

@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef BLACKCORE_THREADS_H
-#define BLACKCORE_THREADS_H
+#pragma once
 
 #include "search.h"
 #include "tt.h"
@@ -146,5 +145,3 @@ struct ThreadData {
         return historyTable[stm][from][to];
     }
 };
-
-#endif //BLACKCORE_THREADS_H
