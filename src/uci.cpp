@@ -233,7 +233,7 @@ void uciInitProtocol() {
     out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
     out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
-    out("option", "name", "SyzygyPath", "type", "string", "default", "<none>");
+    out("option", "name", "SyzygyPath", "type", "string", "default", "<empty>");
     out("option", "name", "Move Overhead", "type", "spin", "default", 20, "min", 0, "max", 10000);
 
 #ifdef TUNE
