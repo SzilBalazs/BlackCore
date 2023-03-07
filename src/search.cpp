@@ -17,6 +17,7 @@
 #include "search.h"
 #include "eval.h"
 #include "movegen.h"
+#include "movelist.h"
 #include "tt.h"
 
 SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
@@ -103,11 +104,10 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
         alpha = bestScore;
     }
 
-    Move moves[200];
-    int moveCount = generateMoves(position, moves, true) - moves;
+    MoveList moves = MoveList<LIST_Q>(position, history, stack, MOVE_NULL);
 
-    for (int index = 0; index < moveCount; index++) {
-        Move move = moves[index];
+    while (!moves.empty()) {
+        Move move = moves.nextMove();
 
         nodes++;
         position.makeMove(move);
@@ -192,19 +192,14 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     stack->eval = eval(position);
     bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
-    // TODO implement a movelist structure
-    Move moves[200];
-    int moveCount = generateMoves(position, moves, false) - moves;
-    Move hashMove = ttEntry.hashMove;
-    for (int index = 0; index < moveCount; index++) {
-        if (hashMove == moves[index]) {
-            std::swap(moves[0], moves[index]);
-            break;
-        }
+    MoveList moves = MoveList<LIST_AB>(position, history, stack, ttEntry.hashMove);
+
+    if (moves.empty()) {
+        return inCheck ? -matePly : 0;
     }
 
-    for (int index = 0; index < moveCount; index++) {
-        Move move = moves[index];
+    while (!moves.empty()) {
+        Move move = moves.nextMove();
 
         Depth newDepth = depth - 1;
         nodes++;
@@ -222,6 +217,9 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         bestScore = std::max(bestScore, score);
 
         if (score >= beta) {
+
+            history.updateHistory(move, stack->ply);
+
             ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
             return beta;
         }
@@ -237,10 +235,6 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
             }
             pvLength[stack->ply] = pvLength[stack->ply + 1];
         }
-    }
-
-    if (moveCount == 0) {
-        return inCheck ? -matePly : 0;
     }
 
     ttSave(position.getHash(), depth, bestScore, ttFlag, bestMove, stack->ply);

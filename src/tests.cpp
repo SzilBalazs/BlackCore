@@ -33,7 +33,7 @@ struct TestPosition {
 const unsigned int posCount = 10;           // Number of test positions
 const unsigned int benchPosCount = 20;      // Number of bench positions
 const unsigned int searchTestHashSize = 32; // Transposition table size for benchmarking
-const Depth searchTestDepth = 4;            // Depth used in benchmarks
+const Depth searchTestDepth = 6;            // Depth used in benchmarks
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW

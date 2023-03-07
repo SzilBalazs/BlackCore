@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "history.h"
 #include "position.h"
 #include "timeman.h"
 #include "uci.h"
@@ -42,6 +43,8 @@ private:
     Position position{};
     SearchInfo searchInfo{};
     TimeManager timeManager{};
+
+    History history;
 
     Move pvArray[MAX_PLY + 1][MAX_PLY + 1];
     Ply pvLength[MAX_PLY + 1];
