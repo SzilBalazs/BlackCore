@@ -52,13 +52,12 @@ inline void addParam(const std::string &name, int defaultValue, int minValue, in
 
 #endif
 
-#define TUNING_PARAMETERS              \
-    DEPTH_PARAM(ASPIRATION_DEPTH, 100) \
-    SCORE_PARAM(ASPIRATION_DELTA, 30)  \
-    SCORE_PARAM(ASPIRATION_BOUND, 3000)
-
-constexpr double LMR_BASE = 0.1;
-constexpr double LMR_SCALE = 1.6;
+#define TUNING_PARAMETERS               \
+    DEPTH_PARAM(ASPIRATION_DEPTH, 100)  \
+    SCORE_PARAM(ASPIRATION_DELTA, 30)   \
+    SCORE_PARAM(ASPIRATION_BOUND, 3000) \
+    DEPTH_PARAM(RFP_DEPTH, 7)           \
+    SCORE_PARAM(RFP_DEPTH_MULTI, 70)
 
 TUNING_PARAMETERS
 

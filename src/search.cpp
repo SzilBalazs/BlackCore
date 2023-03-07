@@ -225,6 +225,13 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     stack->eval = position.eval();
     bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
+    if (rootNode || inCheck)
+        goto search_moves;
+
+    if (nonPvNode && depth <= RFP_DEPTH && stack->eval - RFP_DEPTH_MULTI * depth >= beta && std::abs(beta) < TB_WORST_WIN)
+        return beta;
+
+search_moves:
     MoveList moves = MoveList<LIST_AB>(position, history, stack, ttEntry.hashMove);
 
     if (moves.empty()) {
