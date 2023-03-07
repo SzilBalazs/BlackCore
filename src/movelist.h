@@ -49,18 +49,21 @@ public:
 
         for (int i = 0; i < count; i++) {
 
+            Square from = moves[i].getFrom();
+            Square to = moves[i].getTo();
+
             if (moves[i] == hashMove) {
                 scores[i] = 10'000'000;
             } else if (moves[i].isCapture()) {
-                PieceType moved = position.pieceAt(moves[i].getFrom()).type;
-                PieceType captured = moves[i].equalFlag(EP_CAPTURE) ? PAWN : position.pieceAt(moves[i].getTo()).type;
+                PieceType moved = position.pieceAt(from).type;
+                PieceType captured = moves[i].equalFlag(EP_CAPTURE) ? PAWN : position.pieceAt(to).type;
                 scores[i] = 8'000'000 + MVVLVA[captured][moved];
             } else if (moves[i] == history.killerMoves[ply][0]) {
                 scores[i] = 7'000'000;
             } else if (moves[i] == history.killerMoves[ply][1]) {
                 scores[i] = 6'000'000;
             } else {
-                scores[i] = 0;
+                scores[i] = history.mainHistory[position.getSideToMove()][from][to];
             }
         }
     }

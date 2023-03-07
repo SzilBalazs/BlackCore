@@ -252,7 +252,8 @@ search_moves:
         return inCheck ? -matePly : 0;
     }
 
-    int index = 0;
+    Move quietMoves[200];
+    int index = 0, quiets = 0;
     while (!moves.empty()) {
         Move move = moves.nextMove();
 
@@ -282,9 +283,9 @@ search_moves:
 
         if (score >= beta) {
 
-            history.updateHistory(move, stack->ply);
-
+            history.updateHistory(position, quietMoves, quiets, move, stack->ply, std::max(1500, depth * 100));
             ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
+
             return beta;
         }
 
@@ -301,6 +302,7 @@ search_moves:
         }
 
         index++;
+        quietMoves[quiets++] = move;
     }
 
     ttSave(position.getHash(), depth, bestScore, ttFlag, bestMove, stack->ply);
