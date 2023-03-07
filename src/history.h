@@ -28,6 +28,7 @@ struct History {
 
     inline void reset() {
         std::memset(killerMoves, 0, sizeof(killerMoves));
+        std::memset(mainHistory, 0, sizeof(mainHistory));
     }
 
     inline void updateHistory(const Position &position, Move *quietMoves, int quiets, Move move, Ply ply, Score bonus) {

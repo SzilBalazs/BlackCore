@@ -60,6 +60,7 @@ void SearchThread::start() {
 
         while (true) {
 
+            history.reset();
             score = search<ROOT_NODE>(stack, depth, alpha, beta);
 
             if (!timeManager.resourcesLeft()) {
