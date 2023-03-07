@@ -76,6 +76,66 @@ int64_t SearchThread::getNps() const {
 }
 
 template<NodeType nodeType>
+Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
+    constexpr bool pvNode = nodeType != NON_PV_NODE;
+    constexpr bool nonPvNode = !pvNode;
+
+    Move bestMove;
+
+    selectivePly = std::max(selectivePly, stack->ply);
+
+    if (stack->ply >= MAX_PLY) {
+        return eval(position);
+    }
+
+    if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+        return UNKNOWN_SCORE;
+    }
+
+    Score bestScore = stack->eval = eval(position);
+
+    if (bestScore >= beta) {
+        return beta;
+    }
+
+    if (bestScore > alpha) {
+        alpha = bestScore;
+    }
+
+    Move moves[200];
+    int moveCount = generateMoves(position, moves, true) - moves;
+
+    for (int index = 0; index < moveCount; index++) {
+        Move move = moves[index];
+
+        nodes++;
+        position.makeMove(move);
+
+        Score score = -qsearch<nodeType>(stack + 1, -beta, -alpha);
+
+        position.undoMove(move);
+
+        if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+            return UNKNOWN_SCORE;
+        }
+
+        bestScore = std::max(bestScore, score);
+
+        if (score >= beta) {
+
+            return beta;
+        }
+
+        if (score > alpha) {
+            alpha = score;
+            bestMove = move;
+        }
+    }
+
+    return bestScore;
+}
+
+template<NodeType nodeType>
 Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score beta) {
     constexpr bool rootNode = nodeType == ROOT_NODE;
     constexpr bool pvNode = nodeType != NON_PV_NODE;
@@ -104,7 +164,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     }
 
     if (depth <= 0) {
-        return eval(position);
+        return qsearch<nextNodeType>(stack, alpha, beta);
     }
 
     stack->eval = eval(position);

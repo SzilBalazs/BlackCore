@@ -28,14 +28,10 @@ public:
 
     bool resourcesLeft();
 
-    void stopThread();
-
     int64_t calcNps(int64_t nodes) const;
 
 private:
     int64_t optimum, maximum, startPoint;
-
-    std::atomic_bool stop;
 
     int64_t now() const;
 };

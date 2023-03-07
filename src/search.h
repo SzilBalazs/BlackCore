@@ -47,9 +47,13 @@ private:
     Ply pvLength[MAX_PLY + 1];
 
     int64_t nodes = 0;
+    Ply selectivePly = 0;
 
     template<NodeType nodeType>
     Score search(SearchStack *stack, Depth depth, Score alpha, Score beta);
+
+    template<NodeType nodeType>
+    Score qsearch(SearchStack *stack, Score alpha, Score beta);
 };
 
 inline void init() {

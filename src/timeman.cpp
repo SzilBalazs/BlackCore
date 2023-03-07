@@ -23,7 +23,6 @@ using namespace std::chrono;
 void TimeManager::init(SearchInfo searchInfo, Color stm) {
 
     startPoint = now();
-    stop = false;
 
     int64_t timeLeft, movesLeft, increment;
     movesLeft = searchInfo.movestogo;
@@ -57,13 +56,8 @@ int64_t TimeManager::calcNps(int64_t nodes) const {
     return elapsedTime == 0 ? 0 : nodes * 1000 / elapsedTime;
 }
 
-void TimeManager::stopThread() {
-    stop = true;
-}
-
 bool TimeManager::resourcesLeft() {
-    stop = stop || now() > startPoint + optimum;
-    return !stop;
+    return now() < startPoint + optimum;
 }
 
 int64_t TimeManager::now() const {
