@@ -82,6 +82,7 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
     constexpr bool nonPvNode = !pvNode;
 
     Move bestMove;
+    EntryFlag ttFlag = TT_ALPHA;
 
     selectivePly = std::max(selectivePly, stack->ply);
 
@@ -91,6 +92,14 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
 
     if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
         return UNKNOWN_SCORE;
+    }
+
+    bool ttHit = false;
+    TTEntry ttEntry = ttProbe(position.getHash(), stack->ply, ttHit);
+
+    if (ttHit && nonPvNode &&
+        (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
+        return ttEntry.eval;
     }
 
     Score bestScore = stack->eval = position.eval();
@@ -103,7 +112,7 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
         alpha = bestScore;
     }
 
-    MoveList moves = MoveList<LIST_Q>(position, history, stack, MOVE_NULL);
+    MoveList moves = MoveList<LIST_Q>(position, history, stack, ttEntry.hashMove);
 
     while (!moves.empty()) {
         Move move = moves.nextMove();
@@ -122,15 +131,18 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
         bestScore = std::max(bestScore, score);
 
         if (score >= beta) {
-
+            ttSave(position.getHash(), 0, beta, TT_BETA, move, stack->ply);
             return beta;
         }
 
         if (score > alpha) {
             alpha = score;
+            ttFlag = TT_EXACT;
             bestMove = move;
         }
     }
+
+    ttSave(position.getHash(), 0, bestScore, ttFlag, bestMove, stack->ply);
 
     return bestScore;
 }
