@@ -198,6 +198,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         return inCheck ? -matePly : 0;
     }
 
+    int index = 0;
     while (!moves.empty()) {
         Move move = moves.nextMove();
 
@@ -206,7 +207,15 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
 
         position.makeMove(move);
 
-        Score score = -search<nextNodeType>(stack + 1, newDepth, -beta, -alpha);
+        Score score = UNKNOWN_SCORE;
+
+        if (nonPvNode || index > 0) {
+            score = -search<NON_PV_NODE>(stack + 1, newDepth, -alpha - 1, -alpha);
+        }
+
+        if (pvNode && (index == 0 || (alpha < score && score < beta))) {
+            score = -search<PV_NODE>(stack + 1, newDepth, -beta, -alpha);
+        }
 
         position.undoMove(move);
 
@@ -214,6 +223,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
             return UNKNOWN_SCORE;
         }
 
+        assert(score != UNKNOWN_SCORE);
         bestScore = std::max(bestScore, score);
 
         if (score >= beta) {
@@ -235,6 +245,8 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
             }
             pvLength[stack->ply] = pvLength[stack->ply + 1];
         }
+
+        index++;
     }
 
     ttSave(position.getHash(), depth, bestScore, ttFlag, bestMove, stack->ply);
