@@ -18,7 +18,6 @@
 
 #include "move.h"
 #include "position.h"
-#include "threads.h"
 
 // Returns a bitboard of all the squares attacking a given square for the given color
 template<Color color>
