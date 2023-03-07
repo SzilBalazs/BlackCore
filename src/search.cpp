@@ -283,7 +283,7 @@ search_moves:
 
         if (score >= beta) {
 
-            history.updateHistory(position, quietMoves, quiets, move, stack->ply, std::max(1500, depth * 100));
+            history.updateHistory(position, quietMoves, quiets, move, stack->ply, std::min(1500, depth * 100));
             ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
 
             return beta;
