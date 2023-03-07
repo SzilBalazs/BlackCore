@@ -18,6 +18,7 @@
 #include "movegen.h"
 #include "movelist.h"
 #include "tt.h"
+#include "tune.h"
 
 SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
 
@@ -43,15 +44,48 @@ void SearchThread::start() {
     }
 
     Move bestMove;
+    Score prevScore = 0;
     for (Depth depth = 1; depth <= searchInfo.maxDepth; depth++) {
-        Score score = search<ROOT_NODE>(stack, depth, -INF_SCORE, INF_SCORE);
+
+        Score score;
+        Score alpha = -INF_SCORE;
+        Score beta = INF_SCORE;
+
+        if (depth >= ASPIRATION_DEPTH) {
+            alpha = prevScore - ASPIRATION_DELTA;
+            beta = prevScore + ASPIRATION_DELTA;
+        }
+
+        Score delta = ASPIRATION_DELTA;
+
+        while (true) {
+
+            score = search<ROOT_NODE>(stack, depth, alpha, beta);
+
+            if (!timeManager.resourcesLeft()) {
+                break;
+            }
+
+            if (score <= alpha) {
+                beta = (alpha + beta) / 2;
+                alpha = std::max(-ASPIRATION_BOUND, score - delta);
+            } else if (score >= beta) {
+                beta = std::min(ASPIRATION_BOUND, score + delta);
+            } else {
+                break;
+            }
+
+            delta += delta / 2;
+        }
 
         if (!timeManager.resourcesLeft())
             break;
 
         if (searchInfo.uciMode)
             out("info", "depth", (int) depth, "score", "cp", score, "nodes", nodes, "pv", getPvLine());
+
         bestMove = pvArray[0][0];
+        prevScore = score;
     }
 
     if (searchInfo.uciMode)
