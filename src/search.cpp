@@ -17,6 +17,7 @@
 #include "search.h"
 #include "eval.h"
 #include "movegen.h"
+#include "tt.h"
 
 SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
 
@@ -145,6 +146,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     const Score matePly = MATE_VALUE - stack->ply;
 
     Score bestScore = -INF_SCORE;
+    EntryFlag ttFlag = TT_ALPHA;
     Move bestMove;
 
     pvLength[stack->ply] = stack->ply;
@@ -163,6 +165,26 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
             return 1 - (nodes & 3);
     }
 
+    /*
+     * Transposition table probing
+     *
+     * Check the transposition table for information about this position. If the
+     * node is a singular search root skip this step.
+     */
+    bool ttHit = false;
+    TTEntry ttEntry = ttProbe(position.getHash(), stack->ply, ttHit);
+
+    /*
+     * TT cutoffs
+     *
+     * If this is a not a PV node and the transposition entry was saved by a
+     * big enough depth search, return the evaluation from TT.
+     */
+    if (ttHit && nonPvNode && ttEntry.depth >= depth &&
+        (ttEntry.flag == TT_EXACT || (ttEntry.flag == TT_ALPHA && ttEntry.eval <= alpha) || (ttEntry.flag == TT_BETA && ttEntry.eval >= beta))) {
+        return ttEntry.eval;
+    }
+
     if (depth <= 0) {
         return qsearch<nextNodeType>(stack, alpha, beta);
     }
@@ -170,8 +192,16 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     stack->eval = eval(position);
     bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
+    // TODO implement a movelist structure
     Move moves[200];
     int moveCount = generateMoves(position, moves, false) - moves;
+    Move hashMove = ttEntry.hashMove;
+    for (int index = 0; index < moveCount; index++) {
+        if (hashMove == moves[index]) {
+            std::swap(moves[0], moves[index]);
+            break;
+        }
+    }
 
     for (int index = 0; index < moveCount; index++) {
         Move move = moves[index];
@@ -192,7 +222,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         bestScore = std::max(bestScore, score);
 
         if (score >= beta) {
-
+            ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
             return beta;
         }
 
@@ -213,5 +243,6 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         return inCheck ? -matePly : 0;
     }
 
+    ttSave(position.getHash(), depth, bestScore, ttFlag, bestMove, stack->ply);
     return bestScore;
 }
