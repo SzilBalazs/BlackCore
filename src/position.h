@@ -209,6 +209,11 @@ public:
         return states.getMove50();
     }
 
+    // Returns the score of a position using NNUE.
+    [[nodiscard]] inline Score eval() const {
+        return state->accumulator.forward(getSideToMove());
+    }
+
     // Makes a move on the board
     inline void makeMove(Move move);
 

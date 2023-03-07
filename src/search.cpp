@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "search.h"
-#include "eval.h"
 #include "movegen.h"
 #include "movelist.h"
 #include "tt.h"
@@ -87,14 +86,14 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
     selectivePly = std::max(selectivePly, stack->ply);
 
     if (stack->ply >= MAX_PLY) {
-        return eval(position);
+        return position.eval();
     }
 
     if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
         return UNKNOWN_SCORE;
     }
 
-    Score bestScore = stack->eval = eval(position);
+    Score bestScore = stack->eval = position.eval();
 
     if (bestScore >= beta) {
         return beta;
@@ -152,7 +151,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     pvLength[stack->ply] = stack->ply;
 
     if (stack->ply >= MAX_PLY) {
-        return eval(position);
+        return position.eval();
     }
 
     if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
@@ -189,7 +188,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         return qsearch<nextNodeType>(stack, alpha, beta);
     }
 
-    stack->eval = eval(position);
+    stack->eval = position.eval();
     bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
     MoveList moves = MoveList<LIST_AB>(position, history, stack, ttEntry.hashMove);

@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "position.h"
-#include "eval.h"
 
 #include <cstring>
 #include <iomanip>
@@ -124,7 +123,7 @@ void Position::display() const {
 // Displays the NNUE's take on the current position.
 void Position::displayEval() {
     getState()->accumulator.refresh(*this);
-    Score score = eval(*this);
+    Score score = eval();
     cout << "\n      A     B     C     D     E     F     G     H    \n";
     for (int i = 8; i >= 1; i--) {
         cout << "   +-----+-----+-----+-----+-----+-----+-----+-----+";
@@ -140,7 +139,7 @@ void Position::displayEval() {
             string evalStr = " ";
             if (!piece.isNull() && piece.type != KING) {
                 clearSquare<true>(square);
-                Score newScore = eval(*this);
+                Score newScore = eval();
                 Score scoreDiff = score - newScore;
                 evalStr = std::to_string(scoreDiff);
                 setSquare<true>(square, piece);
