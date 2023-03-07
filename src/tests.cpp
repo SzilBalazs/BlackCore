@@ -33,7 +33,7 @@ struct TestPosition {
 const unsigned int posCount = 10;           // Number of test positions
 const unsigned int benchPosCount = 20;      // Number of bench positions
 const unsigned int searchTestHashSize = 32; // Transposition table size for benchmarking
-const Depth searchTestDepth = 15;           // Depth used in benchmarks
+const Depth searchTestDepth = 5;            // Depth used in benchmarks
 
 const TestPosition testPositions[posCount] = {
         // Positions from CPW
@@ -78,7 +78,6 @@ const std::string benchPositions[benchPosCount] = {
 void testPerft() {
 
     // Initialize values
-    initSearch();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     U64 totalNodes = 0;
     bool ok = true;
@@ -114,7 +113,6 @@ void testPerft() {
 // Outputs a node count for identifying the binary and a nodes per second,
 // which shows the speed of the search.
 void testSearch(U64 expectedResult) {
-    initSearch();
     ttResize(searchTestHashSize);
 
     U64 totalNodes = 0, nps = 0;
@@ -129,13 +127,11 @@ void testSearch(U64 expectedResult) {
         info.maxDepth = searchTestDepth;
         info.uciMode = false;
 
-        startSearch(info, pos, 1);
+        SearchThread searchThread(pos, info);
 
         // Record the node count and the nps.
-        totalNodes += getTotalNodes();
-        nps += getNps(getTotalNodes());
-
-        joinThreads(true);
+        totalNodes += searchThread.getNodes();
+        nps += searchThread.getNps();
     }
 
     std::cout << totalNodes << " nodes " << nps / benchPosCount << " nps" << std::endl;

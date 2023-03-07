@@ -230,8 +230,9 @@ void uciInitProtocol() {
 
     // Tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
-    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
-    out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
+    // TODO reimplement these
+    // out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
+    // out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<empty>");
     out("option", "name", "Move Overhead", "type", "spin", "default", 20, "min", 0, "max", 10000);
@@ -246,7 +247,6 @@ void uciInitProtocol() {
 
 void uciLoop() {
     // Initialize stuff
-    initSearch();
     ttResize(32);
 
     Position pos = {STARTING_FEN};
@@ -270,11 +270,11 @@ void uciLoop() {
         } else if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
-            joinThreads(false);
             tb_free();
             break;
         } else if (command == "stop") {
-            joinThreads(false);
+            // TODO implement stop
+            // searchThread.stopThread();
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -282,10 +282,12 @@ void uciLoop() {
                 if (tokens[1] == "Hash") {
                     ttResize(std::stoi(tokens[3]));
                 } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
-                    MOVE_OVERHEAD = std::stoi(tokens[4]);
+                    // TODO implement move overhead
+                    // MOVE_OVERHEAD = std::stoi(tokens[4]);
                 } else if (tokens[1] == "Ponder") {
-
+                    // TODO implement ponder
                 } else if (tokens[1] == "Threads") {
+                    // TODO implement SMP
                     threadCount = std::stoi(tokens[3]);
                 } else if (tokens[1] == "MultiPV") {
                     multiPV = std::stoi(tokens[3]);
@@ -372,7 +374,9 @@ void uciLoop() {
                 out("   Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS   ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }
 
-            startSearch(searchInfo, pos, threadCount);
+
+            SearchThread searchThread(pos, searchInfo);
+            searchThread.start();
 
         } else if (command == "d" || command == "display") {
             pos.display();
@@ -389,7 +393,8 @@ void uciLoop() {
         } else if (command == "play") {
             playGame(pos);
         } else if (command == "see") {
-            out(see(pos, stringToMove(pos, tokens[0]), 0));
+            // TODO implement this
+            // out(see(pos, stringToMove(pos, tokens[0]), 0));
         }
     }
     ttFree();

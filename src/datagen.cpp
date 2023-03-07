@@ -24,6 +24,8 @@
 #include <random>
 #include <utility>
 
+// TODO implement this
+/*
 struct DataEntry {
     std::string fen;
     Score score;
@@ -181,4 +183,4 @@ void startDataGen(int entryCount, int id) {
     }
 
     outFile.close();
-}
+}*/

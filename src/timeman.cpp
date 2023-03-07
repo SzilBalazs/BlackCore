@@ -15,76 +15,57 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "timeman.h"
+
 #include <chrono>
 
-unsigned int MOVE_OVERHEAD = 20;
+using namespace std::chrono;
 
-constexpr U64 mask = 1023;
-constexpr long long INFINITE_LIMIT = LONG_LONG_MAX / 2;
+void TimeManager::init(SearchInfo searchInfo, Color stm) {
 
-bool minimalDepthReached;
+    startPoint = now();
+    stop = false;
 
-long long startedSearch, idealTime, maxTime;
-U64 maxNodes;
+    int64_t timeLeft, movesLeft, increment;
+    movesLeft = searchInfo.movestogo;
 
-std::atomic<bool> stopped = true;
+    if (movesLeft == 0) {
+        movesLeft = 25;
+    }
 
-long long getTime() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-                   std::chrono::system_clock::now().time_since_epoch())
-            .count();
-}
-
-void initTimeManager(long long time, long long inc, long long movesToGo, long long moveTime, long long nodes) {
-
-    startedSearch = getTime();
-    stopped = false;
-    minimalDepthReached = false;
-
-    maxNodes = nodes == -1 ? INFINITE_LIMIT : nodes;
-
-    if (moveTime != -1) {
-        // We are limited how much can we search
-        idealTime = moveTime - MOVE_OVERHEAD;
-        maxTime = moveTime - MOVE_OVERHEAD;
-    } else if (time == -1) {
-        // We have infinite time
-        idealTime = INFINITE_LIMIT;
-        maxTime = INFINITE_LIMIT;
+    if (stm == WHITE) {
+        timeLeft = searchInfo.wtime;
+        increment = searchInfo.winc;
     } else {
+        timeLeft = searchInfo.btime;
+        increment = searchInfo.binc;
+    }
 
-        if (movesToGo == 0) {
-            idealTime = 1 * inc + (time - MOVE_OVERHEAD) / 25;
-            maxTime = 2 * inc + (time - MOVE_OVERHEAD) / 15;
-        } else {
-            idealTime = inc + (time - MOVE_OVERHEAD) / movesToGo;
-            maxTime = 2 * idealTime;
-        }
-        idealTime = std::min(idealTime, time - MOVE_OVERHEAD);
-        maxTime = std::min(maxTime, time - MOVE_OVERHEAD);
+    if (searchInfo.movetime != -1) {
+        optimum = searchInfo.movetime;
+        maximum = searchInfo.movetime;
+    } else if (timeLeft == -1) {
+        optimum = INT32_MAX;
+        maximum = INT32_MAX;
+    } else {
+        optimum = timeLeft / movesLeft + increment;
+        maximum = timeLeft / movesLeft + increment;
     }
 }
 
-bool shouldEnd(U64 nodes, U64 totalNodes) {
-    if ((nodes & mask) == 0 && !stopped && minimalDepthReached && !isInfiniteSearch()) {
-        stopped = getSearchTime() >= maxTime || totalNodes > maxNodes;
-    }
-    return stopped;
+int64_t TimeManager::calcNps(int64_t nodes) const {
+    int64_t elapsedTime = now() - startPoint;
+    return elapsedTime == 0 ? 0 : nodes * 1000 / elapsedTime;
 }
 
-bool manageTime(double factor) {
-    minimalDepthReached = true; // First time management is called at depth 5
-
-    return getSearchTime() > std::min((long long) (double(idealTime) * factor), maxTime) && maxTime != INFINITE_LIMIT;
+void TimeManager::stopThread() {
+    stop = true;
 }
 
-bool isInfiniteSearch() { return maxTime == INFINITE_LIMIT && maxNodes == INFINITE_LIMIT; }
-
-long long getSearchTime() {
-    return getTime() - startedSearch;
+bool TimeManager::resourcesLeft() {
+    stop = stop || now() > startPoint + optimum;
+    return !stop;
 }
 
-U64 getNps(U64 nodes) {
-    U64 millis = getSearchTime();
-    return millis == 0 ? 0 : nodes * 1000 / millis;
+int64_t TimeManager::now() const {
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }

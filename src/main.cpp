@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "datagen.h"
+#include "search.h"
 #include "tests.h"
 #include "tools.h"
 #include "uci.h"
@@ -27,6 +28,7 @@
 int main(int argc, char **argv) {
 
     srand(RANDOM_SEED);
+    init();
 
 #ifdef _WIN64
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -47,7 +49,8 @@ int main(int argc, char **argv) {
         }
         int entryCount = std::stoi(argv[2]);
         int threadId = std::stoi(argv[3]);
-        startDataGen(entryCount, threadId);
+        out("Not implemented!");
+        // startDataGen(entryCount, threadId);
     } else if (mode == "bench") {
         testSearch(argc >= 3 ? std::stoi(argv[2]) : 0);
     } else if (mode == "perft") {

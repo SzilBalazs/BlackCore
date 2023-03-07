@@ -18,4 +18,4 @@
 
 #include "constants.h"
 
-void startDataGen(int entryCount, int id);
+// void startDataGen(int entryCount, int id);

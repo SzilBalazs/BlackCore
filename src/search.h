@@ -16,41 +16,43 @@
 
 #pragma once
 
-#include "nnue.h"
 #include "position.h"
-#include "tune.h"
+#include "timeman.h"
 #include "uci.h"
-#include <atomic>
 
 struct SearchStack {
-    Move move, excludedMove;
-    Score eval = 0;
-    Ply ply = 0;
+    Ply ply;
+    Score eval;
 };
 
-struct SearchResult {
-    Score score = 0;
-    Move bestMove;
+class SearchThread {
 
-    SearchResult() = default;
+public:
+    SearchThread(const Position &pos, const SearchInfo &info);
 
-    SearchResult(Score _score, Move _bestMove) : score(_score), bestMove(_bestMove) {}
+    void start();
+
+    std::string getPvLine();
+
+    int64_t getNodes() const;
+
+    int64_t getNps() const;
+
+private:
+    Position position{};
+    SearchInfo searchInfo{};
+    TimeManager timeManager{};
+
+    Move pvArray[MAX_PLY + 1][MAX_PLY + 1];
+    Ply pvLength[MAX_PLY + 1];
+
+    int64_t nodes = 0;
+
+    template<NodeType nodeType>
+    Score search(SearchStack *stack, Depth depth, Score alpha, Score beta);
 };
 
-
-U64 getTotalNodes();
-
-void initLmr();
-
-// Initializes stuff that is needed for a search.
-inline void initSearch() {
-    initBitboard();
-    initLmr();
+inline void init() {
     NNUE::init();
+    initBitboard();
 }
-
-bool see(const Position &pos, Move move, Score threshold);
-
-void joinThreads(bool waitToFinish);
-
-SearchResult startSearch(SearchInfo &searchInfo, Position &pos, int threadCount);

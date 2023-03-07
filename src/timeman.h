@@ -16,20 +16,26 @@
 
 #pragma once
 
-#include "constants.h"
+#include "uci.h"
 #include <atomic>
 
-extern unsigned int MOVE_OVERHEAD;
-extern std::atomic<bool> stopped;
+class TimeManager {
 
-void initTimeManager(long long time, long long inc, long long movesToGo, long long moveTime, long long nodes);
+public:
+    TimeManager() = default;
 
-bool shouldEnd(U64 nodes, U64 totalNodes);
+    void init(SearchInfo searchInfo, Color stm);
 
-bool manageTime(double factor);
+    bool resourcesLeft();
 
-bool isInfiniteSearch();
+    void stopThread();
 
-long long getSearchTime();
+    int64_t calcNps(int64_t nodes) const;
 
-U64 getNps(U64 nodes);
+private:
+    int64_t optimum, maximum, startPoint;
+
+    std::atomic_bool stop;
+
+    int64_t now() const;
+};

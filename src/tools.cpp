@@ -18,6 +18,7 @@
 #include "movegen.h"
 #include "position.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -28,8 +29,6 @@ constexpr int SHUFFLE_SIZE = 10000000;
 void processPlain(const std::string filename) {
     std::ifstream file(filename);
     std::ofstream out("filtered.plain", std::ios_base::app);
-
-    initSearch();
 
     Position pos;
     std::random_device rd;
