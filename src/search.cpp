@@ -231,6 +231,20 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     if (nonPvNode && depth <= RFP_DEPTH && stack->eval - RFP_DEPTH_MULTI * depth >= beta && std::abs(beta) < TB_WORST_WIN)
         return beta;
 
+    if (nonPvNode && depth >= NMP_DEPTH && stack->eval >= beta && !position.isZugzwang()) {
+        Depth R = NMP_BASE + depth / NMP_DEPTH_MULTI;
+
+        position.makeNullMove();
+        Score score = -search<NON_PV_NODE>(stack + 1, depth - R, -beta, -beta + 1);
+        position.undoNullMove();
+
+        if (score >= beta) {
+            if (std::abs(score) > TB_WORST_WIN)
+                return beta;
+            return score;
+        }
+    }
+
 search_moves:
     MoveList moves = MoveList<LIST_AB>(position, history, stack, ttEntry.hashMove);
 

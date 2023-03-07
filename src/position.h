@@ -214,6 +214,11 @@ public:
         return state->accumulator.forward(getSideToMove());
     }
 
+    [[nodiscard]] inline bool isZugzwang() const {
+        Color stm = getSideToMove();
+        return !(pieces<KNIGHT>(stm) || pieces<BISHOP>(stm) || pieces<ROOK>(stm) || pieces<QUEEN>(stm));
+    }
+
     // Makes a move on the board
     inline void makeMove(Move move);
 
