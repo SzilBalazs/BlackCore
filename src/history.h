@@ -25,21 +25,28 @@ struct History {
 
     Move killerMoves[MAX_PLY + 1][2];
     Score mainHistory[2][64][64];
+    Move counterMoves[64][64];
 
     inline void reset() {
         std::memset(killerMoves, 0, sizeof(killerMoves));
         std::memset(mainHistory, 0, sizeof(mainHistory));
     }
 
-    inline void updateHistory(const Position &position, Move *quietMoves, int quiets, Move move, Ply ply, Score bonus) {
+    inline void updateHistory(const Position &position, SearchStack *stack, Move *quietMoves, int quiets, Move move, Score bonus) {
 
-        Color stm = position.getSideToMove();
+        const Color stm = position.getSideToMove();
+        const Square from = move.getFrom();
+        const Square to = move.getTo();
+        const Ply ply = stack->ply;
+        const Move prevMove = (stack - 1)->move;
 
         if (move.isQuiet()) {
             killerMoves[ply][1] = killerMoves[ply][0];
             killerMoves[ply][0] = move;
 
-            mainHistory[stm][move.getFrom()][move.getTo()] += bonus;
+            mainHistory[stm][from][to] += bonus;
+
+            counterMoves[prevMove.getFrom()][prevMove.getTo()] = move;
 
             for (int i = 0; i < quiets; i++) {
                 mainHistory[stm][quietMoves[i].getFrom()][quietMoves[i].getTo()] -= bonus;

@@ -46,6 +46,12 @@ struct BoardState {
     }
 };
 
+struct SearchStack {
+    Ply ply;
+    Score eval;
+    Move move;
+};
+
 struct StateStack {
 
     BoardState stateStart[500];

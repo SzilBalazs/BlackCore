@@ -45,7 +45,9 @@ public:
     // Constructor that generates and scores legal moves.
     inline MoveList(const Position &position, const History &history, SearchStack *stack, Move hashMove) {
         count = generateMoves(position, moves, (type == LIST_Q)) - moves;
-        Ply ply = stack->ply;
+
+        const Ply ply = stack->ply;
+        const Move prevMove = (stack - 1)->move;
 
         for (int i = 0; i < count; i++) {
 
@@ -62,6 +64,8 @@ public:
                 scores[i] = 7'000'000;
             } else if (moves[i] == history.killerMoves[ply][1]) {
                 scores[i] = 6'000'000;
+            } else if (moves[i] == history.counterMoves[prevMove.getFrom()][prevMove.getTo()]) {
+                scores[i] = 5'000'000;
             } else {
                 scores[i] = history.mainHistory[position.getSideToMove()][from][to];
             }

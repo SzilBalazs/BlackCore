@@ -23,11 +23,6 @@
 
 #include <thread>
 
-struct SearchStack {
-    Ply ply;
-    Score eval;
-};
-
 class SearchThread {
 
 public:

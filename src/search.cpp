@@ -76,7 +76,9 @@ void SearchThread::startSearch() {
     SearchStack stack[MAX_PLY + 1];
     for (int i = 0; i <= MAX_PLY; i++) {
         assert(i <= 127);
-        stack[i].ply = i;
+        stack[i].ply = i - 1;
+        stack[i].eval = 0;
+        stack[i].move = MOVE_NULL;
     }
 
     Move bestMove;
@@ -97,7 +99,7 @@ void SearchThread::startSearch() {
         while (true) {
 
             history.reset();
-            score = search<ROOT_NODE>(stack, depth, alpha, beta);
+            score = search<ROOT_NODE>(stack + 1, depth, alpha, beta);
 
             if (!timeManager.resourcesLeft() || stop) {
                 break;
@@ -199,7 +201,7 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
     MoveList moves = MoveList<LIST_Q>(position, history, stack, MOVE_NULL);
 
     while (!moves.empty()) {
-        Move move = moves.nextMove();
+        Move move = stack->move = moves.nextMove();
 
         nodes++;
         position.makeMove(move);
@@ -290,9 +292,11 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     if (nonPvNode && depth <= RFP_DEPTH && stack->eval - RFP_DEPTH_MULTI * depth >= beta && std::abs(beta) < TB_WORST_WIN)
         return beta;
 
+    // TODO Disable NMP after a null move
     if (nonPvNode && depth >= NMP_DEPTH && stack->eval >= beta && !position.isZugzwang()) {
         Depth R = NMP_BASE + depth / NMP_DEPTH_MULTI;
 
+        stack->move = MOVE_NULL;
         position.makeNullMove();
         Score score = -search<NON_PV_NODE>(stack + 1, depth - R, -beta, -beta + 1);
         position.undoNullMove();
@@ -314,7 +318,7 @@ search_moves:
     Move quietMoves[200];
     int index = 0, quiets = 0;
     while (!moves.empty()) {
-        Move move = moves.nextMove();
+        Move move = stack->move = moves.nextMove();
 
         Depth newDepth = depth - 1;
         nodes++;
@@ -355,7 +359,7 @@ search_moves:
 
         if (score >= beta) {
 
-            history.updateHistory(position, quietMoves, quiets, move, stack->ply, std::min(1500, depth * 100));
+            history.updateHistory(position, stack, quietMoves, quiets, move, std::min(1500, depth * 100));
             ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
 
             return beta;
