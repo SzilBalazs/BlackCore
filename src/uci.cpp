@@ -253,6 +253,8 @@ void uciLoop() {
     int threadCount = 1, multiPV = 1;
     int64_t overhead = 30;
 
+    SearchThread search;
+
     while (true) {
         std::string line, command, token;
         std::getline(std::cin, line);
@@ -271,11 +273,11 @@ void uciLoop() {
         } else if (command == "isready") {
             out("readyok");
         } else if (command == "quit") {
+            search.stopThread();
             tb_free();
             break;
         } else if (command == "stop") {
-            // TODO implement stop
-            // searchThread.stopThread();
+            search.stopThread();
         } else if (command == "ucinewgame") {
             ttClear();
         } else if (command == "setoption") {
@@ -375,9 +377,7 @@ void uciLoop() {
                 out("   Depth    ", "Score    ", "Nodes   ", "Time     ", "NPS   ", "Hash%  ", "TB Hits  ", "Principal Variation");
             }
 
-
-            SearchThread searchThread(pos, searchInfo);
-            searchThread.start();
+            search.startThread(pos, searchInfo);
 
         } else if (command == "d" || command == "display") {
             pos.display();

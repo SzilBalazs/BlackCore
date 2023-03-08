@@ -21,6 +21,8 @@
 #include "timeman.h"
 #include "uci.h"
 
+#include <thread>
+
 struct SearchStack {
     Ply ply;
     Score eval;
@@ -29,9 +31,15 @@ struct SearchStack {
 class SearchThread {
 
 public:
-    SearchThread(const Position &pos, const SearchInfo &info);
+    SearchThread();
 
-    void start();
+    void startSearch();
+
+    void startThread(const Position &pos, const SearchInfo &info);
+
+    void stopThread();
+
+    void joinThread();
 
     std::string getPvLine();
 
@@ -46,11 +54,16 @@ private:
 
     History history;
 
-    Move pvArray[MAX_PLY + 1][MAX_PLY + 1];
-    Ply pvLength[MAX_PLY + 1];
+    Depth reductions[200][MAX_PLY + 1]{};
+
+    Move pvArray[MAX_PLY + 1][MAX_PLY + 1]{};
+    Ply pvLength[MAX_PLY + 1]{};
 
     int64_t nodes = 0;
     Ply selectivePly = 0;
+
+    std::atomic_bool stop;
+    std::thread thread;
 
     template<NodeType nodeType>
     Score search(SearchStack *stack, Depth depth, Score alpha, Score beta);

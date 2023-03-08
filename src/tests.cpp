@@ -117,6 +117,8 @@ void testSearch(U64 expectedResult) {
 
     U64 totalNodes = 0, nps = 0;
 
+    SearchThread search;
+
     for (const std::string &fen : benchPositions) {
 
         // Clear the transposition table for a deterministic behaviour.
@@ -127,12 +129,12 @@ void testSearch(U64 expectedResult) {
         info.maxDepth = searchTestDepth;
         info.uciMode = false;
 
-        SearchThread searchThread(pos, info);
-        searchThread.start();
+        search.startThread(pos, info);
+        search.joinThread();
 
         // Record the node count and the nps.
-        totalNodes += searchThread.getNodes();
-        nps += searchThread.getNps();
+        totalNodes += search.getNodes();
+        nps += search.getNps();
     }
 
     std::cout << totalNodes << " nodes " << nps / benchPosCount << " nps" << std::endl;

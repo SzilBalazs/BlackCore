@@ -23,20 +23,25 @@
 #include <algorithm>
 #include <cmath>
 
-Depth reductions[200][200];
+SearchThread::SearchThread() {
 
-// Initialize a lookup table for LMR reduction values
-void initLmr() {
+    // Initialize a lookup table for LMR reduction values
     for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
         for (Depth depth = 0; depth < MAX_PLY; depth++) {
-
-            reductions[moveIndex][depth] = 1.0 + std::log(moveIndex) * std::log(depth) / 1.75;
+            reductions[moveIndex][depth] = Depth(1.0 + std::log(moveIndex) * std::log(depth) / 1.75);
         }
     }
 }
 
-SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
-    initLmr();
+void SearchThread::startThread(const Position &pos, const SearchInfo &info) {
+
+    // If a search is still running, stop it
+    stopThread();
+
+    // Reset search stats
+    nodes = 0;
+    selectivePly = 0;
+
     // Store search info
     searchInfo = info;
 
@@ -49,9 +54,24 @@ SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
 
     // Refresh NNUE accumulator
     position.getState()->accumulator.refresh(position);
+
+    // Start a thread
+    thread = std::thread(&SearchThread::startSearch, this);
 }
 
-void SearchThread::start() {
+void SearchThread::stopThread() {
+    stop = true;
+    joinThread();
+}
+
+void SearchThread::joinThread() {
+    if (thread.joinable())
+        thread.join();
+}
+
+void SearchThread::startSearch() {
+
+    stop = false;
 
     SearchStack stack[MAX_PLY + 1];
     for (int i = 0; i <= MAX_PLY; i++) {
@@ -79,7 +99,7 @@ void SearchThread::start() {
             history.reset();
             score = search<ROOT_NODE>(stack, depth, alpha, beta);
 
-            if (!timeManager.resourcesLeft()) {
+            if (!timeManager.resourcesLeft() || stop) {
                 break;
             }
 
@@ -95,7 +115,7 @@ void SearchThread::start() {
             delta += delta / 2;
         }
 
-        if (!timeManager.resourcesLeft())
+        if (!timeManager.resourcesLeft() || stop)
             break;
 
         if (searchInfo.uciMode) {
@@ -162,7 +182,7 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
         return position.eval();
     }
 
-    if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+    if ((nodes & 1023) == 0 && (!timeManager.resourcesLeft() || stop)) {
         return UNKNOWN_SCORE;
     }
 
@@ -188,7 +208,7 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
 
         position.undoMove(move);
 
-        if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+        if ((nodes & 1023) == 0 && (!timeManager.resourcesLeft() || stop)) {
             return UNKNOWN_SCORE;
         }
 
@@ -228,7 +248,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
         return position.eval();
     }
 
-    if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+    if ((nodes & 1023) == 0 && (!timeManager.resourcesLeft() || stop)) {
         return UNKNOWN_SCORE;
     }
 
@@ -326,7 +346,7 @@ search_moves:
 
         position.undoMove(move);
 
-        if ((nodes & 1023) == 0 && !timeManager.resourcesLeft()) {
+        if ((nodes & 1023) == 0 && (!timeManager.resourcesLeft() || stop)) {
             return UNKNOWN_SCORE;
         }
 
