@@ -113,7 +113,7 @@ void SearchThread::start() {
             int64_t elapsedTime = timeManager.elapsedTime();
             int64_t nps = timeManager.calcNps(nodes);
 
-            printNewDepth(depth, selectivePly, nodes, hashFull, 0, score, scoreStr, elapsedTime, nps, 1, getPvLine());
+            printNewDepth(depth, selectivePly, nodes, hashFull, 0, score, scoreStr, elapsedTime, nps, 0, getPvLine());
         }
 
         bestMove = pvArray[0][0];
@@ -209,6 +209,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     constexpr bool nonPvNode = !pvNode;
     constexpr NodeType nextNodeType = rootNode ? PV_NODE : nodeType;
     const Score matePly = MATE_VALUE - stack->ply;
+    const bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
     Score bestScore = -INF_SCORE;
     EntryFlag ttFlag = TT_ALPHA;
@@ -255,7 +256,6 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     }
 
     stack->eval = position.eval();
-    bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
     if (rootNode || inCheck)
         goto search_moves;
