@@ -21,7 +21,7 @@
 #include <iostream>
 
 struct SearchInfo {
-    long long wtime = -1, btime = -1, winc = 0, binc = 0, movestogo = 0, movetime = -1, maxNodes = -1;
+    int64_t wtime = -1, btime = -1, winc = 0, binc = 0, movestogo = 0, movetime = -1, maxNodes = -1, overhead = 30;
     Depth maxDepth = MAX_PLY;
     bool uciMode = true;
     int multiPV = 1;

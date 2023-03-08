@@ -28,12 +28,18 @@ public:
 
     bool resourcesLeft();
 
+    inline void setOverhead(int64_t x) {
+        overhead = x;
+    }
+
+    bool scaleOptimum(double scale);
+
     int64_t elapsedTime() const;
 
     int64_t calcNps(int64_t nodes) const;
 
 private:
-    int64_t optimum, maximum, startPoint;
+    int64_t optimum, maximum, startPoint, overhead = 30;
 
     int64_t now() const;
 };

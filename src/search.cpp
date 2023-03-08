@@ -45,6 +45,7 @@ SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
 
     // Initialize time manager
     timeManager.init(info, pos.getSideToMove());
+    timeManager.setOverhead(info.overhead);
 
     // Refresh NNUE accumulator
     position.getState()->accumulator.refresh(position);
@@ -60,6 +61,7 @@ void SearchThread::start() {
 
     Move bestMove;
     Score prevScore = 0;
+    int bmStability = -5;
     for (Depth depth = 1; depth <= searchInfo.maxDepth; depth++) {
 
         Score score;
@@ -116,6 +118,22 @@ void SearchThread::start() {
             printNewDepth(depth, selectivePly, nodes, hashFull, 0, score, scoreStr, elapsedTime, nps, 0, getPvLine());
         }
 
+        // Time management
+        double scale = 1.0;
+
+        if (depth >= 5) {
+            double bmScale = double(115 - 2 * bmStability) / 100;
+            scale *= bmScale;
+        }
+
+        if (timeManager.scaleOptimum(scale))
+            break;
+
+        if (bestMove == pvArray[0][0]) {
+            bmStability++;
+        } else {
+            bmStability = 0;
+        }
         bestMove = pvArray[0][0];
         prevScore = score;
     }

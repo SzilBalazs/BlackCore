@@ -27,10 +27,6 @@ void TimeManager::init(SearchInfo searchInfo, Color stm) {
     int64_t timeLeft, movesLeft, increment;
     movesLeft = searchInfo.movestogo;
 
-    if (movesLeft == 0) {
-        movesLeft = 25;
-    }
-
     if (stm == WHITE) {
         timeLeft = searchInfo.wtime;
         increment = searchInfo.winc;
@@ -39,16 +35,34 @@ void TimeManager::init(SearchInfo searchInfo, Color stm) {
         increment = searchInfo.binc;
     }
 
+    if (timeLeft != -1) {
+        timeLeft -= overhead;
+    }
+
     if (searchInfo.movetime != -1) {
         optimum = searchInfo.movetime;
         maximum = searchInfo.movetime;
     } else if (timeLeft == -1) {
         optimum = INT32_MAX;
         maximum = INT32_MAX;
+        timeLeft = INT32_MAX;
     } else {
-        optimum = timeLeft / movesLeft + increment;
-        maximum = timeLeft / movesLeft + increment;
+
+        if (movesLeft) {
+            optimum = timeLeft / movesLeft + increment;
+            maximum = 1.75 * double(optimum);
+        } else {
+            optimum = timeLeft / 25 + increment;
+            maximum = timeLeft / 15 + increment * 2;
+        }
     }
+
+    optimum = std::min(optimum, timeLeft);
+    maximum = std::min(maximum, timeLeft);
+}
+
+bool TimeManager::scaleOptimum(double scale) {
+    return now() > startPoint + std::min(maximum, int64_t(double(optimum) * scale));
 }
 
 int64_t TimeManager::elapsedTime() const {
@@ -61,7 +75,7 @@ int64_t TimeManager::calcNps(int64_t nodes) const {
 }
 
 bool TimeManager::resourcesLeft() {
-    return now() < startPoint + optimum;
+    return elapsedTime() < maximum;
 }
 
 int64_t TimeManager::now() const {

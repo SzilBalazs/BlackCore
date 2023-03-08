@@ -231,11 +231,11 @@ void uciInitProtocol() {
     // Tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 4096);
     // TODO reimplement these
-    // out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
+    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 1);
     // out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<empty>");
-    out("option", "name", "Move Overhead", "type", "spin", "default", 20, "min", 0, "max", 10000);
+    out("option", "name", "Move Overhead", "type", "spin", "default", 30, "min", 0, "max", 10000);
 
 #ifdef TUNE
     tuneInit();
@@ -251,6 +251,7 @@ void uciLoop() {
 
     Position pos = {STARTING_FEN};
     int threadCount = 1, multiPV = 1;
+    int64_t overhead = 30;
 
     while (true) {
         std::string line, command, token;
@@ -282,8 +283,7 @@ void uciLoop() {
                 if (tokens[1] == "Hash") {
                     ttResize(std::stoi(tokens[3]));
                 } else if (tokens[1] == "Move" && tokens[2] == "Overhead") {
-                    // TODO implement move overhead
-                    // MOVE_OVERHEAD = std::stoi(tokens[4]);
+                    overhead = std::stoi(tokens[4]);
                 } else if (tokens[1] == "Ponder") {
                     // TODO implement ponder
                 } else if (tokens[1] == "Threads") {
@@ -368,6 +368,7 @@ void uciLoop() {
                 }
             }
 
+            searchInfo.overhead = overhead;
             searchInfo.multiPV = multiPV;
 
             if (!guiCommunication) {
