@@ -35,10 +35,6 @@ void TimeManager::init(SearchInfo searchInfo, Color stm) {
         increment = searchInfo.binc;
     }
 
-    if (timeLeft != -1) {
-        timeLeft -= overhead;
-    }
-
     if (searchInfo.movetime != -1) {
         optimum = searchInfo.movetime;
         maximum = searchInfo.movetime;
@@ -57,8 +53,8 @@ void TimeManager::init(SearchInfo searchInfo, Color stm) {
         }
     }
 
-    optimum = std::min(optimum, timeLeft);
-    maximum = std::min(maximum, timeLeft);
+    optimum = std::min(optimum - overhead, timeLeft - overhead);
+    maximum = std::min(maximum - overhead, timeLeft - overhead);
 }
 
 bool TimeManager::scaleOptimum(double scale) {
