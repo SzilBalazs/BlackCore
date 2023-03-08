@@ -256,6 +256,13 @@ void uciLoop() {
     SearchThread search;
 
     while (true) {
+
+        if (std::cin.eof()) {
+            search.stopThread();
+            tb_free();
+            break;
+        }
+
         std::string line, command, token;
         std::getline(std::cin, line);
 
