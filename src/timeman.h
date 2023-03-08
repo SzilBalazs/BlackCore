@@ -28,6 +28,8 @@ public:
 
     bool resourcesLeft();
 
+    int64_t elapsedTime() const;
+
     int64_t calcNps(int64_t nodes) const;
 
 private:

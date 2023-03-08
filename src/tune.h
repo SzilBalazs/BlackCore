@@ -60,8 +60,10 @@ inline void addParam(const std::string &name, int defaultValue, int minValue, in
     SCORE_PARAM(RFP_DEPTH_MULTI, 70)    \
     DEPTH_PARAM(NMP_DEPTH, 3)           \
     SCORE_PARAM(NMP_BASE, 3)            \
-    SCORE_PARAM(NMP_DEPTH_MULTI, 5)
-
+    SCORE_PARAM(NMP_DEPTH_MULTI, 5)     \
+    DEPTH_PARAM(LMR_DEPTH, 3)           \
+    SCORE_PARAM(LMR_BASE_INDEX, 3)      \
+    SCORE_PARAM(LMR_PV_INDEX, 2)
 
 TUNING_PARAMETERS
 

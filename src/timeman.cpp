@@ -51,9 +51,13 @@ void TimeManager::init(SearchInfo searchInfo, Color stm) {
     }
 }
 
+int64_t TimeManager::elapsedTime() const {
+    return now() - startPoint;
+}
+
 int64_t TimeManager::calcNps(int64_t nodes) const {
-    int64_t elapsedTime = now() - startPoint;
-    return elapsedTime == 0 ? 0 : nodes * 1000 / elapsedTime;
+    int64_t elapsed = elapsedTime();
+    return elapsed == 0 ? 0 : nodes * 1000 / elapsed;
 }
 
 bool TimeManager::resourcesLeft() {

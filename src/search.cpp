@@ -20,8 +20,23 @@
 #include "tt.h"
 #include "tune.h"
 
-SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
+#include <algorithm>
+#include <cmath>
 
+Depth reductions[200][200];
+
+// Initialize a lookup table for LMR reduction values
+void initLmr() {
+    for (int moveIndex = 0; moveIndex < 200; moveIndex++) {
+        for (Depth depth = 0; depth < MAX_PLY; depth++) {
+
+            reductions[moveIndex][depth] = 1.0 + std::log(moveIndex) * std::log(depth) / 1.75;
+        }
+    }
+}
+
+SearchThread::SearchThread(const Position &pos, const SearchInfo &info) {
+    initLmr();
     // Store search info
     searchInfo = info;
 
@@ -82,8 +97,24 @@ void SearchThread::start() {
         if (!timeManager.resourcesLeft())
             break;
 
-        if (searchInfo.uciMode)
-            out("info", "depth", (int) depth, "score", "cp", score, "nodes", nodes, "pv", getPvLine());
+        if (searchInfo.uciMode) {
+
+            Score absScore = std::abs(score);
+            int mateDepth = MATE_VALUE - absScore;
+            std::string scoreStr = "cp " + std::to_string(score);
+
+            // Calculate mate depth if a mate was found.
+            if (mateDepth <= 64) {
+                int matePly = score > 0 ? mateDepth / 2 + 1 : -(mateDepth / 2);
+                scoreStr = "mate " + std::to_string(matePly);
+            }
+
+            int hashFull = getTTFull();
+            int64_t elapsedTime = timeManager.elapsedTime();
+            int64_t nps = timeManager.calcNps(nodes);
+
+            printNewDepth(depth, selectivePly, nodes, hashFull, 0, score, scoreStr, elapsedTime, nps, 1, getPvLine());
+        }
 
         bestMove = pvArray[0][0];
         prevScore = score;
@@ -265,7 +296,20 @@ search_moves:
 
         Score score = UNKNOWN_SCORE;
 
-        if (nonPvNode || index > 0) {
+        if (index >= LMR_BASE_INDEX + LMR_PV_INDEX * pvNode && depth >= LMR_DEPTH && !inCheck && move.isQuiet()) {
+
+            Depth R = reductions[index][depth];
+            R -= pvNode;
+
+            Depth D = std::clamp(depth - R, 1, depth - 1);
+
+            score = -search<NON_PV_NODE>(stack + 1, D, -alpha - 1, -alpha);
+
+            if (score > alpha && D != newDepth) {
+                score = -search<NON_PV_NODE>(stack + 1, newDepth, -alpha - 1, -alpha);
+            }
+
+        } else if (nonPvNode || index > 0) {
             score = -search<NON_PV_NODE>(stack + 1, newDepth, -alpha - 1, -alpha);
         }
 
