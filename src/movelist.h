@@ -20,6 +20,7 @@
 #include "movegen.h"
 #include "position.h"
 #include "search.h"
+#include "see.h"
 
 enum ListType {
     LIST_AB,
@@ -57,7 +58,7 @@ public:
             } else if (moves[i].isCapture()) {
                 PieceType moved = position.pieceAt(from).type;
                 PieceType captured = moves[i].equalFlag(EP_CAPTURE) ? PAWN : position.pieceAt(to).type;
-                scores[i] = 8'000'000 + MVVLVA[captured][moved];
+                scores[i] = (see(position, moves[0], 0) ? 8'000'000 : 5'000'000) + MVVLVA[captured][moved];
             } else if (moves[i] == history.killerMoves[ply][0]) {
                 scores[i] = 7'000'000;
             } else if (moves[i] == history.killerMoves[ply][1]) {
