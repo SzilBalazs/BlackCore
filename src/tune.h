@@ -57,7 +57,7 @@ inline void addParam(const std::string &name, int defaultValue, int minValue, in
     SCORE_PARAM(ASPIRATION_DELTA, 30)   \
     SCORE_PARAM(ASPIRATION_BOUND, 3000) \
     DEPTH_PARAM(RFP_DEPTH, 7)           \
-    SCORE_PARAM(RFP_DEPTH_MULTI, 70)    \
+    SCORE_PARAM(RFP_MULTI, 70)          \
     DEPTH_PARAM(NMP_DEPTH, 3)           \
     SCORE_PARAM(NMP_BASE, 3)            \
     SCORE_PARAM(NMP_DEPTH_MULTI, 5)     \
