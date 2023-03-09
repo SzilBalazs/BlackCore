@@ -296,8 +296,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     if (nonPvNode && depth <= RFP_DEPTH && stack->eval - RFP_MULTI * (depth - improving) >= beta && std::abs(beta) < TB_WORST_WIN)
         return beta;
 
-    // TODO Disable NMP after a null move
-    if (nonPvNode && depth >= NMP_DEPTH && stack->eval >= beta && !position.isZugzwang()) {
+    if (nonPvNode && depth >= NMP_DEPTH && stack->eval >= beta && (stack - 1)->move.isOk() && !position.isZugzwang()) {
         Depth R = NMP_BASE + depth / NMP_DEPTH_MULTI;
 
         stack->move = MOVE_NULL;
