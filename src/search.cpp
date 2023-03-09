@@ -217,7 +217,6 @@ Score SearchThread::qsearch(SearchStack *stack, Score alpha, Score beta) {
         bestScore = std::max(bestScore, score);
 
         if (score >= beta) {
-
             return beta;
         }
 
@@ -240,8 +239,8 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     const Score matePly = MATE_VALUE - stack->ply;
     const bool inCheck = bool(getAttackers(position, position.pieces<KING>(position.getSideToMove()).lsb()));
 
-    Score bestScore = -INF_SCORE;
     EntryFlag ttFlag = TT_ALPHA;
+    Score bestScore = -INF_SCORE;
     Move bestMove;
 
     pvLength[stack->ply] = stack->ply;
@@ -360,26 +359,30 @@ search_moves:
         }
 
         assert(score != UNKNOWN_SCORE);
-        bestScore = std::max(bestScore, score);
 
-        if (score >= beta) {
+        if (score > bestScore) {
+            bestScore = score;
 
-            history.updateHistory(position, stack, quietMoves, quiets, move, std::min(1500, depth * 100));
-            ttSave(position.getHash(), depth, beta, TT_BETA, move, stack->ply);
+            if (score > alpha) {
 
-            return beta;
-        }
+                ttFlag = TT_EXACT;
+                alpha = score;
+                bestMove = move;
 
-        if (score > alpha) {
-            alpha = score;
-            bestMove = move;
+                // Update PV-line
+                pvArray[stack->ply][stack->ply] = move;
+                for (int i = stack->ply + 1; i < pvLength[stack->ply + 1]; i++) {
+                    pvArray[stack->ply][i] = pvArray[stack->ply + 1][i];
+                }
+                pvLength[stack->ply] = pvLength[stack->ply + 1];
 
-            // Update PV-line
-            pvArray[stack->ply][stack->ply] = move;
-            for (int i = stack->ply + 1; i < pvLength[stack->ply + 1]; i++) {
-                pvArray[stack->ply][i] = pvArray[stack->ply + 1][i];
+                if (score >= beta) {
+
+                    history.updateHistory(position, stack, quietMoves, quiets, move, std::min(1500, depth * 100));
+                    ttSave(position.getHash(), depth, score, TT_BETA, move, stack->ply);
+                    return score;
+                }
             }
-            pvLength[stack->ply] = pvLength[stack->ply + 1];
         }
 
         index++;
