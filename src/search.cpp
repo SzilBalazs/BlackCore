@@ -260,6 +260,9 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
             return 1 - (nodes & 3);
     }
 
+    if (inCheck)
+        depth++;
+
     /*
      * Transposition table probing
      *
