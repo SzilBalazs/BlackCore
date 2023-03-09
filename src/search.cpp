@@ -285,6 +285,7 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     }
 
     stack->eval = position.eval();
+    bool improving = stack->ply >= 2 && stack->eval >= (stack - 2)->eval;
 
     if (rootNode || inCheck)
         goto search_moves;
@@ -331,6 +332,7 @@ search_moves:
 
             Depth R = reductions[index][depth];
             R -= pvNode;
+            R += !improving;
 
             Depth D = std::clamp(depth - R, 1, depth - 1);
 
