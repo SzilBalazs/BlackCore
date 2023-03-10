@@ -293,6 +293,9 @@ Score SearchThread::search(SearchStack *stack, Depth depth, Score alpha, Score b
     if (rootNode || inCheck)
         goto search_moves;
 
+    if (depth >= 5 && !ttHit)
+        depth--;
+
     if (nonPvNode && depth <= RFP_DEPTH && stack->eval - RFP_MULTI * (depth - improving) >= beta && std::abs(beta) < TB_WORST_WIN)
         return beta;
 
