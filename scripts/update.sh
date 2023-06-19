@@ -27,5 +27,6 @@ git clone https://github.com/SzilBalazs/BlackCore --branch $1
 g++ --version
 make -C BlackCore/src -j 6 CXX=g++ ARCH=native EXE=BlackCore-$1
 cp BlackCore/src/BlackCore-$1 ./
+EXE=BlackCore-$1
 ./BlackCore-$1 bench
 rm -rf BlackCore
