@@ -230,7 +230,7 @@ void uciInitProtocol() {
 
     // Tell the GUI what options we have
     out("option", "name", "Hash", "type", "spin", "default", 32, "min", 1, "max", 65536);
-    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 64);
+    out("option", "name", "Threads", "type", "spin", "default", 1, "min", 1, "max", 256);
     out("option", "name", "MultiPV", "type", "spin", "default", 1, "min", 1, "max", MAX_MULTIPV);
     out("option", "name", "EvalFile", "type", "string", "default", "corenet.bin");
     out("option", "name", "SyzygyPath", "type", "string", "default", "<empty>");
