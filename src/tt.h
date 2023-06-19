@@ -44,7 +44,7 @@ struct TTable {
     U64 mask;
 };
 
-void ttResize(unsigned int MBSize);
+void ttResize(unsigned long long MBSize);
 
 void ttClear();
 

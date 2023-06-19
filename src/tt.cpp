@@ -41,13 +41,13 @@ void ttFree() {
 }
 
 // Resizes the transposition table.
-void ttResize(unsigned int MBSize) {
+void ttResize(unsigned long long MBSize) {
 
     if (tt.bucketCount)
         ttFree();
 
     unsigned int i = 10;
-    while ((1ULL << i) <= MBSize * 1024 * 1024 / sizeof(TTEntry))
+    while ((1ULL << i) <= MBSize * 1024ULL * 1024ULL / sizeof(TTEntry))
         i++;
 
     tt.bucketCount = (1ULL << (i - 1));
