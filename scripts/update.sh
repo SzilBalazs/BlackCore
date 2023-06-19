@@ -17,7 +17,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+if [ $# -eq 0 ]; then
+    echo "Please provide a branch name! Example usage: \"./update.sh tcec\""
+    exit 1
+fi
+
 rm -rf BlackCore
 git clone https://github.com/SzilBalazs/BlackCore --branch $1
 make -C BlackCore/src -j 6 ARCH=native EXE=BlackCore-$1
 cp BlackCore/src/BlackCore-$1 ./
+./BlackCore-$1 bench
