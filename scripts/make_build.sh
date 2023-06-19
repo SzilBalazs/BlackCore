@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+rm -rf BlackCore
 git clone https://github.com/SzilBalazs/BlackCore --branch $1
-make -C BlackCore/src ARCH=native EXE=BlackCore
-cp BlackCore/src/BlackCore ./
+make -C BlackCore/src -j 6 ARCH=native EXE=BlackCore-$1
+cp BlackCore/src/BlackCore-$1 ./
