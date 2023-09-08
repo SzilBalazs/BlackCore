@@ -18,6 +18,7 @@
 
 #include "constants.h"
 #include "move.h"
+#include <cstdint>
 
 enum EntryFlag : uint8_t {
     TT_NONE = 0,
