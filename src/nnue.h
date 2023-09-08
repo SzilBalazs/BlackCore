@@ -17,6 +17,7 @@
 #pragma once
 
 #include "bitboard.h"
+#include <cstdint>
 
 class Position;
 

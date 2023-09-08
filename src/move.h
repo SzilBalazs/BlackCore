@@ -20,6 +20,7 @@
 
 #include "constants.h"
 #include "utils.h"
+#include <cstdint>
 
 constexpr unsigned int PROMO_FLAG = 0x8;    // 0b1000
 constexpr unsigned int CAPTURE_FLAG = 0x4;  // 0b0100
